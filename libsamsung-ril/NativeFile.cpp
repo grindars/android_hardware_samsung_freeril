@@ -26,8 +26,10 @@ RIL::NativeFileData::NativeFileData(int _fd) : fd(_fd), refs(1) {
 }
 
 void RIL::NativeFileData::deref() {
-    if(--refs)
+    if(--refs == 0) {
+        close(fd);
         delete this;
+    }
 }
 
 void RIL::NativeFileData::ref() {

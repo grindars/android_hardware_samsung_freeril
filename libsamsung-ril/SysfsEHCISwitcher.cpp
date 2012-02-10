@@ -30,17 +30,17 @@ RIL::SysfsEHCISwitcher::~SysfsEHCISwitcher() {
 }
 
 bool RIL::SysfsEHCISwitcher::run() const {
-    return read("runtime") == "on";
+    return read("ehci_runtime") == "on\n";
 }
 
 bool RIL::SysfsEHCISwitcher::power() const {
-    return read("power") == "on";
+    return read("ehci_power") == "EHCI Power on\n";
 }
 
 void RIL::SysfsEHCISwitcher::setRun(bool run) {
-    write("runtime", run ? "on" : "off");
+    write("ehci_runtime", run ? "on" : "off");
 }
 
 void RIL::SysfsEHCISwitcher::setPower(bool power) {
-    write("power", power ? "on" : "off");
+    write("ehci_power", power ? "1" : "0");
 }

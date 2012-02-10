@@ -37,7 +37,7 @@ RIL::PHONETIPCTransport::~PHONETIPCTransport() {
 
 bool RIL::PHONETIPCTransport::isLinkUp() const {
     try {
-        return read("connected") == "1";
+        return read("connected") == "1\n";
     } catch(std::exception) {
         return false;
     }

@@ -28,7 +28,7 @@ RIL::SysfsModemControl::~SysfsModemControl() {
 }
 
 bool RIL::SysfsModemControl::isWokenUp() const {
-    return read("wakeup") == "1";
+    return read("wakeup") == "1\n";
 }
 
 void RIL::SysfsModemControl::setWakeup(bool wake) {
