@@ -15,12 +15,3 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-AC_INIT([samsung-ril], [1.0.0], [grindars@gmail.com])
-AM_INIT_AUTOMAKE
-AC_PROG_RANLIB
-AC_PROG_CXX
-AC_PROG_CC
-
-AC_OUTPUT([Makefile libsamsung-ipc/Makefile libsamsung-ril/Makefile
-           ril/Makefile tools/Makefile tools/bootmodem/Makefile])

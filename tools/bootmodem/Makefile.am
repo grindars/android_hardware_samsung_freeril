@@ -16,11 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-AC_INIT([samsung-ril], [1.0.0], [grindars@gmail.com])
-AM_INIT_AUTOMAKE
-AC_PROG_RANLIB
-AC_PROG_CXX
-AC_PROG_CC
+bin_PROGRAMS = bootmodem
+bootmodem_SOURCES = main.cpp
 
-AC_OUTPUT([Makefile libsamsung-ipc/Makefile libsamsung-ril/Makefile
-           ril/Makefile tools/Makefile tools/bootmodem/Makefile])
+AM_CPPFLAGS = -I../../libsamsung-ril -I../../libsamsung-ipc
+AM_CXXFLAGS = -Wall -W -O2
+bootmodem_LDADD = -L../../libsamsung-ipc -L../../libsamsung-ril \
+  -lsamsung-ipc -lsamsung-ril

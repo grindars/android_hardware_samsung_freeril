@@ -17,6 +17,7 @@
 #
 
 EXTRA_DIST = generate-gitfiles.sh
+SUBDIRS    = libsamsung-ipc libsamsung-ril ril tools
 
 dist-hook:
 	sh $(top_srcdir)/generate-gitfiles.sh $(top_srcdir) $(distdir)

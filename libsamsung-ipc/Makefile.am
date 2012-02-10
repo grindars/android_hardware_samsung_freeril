@@ -16,11 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-AC_INIT([samsung-ril], [1.0.0], [grindars@gmail.com])
-AM_INIT_AUTOMAKE
-AC_PROG_RANLIB
-AC_PROG_CXX
-AC_PROG_CC
+lib_LIBRARIES = libsamsung-ipc.a
 
-AC_OUTPUT([Makefile libsamsung-ipc/Makefile libsamsung-ril/Makefile
-           ril/Makefile tools/Makefile tools/bootmodem/Makefile])
+libsamsung_ipc_a_SOURCES = IEHCISwitcher.h ISamsungIPCHal.h SamsungModem.h \
+	SamsungModem.cpp IModemControl.h IIPCTransport.h Exceptions.h \
+	Exceptions.cpp
+AM_CXXFLAGS = -Wall -W -O2

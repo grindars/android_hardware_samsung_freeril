@@ -16,11 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-AC_INIT([samsung-ril], [1.0.0], [grindars@gmail.com])
-AM_INIT_AUTOMAKE
-AC_PROG_RANLIB
-AC_PROG_CXX
-AC_PROG_CC
+lib_LIBRARIES = libsamsung-ril.a
 
-AC_OUTPUT([Makefile libsamsung-ipc/Makefile libsamsung-ril/Makefile
-           ril/Makefile tools/Makefile tools/bootmodem/Makefile])
+libsamsung_ril_a_SOURCES = SysfsEHCISwitcher.h SysfsEHCISwitcher.cpp \
+	NativeFile.h NativeFile.cpp CStyleException.h CStyleException.cpp \
+	RILHAL.h RILHAL.cpp SysfsModemControl.h SysfsModemControl.cpp \
+	SysfsControlledDevice.h SysfsControlledDevice.cpp PHONETIPCTransport.h \
+	PHONETIPCTransport.cpp
+
+AM_CPPFLAGS = -I../libsamsung-ipc
+AM_CXXFLAGS = -Wall -W -O2

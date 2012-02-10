@@ -4,7 +4,12 @@ aclocal.m4
 config.status
 install-sh
 missing
+depcomp
 config.log
 INSTALL
 Makefile
 Makefile.in
+.deps/
+*.o
+*.a
+tools/bootmodem/bootmodem
