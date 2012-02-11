@@ -46,6 +46,7 @@ namespace SamsungIPC {
 
         void rebootModem();
         void sendPSI(IIPCSocket *socket);
+        void expectAck(IIPCSocket *socket, const unsigned char *data, size_t size);
 
         static unsigned char calculateCRC(const std::string &data);
 

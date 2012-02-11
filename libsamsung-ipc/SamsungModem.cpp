@@ -27,6 +27,8 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
+
 #include <memory>
 
 using namespace SamsungIPC;
@@ -127,7 +129,7 @@ void SamsungModem::sendPSI(IIPCSocket *socket) {
         offset += bytes;
     }
 
-    unsigned char crc = calculateCRC(image), ack;
+    unsigned char crc = calculateCRC(image);
 
     socket->send(&crc, 1);
 
@@ -137,6 +139,9 @@ void SamsungModem::sendPSI(IIPCSocket *socket) {
             throw TimeoutException("PSI ACK timeout");
     }
 
+    unsigned char valid_ack = 0x01;
+    expectAck(socket, &valid_ack, 1);
+    expectAck(socket, &valid_ack, 1);
 }
 
 unsigned char SamsungModem::calculateCRC(const std::string &data) {
@@ -148,5 +153,18 @@ unsigned char SamsungModem::calculateCRC(const std::string &data) {
         crc ^= *ptr++;
 
     return crc;
+}
+
+void SamsungModem::expectAck(IIPCSocket *socket, const unsigned char *data,
+                             size_t size) {
+
+    std::auto_ptr<char> buf(new char[size]);
+
+    ssize_t bytes = socket->recv(buf.get(), size);
+    if(bytes < (ssize_t) size)
+        throw TimeoutException("ACK timeout or incomplete ACK");
+
+    if(memcmp(buf.get(), data, size) != 0)
+        throw TimeoutException("Valid ACK timeout");
 }
 
