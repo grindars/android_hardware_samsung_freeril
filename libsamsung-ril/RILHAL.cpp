@@ -20,6 +20,7 @@
 #include "SysfsEHCISwitcher.h"
 #include "SysfsModemControl.h"
 #include "PHONETIPCTransport.h"
+#include "AndroidFileSystem.h"
 
 SamsungIPC::IEHCISwitcher *RIL::RILHAL::createEHCISwitcher() {
     return new SysfsEHCISwitcher("/sys/devices/platform/s5p-ehci");
@@ -31,4 +32,8 @@ SamsungIPC::IModemControl *RIL::RILHAL::createModemControl() {
 
 SamsungIPC::IIPCTransport *RIL::RILHAL::createIPCTransport() {
     return new PHONETIPCTransport("svnet0");
+}
+
+SamsungIPC::IFileSystem *RIL::RILHAL::createFilesystem() {
+    return new AndroidFileSystem("/dev/block/mmcblk0p8");
 }

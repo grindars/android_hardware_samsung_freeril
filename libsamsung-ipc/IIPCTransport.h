@@ -20,6 +20,8 @@
 #define __SAMSUNGIPC__IIPCTRANSPORT__H__
 
 namespace SamsungIPC {
+    class IIPCSocket;
+
     class IIPCTransport {
     public:
         virtual ~IIPCTransport() {};
@@ -28,6 +30,8 @@ namespace SamsungIPC {
 
         virtual bool isUp() const = 0;
         virtual void setUp(bool up) = 0;
+
+        virtual IIPCSocket *createSocket(int obj_id) = 0;
     };
 }
 

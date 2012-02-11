@@ -23,12 +23,14 @@ namespace SamsungIPC {
     class IEHCISwitcher;
     class IModemControl;
     class IIPCTransport;
+    class IFileSystem;
 
     class ISamsungIPCHAL {
     public:
         virtual IEHCISwitcher *createEHCISwitcher() = 0;
         virtual IModemControl *createModemControl() = 0;
         virtual IIPCTransport *createIPCTransport() = 0;
+        virtual IFileSystem   *createFilesystem() = 0;
     };
 }
 

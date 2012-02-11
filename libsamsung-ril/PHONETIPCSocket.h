@@ -16,40 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SAMSUNGRIL__NATIVEFILE__H__
-#define __SAMSUNGRIL__NATIVEFILE__H__
+#ifndef __SAMSUNGRIL__PHONETIPCSOCKET__H__
+#define __SAMSUNGRIL__PHONETIPCSOCKET__H__
 
+#include <IIPCSocket.h>
+#include <linux/phonet.h>
 #include <string>
 
 namespace RIL {
-    struct NativeFileData {
-        NativeFileData(int fd);
-        void deref();
-        void ref();
+    class PHONETIPCSocket: public SamsungIPC::IIPCSocket {
+        friend class PHONETIPCTransport;
 
-        int refs;
-        int fd;
-    };
-
-    class NativeFile {
-        NativeFile(int fd);
-
+        PHONETIPCSocket(const std::string &interface, int obj_id);
     public:
-        NativeFile(const NativeFile &original);
-        ~NativeFile();
+        virtual ~PHONETIPCSocket();
 
-        inline int fd() const { return m_data->fd; }
-        inline operator int() const { return m_data->fd; }
-
-        static NativeFile open(const std::string &file, int mode);
-
-        ssize_t read(void *buf, size_t size);
-        ssize_t write(const void *buf, size_t size);
-        off_t seek(off_t offset, int whence);
+        virtual ssize_t send(const void *buf, size_t size);
+        virtual ssize_t recv(void *buf, size_t size, int timeout = 250);
 
     private:
-        NativeFileData *m_data;
+        struct sockaddr_pn addr;
+        int m_fd;
     };
 }
 
 #endif
+

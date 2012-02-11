@@ -22,9 +22,12 @@
 #include "IModemControl.h"
 #include "IIPCTransport.h"
 #include "Exceptions.h"
+#include "IIPCSocket.h"
+#include "IFileSystem.h"
 
 #include <stdio.h>
 #include <unistd.h>
+#include <memory>
 
 using namespace SamsungIPC;
 
@@ -32,22 +35,45 @@ SamsungModem::SamsungModem(SamsungIPC::ISamsungIPCHAL *hal) {
     m_ehci = hal->createEHCISwitcher();
     m_modemctl = hal->createModemControl();
     m_ipctransport = hal->createIPCTransport();
+    m_filesystem = hal->createFilesystem();
 }
 
 SamsungModem::~SamsungModem() {
     delete m_ehci;
     delete m_modemctl;
     delete m_ipctransport;
+    delete m_filesystem;
 }
 
 void SamsungModem::boot() {
     m_ehci->setRun(true);
 
+    m_modemctl->setState(IModemControl::Reset);
+    usleep(100000);
+    m_modemctl->setState(IModemControl::On);
+
     printf("Rebooting modem\n");
 
     rebootModem();
 
-    printf("Modem rebooted, opening socket.\n");
+    printf("Modem rebooted, opening socket\n");
+
+    std::auto_ptr<IIPCSocket> bootSocket(m_ipctransport->createSocket(0));
+
+    unsigned char ack;
+
+    bootSocket->send("ATAT", 4);
+    if(bootSocket->recv(&ack, 1) == 0)
+        throw TimeoutException("Bootloader greet timeout");
+
+    if(bootSocket->recv(&ack, 1) == 0)
+        throw TimeoutException("Chip id read timeout");
+
+    printf("Bootloader ready, loading PSI\n");
+
+    sendPSI(bootSocket.get());
+
+    printf("PSI sent\n");
 }
 
 void SamsungModem::rebootModem() {
@@ -82,3 +108,45 @@ void SamsungModem::rebootModem() {
     m_ipctransport->setUp(false);
     m_ipctransport->setUp(true);
 }
+
+void SamsungModem::sendPSI(IIPCSocket *socket) {
+    std::string image = m_filesystem->getFirmware(IFileSystem::PSI);
+
+    psi_header_t header;
+    header.header = 0x30;
+    header.length = image.length();
+    header.trailer = 0xFF;
+
+    socket->send(&header, sizeof(psi_header_t));
+
+    unsigned int offset = 0;
+
+    while(offset < image.length()) {
+        ssize_t bytes = socket->send(image.data() + offset, image.length() - offset);
+
+        offset += bytes;
+    }
+
+    unsigned char crc = calculateCRC(image), ack;
+
+    socket->send(&crc, 1);
+
+    for(unsigned int i = 0; i < 22; i++) {
+        unsigned char ack;
+        if(socket->recv(&ack, 1) == 0)
+            throw TimeoutException("PSI ACK timeout");
+    }
+
+}
+
+unsigned char SamsungModem::calculateCRC(const std::string &data) {
+    const unsigned char *ptr = (const unsigned char *) data.data();
+    unsigned char crc = 0;
+    unsigned int len = data.length();
+
+    while(len--)
+        crc ^= *ptr++;
+
+    return crc;
+}
+

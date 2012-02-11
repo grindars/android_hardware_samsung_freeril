@@ -38,6 +38,8 @@ namespace RIL {
         virtual bool isUp() const;
         virtual void setUp(bool up);
 
+        virtual SamsungIPC::IIPCSocket *createSocket(int obj_id);
+
     private:
         std::string m_interface;
     };

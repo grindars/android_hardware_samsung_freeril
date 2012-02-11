@@ -16,39 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SAMSUNGRIL__NATIVEFILE__H__
-#define __SAMSUNGRIL__NATIVEFILE__H__
+#ifndef __SAMSUNGIPC__IFILESYSTEM__H__
+#define __SAMSUNGIPC__IFILESYSTEM__H__
 
 #include <string>
 
-namespace RIL {
-    struct NativeFileData {
-        NativeFileData(int fd);
-        void deref();
-        void ref();
-
-        int refs;
-        int fd;
-    };
-
-    class NativeFile {
-        NativeFile(int fd);
-
+namespace SamsungIPC {
+    class IFileSystem {
     public:
-        NativeFile(const NativeFile &original);
-        ~NativeFile();
+        enum FirmwareType {
+            PSI = 1
+        };
 
-        inline int fd() const { return m_data->fd; }
-        inline operator int() const { return m_data->fd; }
+        virtual ~IFileSystem() {}
 
-        static NativeFile open(const std::string &file, int mode);
-
-        ssize_t read(void *buf, size_t size);
-        ssize_t write(const void *buf, size_t size);
-        off_t seek(off_t offset, int whence);
-
-    private:
-        NativeFileData *m_data;
+        virtual std::string getFirmware(FirmwareType type) = 0;
     };
 }
 

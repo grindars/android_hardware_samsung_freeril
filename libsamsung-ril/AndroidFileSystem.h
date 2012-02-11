@@ -16,39 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SAMSUNGRIL__NATIVEFILE__H__
-#define __SAMSUNGRIL__NATIVEFILE__H__
+#ifndef __SAMSUNGRIL__ANDROIDFILESYSTEM__H__
+#define __SAMSUNGRIL__ANDROIDFILESYSTEM__H__
 
-#include <string>
+#include <IFileSystem.h>
 
 namespace RIL {
-    struct NativeFileData {
-        NativeFileData(int fd);
-        void deref();
-        void ref();
-
-        int refs;
-        int fd;
-    };
-
-    class NativeFile {
-        NativeFile(int fd);
-
+    class AndroidFileSystem: public SamsungIPC::IFileSystem {
     public:
-        NativeFile(const NativeFile &original);
-        ~NativeFile();
+        AndroidFileSystem(const std::string &firmware);
 
-        inline int fd() const { return m_data->fd; }
-        inline operator int() const { return m_data->fd; }
-
-        static NativeFile open(const std::string &file, int mode);
-
-        ssize_t read(void *buf, size_t size);
-        ssize_t write(const void *buf, size_t size);
-        off_t seek(off_t offset, int whence);
+        virtual std::string getFirmware(SamsungIPC::IFileSystem::FirmwareType type);
 
     private:
-        NativeFileData *m_data;
+        std::string m_firmware;
     };
 }
 

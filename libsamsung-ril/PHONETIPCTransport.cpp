@@ -23,6 +23,7 @@
 #include <errno.h>
 
 #include "PHONETIPCTransport.h"
+#include "PHONETIPCSocket.h"
 #include "CStyleException.h"
 
 RIL::PHONETIPCTransport::PHONETIPCTransport(const std::string &interface) :
@@ -97,4 +98,8 @@ void RIL::PHONETIPCTransport::setUp(bool up) {
         errno = save;
         RIL::throwErrno();
     }
+}
+
+SamsungIPC::IIPCSocket *RIL::PHONETIPCTransport::createSocket(int obj_id) {
+    return new PHONETIPCSocket(m_interface, obj_id);
 }

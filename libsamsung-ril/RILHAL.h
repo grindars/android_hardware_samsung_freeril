@@ -27,6 +27,7 @@ namespace RIL {
         virtual SamsungIPC::IEHCISwitcher *createEHCISwitcher();
         virtual SamsungIPC::IModemControl *createModemControl();
         virtual SamsungIPC::IIPCTransport *createIPCTransport();
+        virtual SamsungIPC::IFileSystem *createFilesystem();
     };
 }
 

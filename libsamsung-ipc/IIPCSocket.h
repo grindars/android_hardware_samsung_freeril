@@ -16,39 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SAMSUNGRIL__NATIVEFILE__H__
-#define __SAMSUNGRIL__NATIVEFILE__H__
 
-#include <string>
+#ifndef __SAMSUNGIPC__IIPCSOCKET__H__
+#define __SAMSUNGIPC__IIPCSOCKET__H__
 
-namespace RIL {
-    struct NativeFileData {
-        NativeFileData(int fd);
-        void deref();
-        void ref();
-
-        int refs;
-        int fd;
-    };
-
-    class NativeFile {
-        NativeFile(int fd);
-
+namespace SamsungIPC {
+    class IIPCSocket {
     public:
-        NativeFile(const NativeFile &original);
-        ~NativeFile();
+        virtual ~IIPCSocket() {};
 
-        inline int fd() const { return m_data->fd; }
-        inline operator int() const { return m_data->fd; }
-
-        static NativeFile open(const std::string &file, int mode);
-
-        ssize_t read(void *buf, size_t size);
-        ssize_t write(const void *buf, size_t size);
-        off_t seek(off_t offset, int whence);
-
-    private:
-        NativeFileData *m_data;
+        virtual ssize_t send(const void *buf, size_t size) = 0;
+        virtual ssize_t recv(void *buf, size_t size, int timeout = 250) = 0;
     };
 }
 

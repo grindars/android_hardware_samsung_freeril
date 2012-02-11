@@ -21,7 +21,7 @@
 #include "NativeFile.h"
 #include "CStyleException.h"
 
-RIL::NativeFileData::NativeFileData(int _fd) : fd(_fd), refs(1) {
+RIL::NativeFileData::NativeFileData(int _fd) : refs(1), fd(_fd) {
 
 }
 
@@ -75,4 +75,13 @@ ssize_t RIL::NativeFile::write(const void *buf, size_t size) {
         throwErrno();
 
     return bytes;
+}
+
+off_t RIL::NativeFile::seek(off_t offset, int whence) {
+    off_t ret = ::lseek(fd(), offset, whence);
+
+    if(ret == -1)
+        throwErrno();
+
+    return ret;
 }

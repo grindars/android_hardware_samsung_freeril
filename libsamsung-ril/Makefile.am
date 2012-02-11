@@ -22,7 +22,8 @@ libsamsung_ril_a_SOURCES = SysfsEHCISwitcher.h SysfsEHCISwitcher.cpp \
 	NativeFile.h NativeFile.cpp CStyleException.h CStyleException.cpp \
 	RILHAL.h RILHAL.cpp SysfsModemControl.h SysfsModemControl.cpp \
 	SysfsControlledDevice.h SysfsControlledDevice.cpp PHONETIPCTransport.h \
-	PHONETIPCTransport.cpp
+	PHONETIPCTransport.cpp PHONETIPCSocket.h PHONETIPCSocket.cpp \
+	AndroidFileSystem.cpp AndroidFileSystem.h
 
 AM_CPPFLAGS = -I../libsamsung-ipc
 AM_CXXFLAGS = -Wall -W -O2

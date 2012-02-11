@@ -19,11 +19,16 @@
 #ifndef __SAMSUNGIPC__SAMSUNGMODEM__H__
 #define __SAMSUNGIPC__SAMSUNGMODEM__H__
 
+#include <stdint.h>
+#include <string>
+
 namespace SamsungIPC {
     class ISamsungIPCHAL;
     class IEHCISwitcher;
     class IModemControl;
     class IIPCTransport;
+    class IFileSystem;
+    class IIPCSocket;
 
     class SamsungModem {
     public:
@@ -33,11 +38,21 @@ namespace SamsungIPC {
         void boot();
 
     private:
+        typedef struct {
+            uint8_t header;
+            uint16_t length;
+            uint8_t trailer;
+        } __attribute__((packed)) psi_header_t;
+
         void rebootModem();
+        void sendPSI(IIPCSocket *socket);
+
+        static unsigned char calculateCRC(const std::string &data);
 
         IEHCISwitcher *m_ehci;
         IModemControl *m_modemctl;
         IIPCTransport *m_ipctransport;
+        IFileSystem *m_filesystem;
     };
 }
 
