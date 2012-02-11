@@ -33,7 +33,7 @@ HAL::PHONETIPCSocket::PHONETIPCSocket(const std::string &interface, int obj_id) 
     if(setsockopt(m_fd, SOL_SOCKET, SO_BINDTODEVICE, interface.data(), interface.size()) == -1) {
         int save = errno;
 
-        close(m_fd);
+        ::close(m_fd);
 
         errno = save;
 
@@ -45,7 +45,7 @@ HAL::PHONETIPCSocket::PHONETIPCSocket(const std::string &interface, int obj_id) 
     if(setsockopt(m_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) == -1) {
         int save = errno;
 
-        close(m_fd);
+        ::close(m_fd);
 
         errno = save;
 
@@ -59,7 +59,7 @@ HAL::PHONETIPCSocket::PHONETIPCSocket(const std::string &interface, int obj_id) 
     if(bind(m_fd, (struct sockaddr *) &addr, sizeof(struct sockaddr_pn)) == -1) {
         int save = errno;
 
-        close(m_fd);
+        ::close(m_fd);
 
         errno = save;
 
@@ -68,7 +68,8 @@ HAL::PHONETIPCSocket::PHONETIPCSocket(const std::string &interface, int obj_id) 
 }
 
 HAL::PHONETIPCSocket::~PHONETIPCSocket() {
-    close(m_fd);
+    if(m_fd != -1)
+        ::close(m_fd);
 }
 
 ssize_t HAL::PHONETIPCSocket::send(const void *buf, size_t size) {
@@ -106,4 +107,9 @@ ssize_t HAL::PHONETIPCSocket::recv(void *buf, size_t size, int timeout) {
         HAL::throwErrno();
 
     return bytes;
+}
+
+void HAL::PHONETIPCSocket::close() {
+    ::close(m_fd);
+    m_fd = -1;
 }

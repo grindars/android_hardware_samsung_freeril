@@ -41,7 +41,7 @@ namespace HAL {
         inline int fd() const { return m_data->fd; }
         inline operator int() const { return m_data->fd; }
 
-        static NativeFile open(const std::string &file, int mode);
+        static NativeFile open(const std::string &file, int flags, int mode = 0644);
 
         ssize_t read(void *buf, size_t size);
         ssize_t write(const void *buf, size_t size);

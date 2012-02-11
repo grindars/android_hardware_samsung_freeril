@@ -35,5 +35,6 @@ SamsungIPC::IIPCTransport *HAL::AndroidHAL::createIPCTransport() {
 }
 
 SamsungIPC::IFileSystem *HAL::AndroidHAL::createFilesystem() {
-    return new AndroidFileSystem("/dev/block/mmcblk0p8");
+    return new AndroidFileSystem("/dev/block/mmcblk0p8",
+                                 "/efs/nv_data.bin");
 }

@@ -1,5 +1,5 @@
 /*
- * Free HAL implementation for Samsung Android-based smartphones.
+ * Free RIL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,25 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __ANDROIDHAL__ANDROIDFILESYSTEM__H__
-#define __ANDROIDHAL__ANDROIDFILESYSTEM__H__
+#ifndef __SAMSUNGIPC__UTILITIES__H__
+#define __SAMSUNGIPC__UTILITIES__H__
 
-#include <IFileSystem.h>
+#include <string.h>
 
-namespace HAL {
-    class AndroidFileSystem: public SamsungIPC::IFileSystem {
-    public:
-        AndroidFileSystem(const std::string &firmware,
-                          const std::string &nvdata);
-
-        virtual std::string getFirmware(SamsungIPC::IFileSystem::FirmwareType type);
-
-        virtual std::string readNVData();
-        virtual void writeNVData(const std::string &data);
-
-    private:
-        std::string m_firmware, m_nvdata;
-    };
+namespace SamsungIPC {
+    void dump(const void *data, size_t size);
 }
 
 #endif
+

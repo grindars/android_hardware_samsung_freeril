@@ -38,14 +38,48 @@ namespace SamsungIPC {
         void boot();
 
     private:
+        enum {
+            SetPortConf        = 0x84,
+
+            ReqSecStart        = 0x204,
+            ReqSecEnd          = 0x205,
+            ReqForceHwReset    = 0x208,
+
+            ReqFlashSetAddress = 0x802,
+            ReqFlashWriteBlock = 0x804
+        };
+
         typedef struct {
-            uint8_t header;
+            uint8_t indicate;
             uint16_t length;
-            uint8_t trailer;
+            uint8_t dummy;
         } __attribute__((packed)) psi_header_t;
+
+        typedef struct {
+            uint8_t unknown[76];
+        } __attribute__((packed)) boot_info_t;
+
+        typedef struct {
+            uint16_t check;
+            uint16_t cmd;
+            uint32_t info_size;
+        } bootloader_cmd_t;
+
+        enum FlashImageType {
+            FirmwareFlashImage  = 2,
+            NVDataFlashImage    = 3
+        };
 
         void rebootModem();
         void sendPSI(IIPCSocket *socket);
+        void sendEBL(IIPCSocket *socket);
+        void readBootInfo(IIPCSocket *socket);
+        void sendSecureImage(IIPCSocket *socket);
+
+        void loadFlashImage(IIPCSocket *socket, uint32_t address,
+            std::string image);
+        void bootloaderCommand(IIPCSocket *socket, uint16_t cmd,
+                               const void *data, size_t data_size);
         void expectAck(IIPCSocket *socket, const unsigned char *data, size_t size);
 
         static unsigned char calculateCRC(const std::string &data);

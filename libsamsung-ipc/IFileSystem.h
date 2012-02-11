@@ -25,12 +25,19 @@ namespace SamsungIPC {
     class IFileSystem {
     public:
         enum FirmwareType {
-            PSI = 1
+            PSI           = 1,
+            EBL           = 2,
+            SecureImage   = 3,
+            Firmware      = 4,
+            DefaultNVData = 5
         };
 
         virtual ~IFileSystem() {}
 
         virtual std::string getFirmware(FirmwareType type) = 0;
+
+        virtual std::string readNVData() = 0;
+        virtual void writeNVData(const std::string &data) = 0;
     };
 }
 

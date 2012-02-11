@@ -24,7 +24,11 @@
 #include "NativeFile.h"
 #include "CStyleException.h"
 
-HAL::AndroidFileSystem::AndroidFileSystem(const std::string &firmware) : m_firmware(firmware) {
+#define NVDATA_SIZE (2 * 1024 * 1024)
+
+HAL::AndroidFileSystem::AndroidFileSystem(const std::string &firmware,
+                                          const std::string &nvdata) :
+    m_firmware(firmware), m_nvdata(nvdata) {
 
 }
 
@@ -35,6 +39,30 @@ std::string HAL::AndroidFileSystem::getFirmware(SamsungIPC::IFileSystem::Firmwar
     case SamsungIPC::IFileSystem::PSI:
         offset = 0;
         length = 61440;
+
+        break;
+
+    case SamsungIPC::IFileSystem::EBL:
+        offset = 61440;
+        length = 102400;
+
+        break;
+
+    case SamsungIPC::IFileSystem::SecureImage:
+        offset = 10483712;
+        length = 2048;
+
+        break;
+
+    case SamsungIPC::IFileSystem::Firmware:
+        offset = 163840;
+        length = 10321920;
+
+        break;
+
+    case SamsungIPC::IFileSystem::DefaultNVData:
+        offset = 10485760;
+        length = NVDATA_SIZE;
 
         break;
 
@@ -61,3 +89,34 @@ std::string HAL::AndroidFileSystem::getFirmware(SamsungIPC::IFileSystem::Firmwar
     out.assign(data.get(), length);
     return out;
 }
+
+// TODO: MD5 checking.
+
+std::string HAL::AndroidFileSystem::readNVData() {
+    HAL::NativeFile file = HAL::NativeFile::open(m_nvdata, O_RDONLY);
+
+    std::auto_ptr<char> data(new char[NVDATA_SIZE]);
+    ssize_t bytes = file.read(data.get(), NVDATA_SIZE);
+    if(bytes != NVDATA_SIZE) {
+        errno = EIO;
+
+        HAL::throwErrno();
+    }
+
+    std::string out;
+    out.assign(data.get(), NVDATA_SIZE);
+    return out;
+}
+
+void HAL::AndroidFileSystem::writeNVData(const std::string &data) {
+    HAL::NativeFile file = HAL::NativeFile::open(m_nvdata, O_WRONLY | O_TRUNC | O_CREAT, 0600);
+
+    ssize_t bytes = file.write(data.data(), data.length());
+
+    if(bytes != (ssize_t) data.length()) {
+        errno = EIO;
+
+        HAL::throwErrno();
+    }
+}
+

@@ -16,3 +16,5 @@ tools/bootmodem/bootmodem
 config.h.in
 config.h
 stamp-h1
+*.kate-swp
+tools/extractfw/extractfw

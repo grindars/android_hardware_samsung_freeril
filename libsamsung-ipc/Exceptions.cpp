@@ -35,3 +35,7 @@ const char *BaseStringException::what() const throw() {
 TimeoutException::TimeoutException(const std::string &msg) : BaseStringException(msg) {
 
 }
+
+CommunicationErrorException::CommunicationErrorException(const std::string &msg) : BaseStringException(msg) {
+
+}

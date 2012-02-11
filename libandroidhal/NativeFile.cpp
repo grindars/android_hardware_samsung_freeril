@@ -50,8 +50,9 @@ HAL::NativeFile::NativeFile(const NativeFile &orig) {
     m_data->ref();
 }
 
-HAL::NativeFile HAL::NativeFile::open(const std::string &file, int mode) {
-    int fd = ::open(file.c_str(), mode);
+HAL::NativeFile HAL::NativeFile::open(const std::string &file, int flags,
+                                      int mode) {
+    int fd = ::open(file.c_str(), flags, mode);
 
     if(fd == -1)
         throwErrno();

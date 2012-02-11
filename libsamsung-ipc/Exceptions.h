@@ -39,6 +39,11 @@ namespace SamsungIPC {
     public:
         TimeoutException(const std::string &msg);
     };
+
+    class CommunicationErrorException: public BaseStringException {
+    public:
+        CommunicationErrorException(const std::string &msg);
+    };
 }
 
 #endif

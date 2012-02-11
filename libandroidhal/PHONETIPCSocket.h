@@ -31,6 +31,7 @@ namespace HAL {
     public:
         virtual ~PHONETIPCSocket();
 
+        virtual void close();
         virtual ssize_t send(const void *buf, size_t size);
         virtual ssize_t recv(void *buf, size_t size, int timeout = 250);
 
