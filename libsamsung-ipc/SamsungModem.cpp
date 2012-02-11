@@ -218,7 +218,7 @@ void SamsungModem::bootloaderCommand(IIPCSocket *socket,
     uint16_t acc = (data_size & 0xFFFF) + cmd;
 
     for(size_t offset = 0; offset < data_size; offset++)
-        acc += *ptr;
+        acc += ptr[offset];
 
     bootloader_cmd_t header = { acc, cmd, data_size }, reply;
 
@@ -236,11 +236,11 @@ void SamsungModem::bootloaderCommand(IIPCSocket *socket,
     memcpy(buf.get() + 8, data, data_size);
 
     printf("Generated command of size %u:\n", size);
-    SamsungIPC::dump(buf.get(), size);
+    SamsungIPC::dump(buf.get(), 32);
 
     socket->send(buf.get(), size);
 
-    if(cmd != ReqForceHwReset && cmd != 0x804) {
+    if(cmd != ReqForceHwReset && cmd != ReqFlashWriteBlock) {
         printf("Reading reply\n");
 
         if(socket->recv(&reply, sizeof(bootloader_cmd_t)) !=

@@ -39,7 +39,7 @@ namespace SamsungIPC {
 
     private:
         enum {
-            SetPortConf        = 0x84,
+            SetPortConf        = 0x86,
 
             ReqSecStart        = 0x204,
             ReqSecEnd          = 0x205,
