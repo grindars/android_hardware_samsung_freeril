@@ -13,3 +13,6 @@ Makefile.in
 *.o
 *.a
 tools/bootmodem/bootmodem
+config.h.in
+config.h
+stamp-h1

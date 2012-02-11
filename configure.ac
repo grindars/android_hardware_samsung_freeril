@@ -22,5 +22,8 @@ AC_PROG_RANLIB
 AC_PROG_CXX
 AC_PROG_CC
 
-AC_OUTPUT([Makefile libsamsung-ipc/Makefile libandroidhal/Makefile
-           ril/Makefile tools/Makefile tools/bootmodem/Makefile])
+AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_FILES([Makefile libsamsung-ipc/Makefile libandroidhal/Makefile
+                 ril/Makefile tools/Makefile tools/bootmodem/Makefile])
+
+AC_OUTPUT
