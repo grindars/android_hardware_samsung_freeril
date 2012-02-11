@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,36 +21,36 @@
 #include "NativeFile.h"
 #include "CStyleException.h"
 
-RIL::NativeFileData::NativeFileData(int _fd) : refs(1), fd(_fd) {
+HAL::NativeFileData::NativeFileData(int _fd) : refs(1), fd(_fd) {
 
 }
 
-void RIL::NativeFileData::deref() {
+void HAL::NativeFileData::deref() {
     if(--refs == 0) {
         close(fd);
         delete this;
     }
 }
 
-void RIL::NativeFileData::ref() {
+void HAL::NativeFileData::ref() {
     refs++;
 }
 
-RIL::NativeFile::NativeFile(int fd) : m_data(new NativeFileData(fd)) {
+HAL::NativeFile::NativeFile(int fd) : m_data(new NativeFileData(fd)) {
 
 }
 
-RIL::NativeFile::~NativeFile() {
+HAL::NativeFile::~NativeFile() {
     m_data->deref();
 }
 
-RIL::NativeFile::NativeFile(const NativeFile &orig) {
+HAL::NativeFile::NativeFile(const NativeFile &orig) {
     m_data = orig.m_data;
 
     m_data->ref();
 }
 
-RIL::NativeFile RIL::NativeFile::open(const std::string &file, int mode) {
+HAL::NativeFile HAL::NativeFile::open(const std::string &file, int mode) {
     int fd = ::open(file.c_str(), mode);
 
     if(fd == -1)
@@ -59,7 +59,7 @@ RIL::NativeFile RIL::NativeFile::open(const std::string &file, int mode) {
     return NativeFile(fd);
 }
 
-ssize_t RIL::NativeFile::read(void *buf, size_t size) {
+ssize_t HAL::NativeFile::read(void *buf, size_t size) {
     ssize_t bytes = ::read(fd(), buf, size);
 
     if(bytes == -1)
@@ -68,7 +68,7 @@ ssize_t RIL::NativeFile::read(void *buf, size_t size) {
     return bytes;
 }
 
-ssize_t RIL::NativeFile::write(const void *buf, size_t size) {
+ssize_t HAL::NativeFile::write(const void *buf, size_t size) {
     ssize_t bytes = ::write(fd(), buf, size);
 
     if(bytes == -1)
@@ -77,7 +77,7 @@ ssize_t RIL::NativeFile::write(const void *buf, size_t size) {
     return bytes;
 }
 
-off_t RIL::NativeFile::seek(off_t offset, int whence) {
+off_t HAL::NativeFile::seek(off_t offset, int whence) {
     off_t ret = ::lseek(fd(), offset, whence);
 
     if(ret == -1)

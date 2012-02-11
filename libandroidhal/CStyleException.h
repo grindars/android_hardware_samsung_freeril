@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,21 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SAMSUNGRIL__ANDROIDFILESYSTEM__H__
-#define __SAMSUNGRIL__ANDROIDFILESYSTEM__H__
+#ifndef __ANDROIDHAL__CSTYLEXCEPTION__H__
+#define __ANDROIDHAL__CSTYLEXCEPTION__H__
 
-#include <IFileSystem.h>
+#include <exception>
+#include <string>
 
-namespace RIL {
-    class AndroidFileSystem: public SamsungIPC::IFileSystem {
+namespace HAL {
+    class CStyleException: public std::exception {
     public:
-        AndroidFileSystem(const std::string &firmware);
+        CStyleException();
+        virtual ~CStyleException() throw();
 
-        virtual std::string getFirmware(SamsungIPC::IFileSystem::FirmwareType type);
+        virtual const char *what() const throw();
 
     private:
-        std::string m_firmware;
+        std::string m_error;
     };
+
+    inline void throwErrno() { throw CStyleException(); }
 }
 
 #endif

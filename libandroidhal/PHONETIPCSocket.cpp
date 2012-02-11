@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,11 +24,11 @@
 #include "PHONETIPCSocket.h"
 #include "CStyleException.h"
 
-RIL::PHONETIPCSocket::PHONETIPCSocket(const std::string &interface, int obj_id) {
+HAL::PHONETIPCSocket::PHONETIPCSocket(const std::string &interface, int obj_id) {
     m_fd = socket(AF_PHONET, SOCK_DGRAM, 0);
 
     if(m_fd == -1)
-        RIL::throwErrno();
+        HAL::throwErrno();
 
     if(setsockopt(m_fd, SOL_SOCKET, SO_BINDTODEVICE, interface.data(), interface.size()) == -1) {
         int save = errno;
@@ -37,7 +37,7 @@ RIL::PHONETIPCSocket::PHONETIPCSocket(const std::string &interface, int obj_id) 
 
         errno = save;
 
-        RIL::throwErrno();
+        HAL::throwErrno();
     }
 
     int reuse = 1;
@@ -49,7 +49,7 @@ RIL::PHONETIPCSocket::PHONETIPCSocket(const std::string &interface, int obj_id) 
 
         errno = save;
 
-        RIL::throwErrno();
+        HAL::throwErrno();
     }
 
     memset(&addr, 0, sizeof(struct sockaddr_pn));
@@ -63,25 +63,25 @@ RIL::PHONETIPCSocket::PHONETIPCSocket(const std::string &interface, int obj_id) 
 
         errno = save;
 
-        RIL::throwErrno();
+        HAL::throwErrno();
     }
 }
 
-RIL::PHONETIPCSocket::~PHONETIPCSocket() {
+HAL::PHONETIPCSocket::~PHONETIPCSocket() {
     close(m_fd);
 }
 
-ssize_t RIL::PHONETIPCSocket::send(const void *buf, size_t size) {
+ssize_t HAL::PHONETIPCSocket::send(const void *buf, size_t size) {
     ssize_t bytes = sendto(m_fd, buf, size, 0, (struct sockaddr *) &addr, sizeof(struct sockaddr_pn));
 
     if(bytes == -1)
-        RIL::throwErrno();
+        HAL::throwErrno();
 
     return bytes;
 }
 
 // NOTE: not signal-safe.
-ssize_t RIL::PHONETIPCSocket::recv(void *buf, size_t size, int timeout) {
+ssize_t HAL::PHONETIPCSocket::recv(void *buf, size_t size, int timeout) {
     if(timeout != -1) {
         fd_set read_set;
         FD_ZERO(&read_set);
@@ -93,7 +93,7 @@ ssize_t RIL::PHONETIPCSocket::recv(void *buf, size_t size, int timeout) {
         int ret = select(m_fd + 1, &read_set, NULL, NULL, &val);
 
         if(ret == -1)
-            RIL::throwErrno();
+            HAL::throwErrno();
         else if(ret == 0)
             return 0;
     }
@@ -103,7 +103,7 @@ ssize_t RIL::PHONETIPCSocket::recv(void *buf, size_t size, int timeout) {
     ssize_t bytes = recvfrom(m_fd, buf, size, 0, (struct sockaddr *) &dummy, &dummy_len);
 
     if(bytes == -1)
-        RIL::throwErrno();
+        HAL::throwErrno();
 
     return bytes;
 }

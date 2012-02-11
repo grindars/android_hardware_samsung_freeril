@@ -19,7 +19,7 @@
 bin_PROGRAMS = bootmodem
 bootmodem_SOURCES = main.cpp
 
-AM_CPPFLAGS = -I../../libsamsung-ril -I../../libsamsung-ipc
+AM_CPPFLAGS = -I../../libandroidhal -I../../libsamsung-ipc
 AM_CXXFLAGS = -Wall -W -O2
-bootmodem_LDADD = -L../../libsamsung-ipc -L../../libsamsung-ril \
-  -lsamsung-ipc -lsamsung-ril
+bootmodem_LDADD = -L../../libandroidhal -L../../libsamsung-ipc \
+  -lsamsung-ipc -landroidhal

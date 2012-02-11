@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,22 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SYSFS_CONTROLLED_DEVICE__H__
-#define __SYSFS_CONTROLLED_DEVICE__H__
+#include <errno.h>
+#include <string.h>
 
-#include <string>
+#include "CStyleException.h"
 
-namespace RIL {
-    class SysfsControlledDevice {
-    protected:
-        SysfsControlledDevice(const std::string &path);
-
-        std::string read(const std::string &file) const;
-        void write(const std::string &file, const std::string &value) const;
-
-    private:
-        std::string m_path;
-    };
+HAL::CStyleException::CStyleException() {
+    m_error = strerror(errno);
 }
 
-#endif
+HAL::CStyleException::~CStyleException() throw() {
+
+}
+
+const char *HAL::CStyleException::what() const throw() {
+    return m_error.c_str();
+}

@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,30 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SAMSUNGRIL__SYSFSMODEMCONTROL__H__
-#define __SAMSUNGRIL__SYSFSMODEMCONTROL__H__
+#ifndef __ANDROIDHAL__PHONETIPCSOCKET__H__
+#define __ANDROIDHAL__PHONETIPCSOCKET__H__
 
-#include <IModemControl.h>
+#include <IIPCSocket.h>
+#include <linux/phonet.h>
 #include <string>
-#include "SysfsControlledDevice.h"
 
-namespace RIL {
-    class SysfsModemControl: public SamsungIPC::IModemControl,
-                             public SysfsControlledDevice {
+namespace HAL {
+    class PHONETIPCSocket: public SamsungIPC::IIPCSocket {
+        friend class PHONETIPCTransport;
+
+        PHONETIPCSocket(const std::string &interface, int obj_id);
     public:
-        SysfsModemControl(const std::string &device);
-        virtual ~SysfsModemControl();
+        virtual ~PHONETIPCSocket();
 
-        virtual bool isWokenUp() const;
-        virtual void setWakeup(bool wake);
-
-        virtual SamsungIPC::IModemControl::State state() const;
-        virtual void setState(SamsungIPC::IModemControl::State state);
+        virtual ssize_t send(const void *buf, size_t size);
+        virtual ssize_t recv(void *buf, size_t size, int timeout = 250);
 
     private:
-        //std::string m_path;
-        SamsungIPC::IModemControl::State m_state;
+        struct sockaddr_pn addr;
+        int m_fd;
     };
 }
 
 #endif
+

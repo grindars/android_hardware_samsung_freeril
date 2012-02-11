@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,25 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SAMSUNGRIL__CSTYLEXCEPTION__H__
-#define __SAMSUNGRIL__CSTYLEXCEPTION__H__
+#ifndef __ANDROIDHAL__SYSFSMODEMCONTROL__H__
+#define __ANDROIDHAL__SYSFSMODEMCONTROL__H__
 
-#include <exception>
+#include <IModemControl.h>
 #include <string>
+#include "SysfsControlledDevice.h"
 
-namespace RIL {
-    class CStyleException: public std::exception {
+namespace HAL {
+    class SysfsModemControl: public SamsungIPC::IModemControl,
+                             public SysfsControlledDevice {
     public:
-        CStyleException();
-        virtual ~CStyleException() throw();
+        SysfsModemControl(const std::string &device);
+        virtual ~SysfsModemControl();
 
-        virtual const char *what() const throw();
+        virtual bool isWokenUp() const;
+        virtual void setWakeup(bool wake);
+
+        virtual SamsungIPC::IModemControl::State state() const;
+        virtual void setState(SamsungIPC::IModemControl::State state);
 
     private:
-        std::string m_error;
+        //std::string m_path;
+        SamsungIPC::IModemControl::State m_state;
     };
-
-    inline void throwErrno() { throw CStyleException(); }
 }
 
 #endif

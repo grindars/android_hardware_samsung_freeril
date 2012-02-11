@@ -16,11 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-lib_LIBRARIES = libsamsung-ril.a
+lib_LIBRARIES = libandroidhal.a
 
-libsamsung_ril_a_SOURCES = SysfsEHCISwitcher.h SysfsEHCISwitcher.cpp \
+libandroidhal_a_SOURCES = SysfsEHCISwitcher.h SysfsEHCISwitcher.cpp \
 	NativeFile.h NativeFile.cpp CStyleException.h CStyleException.cpp \
-	RILHAL.h RILHAL.cpp SysfsModemControl.h SysfsModemControl.cpp \
+	AndroidHAL.h AndroidHAL.cpp SysfsModemControl.h SysfsModemControl.cpp \
 	SysfsControlledDevice.h SysfsControlledDevice.cpp PHONETIPCTransport.h \
 	PHONETIPCTransport.cpp PHONETIPCSocket.h PHONETIPCSocket.cpp \
 	AndroidFileSystem.cpp AndroidFileSystem.h

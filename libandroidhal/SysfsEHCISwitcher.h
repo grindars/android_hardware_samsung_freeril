@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,31 +16,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <fcntl.h>
+#ifndef __ANDROIDHAL__SYSFSEHCISWITCHER__H__
+#define __ANDROIDHAL__SYSFSEHCISWITCHER__H__
 
-#include "SysfsEHCISwitcher.h"
-#include "NativeFile.h"
+#include <IEHCISwitcher.h>
+#include <string>
+#include "SysfsControlledDevice.h"
 
-RIL::SysfsEHCISwitcher::SysfsEHCISwitcher(const std::string &device) : SysfsControlledDevice(device) {
+namespace HAL {
+    class SysfsEHCISwitcher: public SamsungIPC::IEHCISwitcher,
+                             public SysfsControlledDevice {
 
+    public:
+        SysfsEHCISwitcher(const std::string &device);
+        virtual ~SysfsEHCISwitcher();
+
+        virtual bool run() const;
+        virtual void setRun(bool run);
+
+        virtual bool power() const;
+        virtual void setPower(bool power);
+    };
 }
 
-RIL::SysfsEHCISwitcher::~SysfsEHCISwitcher() {
-
-}
-
-bool RIL::SysfsEHCISwitcher::run() const {
-    return read("ehci_runtime") == "on\n";
-}
-
-bool RIL::SysfsEHCISwitcher::power() const {
-    return read("ehci_power") == "EHCI Power on\n";
-}
-
-void RIL::SysfsEHCISwitcher::setRun(bool run) {
-    write("ehci_runtime", run ? "on" : "off");
-}
-
-void RIL::SysfsEHCISwitcher::setPower(bool power) {
-    write("ehci_power", power ? "1" : "0");
-}
+#endif

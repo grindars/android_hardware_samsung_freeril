@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,28 +18,28 @@
 
 #include "SysfsModemControl.h"
 
-RIL::SysfsModemControl::SysfsModemControl(const std::string &device) :
+HAL::SysfsModemControl::SysfsModemControl(const std::string &device) :
     SysfsControlledDevice(device), m_state(SamsungIPC::IModemControl::Off) {
 
 }
 
-RIL::SysfsModemControl::~SysfsModemControl() {
+HAL::SysfsModemControl::~SysfsModemControl() {
 
 }
 
-bool RIL::SysfsModemControl::isWokenUp() const {
+bool HAL::SysfsModemControl::isWokenUp() const {
     return read("wakeup") == "1\n";
 }
 
-void RIL::SysfsModemControl::setWakeup(bool wake) {
+void HAL::SysfsModemControl::setWakeup(bool wake) {
     write("wakeup", wake ? "1" : "0");
 }
 
-SamsungIPC::IModemControl::State RIL::SysfsModemControl::state() const {
+SamsungIPC::IModemControl::State HAL::SysfsModemControl::state() const {
     return m_state;
 }
 
-void RIL::SysfsModemControl::setState(SamsungIPC::IModemControl::State state) {
+void HAL::SysfsModemControl::setState(SamsungIPC::IModemControl::State state) {
     switch(state) {
     case SamsungIPC::IModemControl::On:
         write("control", "on");

@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,11 +24,11 @@
 #include "NativeFile.h"
 #include "CStyleException.h"
 
-RIL::AndroidFileSystem::AndroidFileSystem(const std::string &firmware) : m_firmware(firmware) {
+HAL::AndroidFileSystem::AndroidFileSystem(const std::string &firmware) : m_firmware(firmware) {
 
 }
 
-std::string RIL::AndroidFileSystem::getFirmware(SamsungIPC::IFileSystem::FirmwareType type) {
+std::string HAL::AndroidFileSystem::getFirmware(SamsungIPC::IFileSystem::FirmwareType type) {
     unsigned int offset, length;
 
     switch(type) {
@@ -45,7 +45,7 @@ std::string RIL::AndroidFileSystem::getFirmware(SamsungIPC::IFileSystem::Firmwar
         break;
     }
 
-    RIL::NativeFile file = RIL::NativeFile::open(m_firmware, O_RDONLY);
+    HAL::NativeFile file = HAL::NativeFile::open(m_firmware, O_RDONLY);
 
     file.seek(offset, SEEK_SET);
 
@@ -54,7 +54,7 @@ std::string RIL::AndroidFileSystem::getFirmware(SamsungIPC::IFileSystem::Firmwar
     if((unsigned int) bytes != length) {
         errno = EIO;
 
-        RIL::throwErrno();
+        HAL::throwErrno();
     }
 
     std::string out;

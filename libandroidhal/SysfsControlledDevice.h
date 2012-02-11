@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,24 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "RILHAL.h"
-#include "SysfsEHCISwitcher.h"
-#include "SysfsModemControl.h"
-#include "PHONETIPCTransport.h"
-#include "AndroidFileSystem.h"
+#ifndef __SYSFS_CONTROLLED_DEVICE__H__
+#define __SYSFS_CONTROLLED_DEVICE__H__
 
-SamsungIPC::IEHCISwitcher *RIL::RILHAL::createEHCISwitcher() {
-    return new SysfsEHCISwitcher("/sys/devices/platform/s5p-ehci");
+#include <string>
+
+namespace HAL {
+    class SysfsControlledDevice {
+    protected:
+        SysfsControlledDevice(const std::string &path);
+
+        std::string read(const std::string &file) const;
+        void write(const std::string &file, const std::string &value) const;
+
+    private:
+        std::string m_path;
+    };
 }
 
-SamsungIPC::IModemControl *RIL::RILHAL::createModemControl() {
-    return new SysfsModemControl("/sys/devices/platform/modemctl");
-}
-
-SamsungIPC::IIPCTransport *RIL::RILHAL::createIPCTransport() {
-    return new PHONETIPCTransport("svnet0");
-}
-
-SamsungIPC::IFileSystem *RIL::RILHAL::createFilesystem() {
-    return new AndroidFileSystem("/dev/block/mmcblk0p8");
-}
+#endif

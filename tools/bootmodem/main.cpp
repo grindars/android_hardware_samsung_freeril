@@ -17,10 +17,10 @@
  */
 
 #include <SamsungModem.h>
-#include <RILHAL.h>
+#include <AndroidHAL.h>
 
 int main(void) {
-    RIL::RILHAL hal;
+    HAL::AndroidHAL hal;
 
     SamsungIPC::SamsungModem modem(&hal);
     modem.boot();

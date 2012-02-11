@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,11 +22,11 @@
 #include "SysfsControlledDevice.h"
 #include "NativeFile.h"
 
-RIL::SysfsControlledDevice::SysfsControlledDevice(const std::string &path) : m_path(path) {
+HAL::SysfsControlledDevice::SysfsControlledDevice(const std::string &path) : m_path(path) {
 
 }
 
-std::string RIL::SysfsControlledDevice::read(const std::string &filename) const {
+std::string HAL::SysfsControlledDevice::read(const std::string &filename) const {
     std::auto_ptr<char> data(new char[1024]);
 
     NativeFile file = NativeFile::open(m_path + "/" + filename, O_RDONLY);
@@ -37,7 +37,7 @@ std::string RIL::SysfsControlledDevice::read(const std::string &filename) const 
     return ret;
 }
 
-void RIL::SysfsControlledDevice::write(const std::string &filename,
+void HAL::SysfsControlledDevice::write(const std::string &filename,
                                        const std::string &value) const {
 
     NativeFile file = NativeFile::open(m_path + "/" + filename, O_WRONLY);

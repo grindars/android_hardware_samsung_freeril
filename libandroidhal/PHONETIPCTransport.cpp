@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,17 +26,17 @@
 #include "PHONETIPCSocket.h"
 #include "CStyleException.h"
 
-RIL::PHONETIPCTransport::PHONETIPCTransport(const std::string &interface) :
+HAL::PHONETIPCTransport::PHONETIPCTransport(const std::string &interface) :
     SysfsControlledDevice("/sys/class/net/" + interface),
     m_interface(interface) {
 
 }
 
-RIL::PHONETIPCTransport::~PHONETIPCTransport() {
+HAL::PHONETIPCTransport::~PHONETIPCTransport() {
 
 }
 
-bool RIL::PHONETIPCTransport::isLinkUp() const {
+bool HAL::PHONETIPCTransport::isLinkUp() const {
     try {
         return read("connected") == "1\n";
     } catch(std::exception) {
@@ -44,7 +44,7 @@ bool RIL::PHONETIPCTransport::isLinkUp() const {
     }
 }
 
-bool RIL::PHONETIPCTransport::isUp() const {
+bool HAL::PHONETIPCTransport::isUp() const {
     struct ifreq ifr;
     memset(&ifr, 0, sizeof(struct ifreq));
     strncpy(ifr.ifr_name, m_interface.c_str(), IFNAMSIZ);
@@ -65,7 +65,7 @@ bool RIL::PHONETIPCTransport::isUp() const {
     return (ifr.ifr_flags & IFF_UP) != 0;
 }
 
-void RIL::PHONETIPCTransport::setUp(bool up) {
+void HAL::PHONETIPCTransport::setUp(bool up) {
     struct ifreq ifr;
     memset(&ifr, 0, sizeof(struct ifreq));
     strncpy(ifr.ifr_name, m_interface.c_str(), IFNAMSIZ);
@@ -73,7 +73,7 @@ void RIL::PHONETIPCTransport::setUp(bool up) {
     int sock = socket(AF_PHONET, SOCK_DGRAM, 0);
 
     if(sock == -1)
-        RIL::throwErrno();
+        HAL::throwErrno();
 
 
     int ret = ioctl(sock, SIOCGIFFLAGS, &ifr), save = errno;
@@ -81,7 +81,7 @@ void RIL::PHONETIPCTransport::setUp(bool up) {
     if(ret == -1) {
         close(sock);
         errno = save;
-        RIL::throwErrno();
+        HAL::throwErrno();
     }
 
     if(up)
@@ -96,10 +96,10 @@ void RIL::PHONETIPCTransport::setUp(bool up) {
 
     if(ret == -1) {
         errno = save;
-        RIL::throwErrno();
+        HAL::throwErrno();
     }
 }
 
-SamsungIPC::IIPCSocket *RIL::PHONETIPCTransport::createSocket(int obj_id) {
+SamsungIPC::IIPCSocket *HAL::PHONETIPCTransport::createSocket(int obj_id) {
     return new PHONETIPCSocket(m_interface, obj_id);
 }

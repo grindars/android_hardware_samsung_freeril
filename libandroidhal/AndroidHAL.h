@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,13 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SAMSUNGRIL__RILHAL__H__
-#define __SAMSUNGRIL__RILHAL__H__
+#ifndef __ANDROIDHAL__ANDROIDHAL__H__
+#define __ANDROIDHAL__ANDROIDHAL__H__
 
 #include <ISamsungIPCHAL.h>
 
-namespace RIL {
-    class RILHAL : public SamsungIPC::ISamsungIPCHAL {
+namespace HAL {
+    class AndroidHAL : public SamsungIPC::ISamsungIPCHAL {
     public:
         virtual SamsungIPC::IEHCISwitcher *createEHCISwitcher();
         virtual SamsungIPC::IModemControl *createModemControl();

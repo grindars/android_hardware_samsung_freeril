@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SAMSUNGRIL__NATIVEFILE__H__
-#define __SAMSUNGRIL__NATIVEFILE__H__
+#ifndef __ANDROIDHAL__NATIVEFILE__H__
+#define __ANDROIDHAL__NATIVEFILE__H__
 
 #include <string>
 
-namespace RIL {
+namespace HAL {
     struct NativeFileData {
         NativeFileData(int fd);
         void deref();

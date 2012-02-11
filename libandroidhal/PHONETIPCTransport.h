@@ -1,5 +1,5 @@
 /*
- * Free RIL implementation for Samsung Android-based smartphones.
+ * Free HAL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,29 +16,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SAMSUNGRIL__PHONETIPCSOCKET__H__
-#define __SAMSUNGRIL__PHONETIPCSOCKET__H__
+#ifndef __ANDROIDHAL__PHONETIPCTRANSPORT__H__
+#define __ANDROIDHAL__PHONETIPCTRANSPORT__H__
 
-#include <IIPCSocket.h>
-#include <linux/phonet.h>
+#include <IIPCTransport.h>
+
 #include <string>
 
-namespace RIL {
-    class PHONETIPCSocket: public SamsungIPC::IIPCSocket {
-        friend class PHONETIPCTransport;
+#include "SysfsControlledDevice.h"
 
-        PHONETIPCSocket(const std::string &interface, int obj_id);
+namespace HAL {
+    class PHONETIPCTransport : public SamsungIPC::IIPCTransport,
+                               public SysfsControlledDevice {
+
     public:
-        virtual ~PHONETIPCSocket();
+        PHONETIPCTransport(const std::string &interface);
+        virtual ~PHONETIPCTransport();
 
-        virtual ssize_t send(const void *buf, size_t size);
-        virtual ssize_t recv(void *buf, size_t size, int timeout = 250);
+        virtual bool isLinkUp() const;
+
+        virtual bool isUp() const;
+        virtual void setUp(bool up);
+
+        virtual SamsungIPC::IIPCSocket *createSocket(int obj_id);
 
     private:
-        struct sockaddr_pn addr;
-        int m_fd;
+        std::string m_interface;
     };
 }
 
 #endif
-
