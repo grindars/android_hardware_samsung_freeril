@@ -52,11 +52,11 @@ HAL::PHONETIPCSocket::PHONETIPCSocket(const std::string &interface, int obj_id) 
         HAL::throwErrno();
     }
 
-    memset(&addr, 0, sizeof(struct sockaddr_pn));
-    addr.spn_family = AF_PHONET;
-    addr.spn_obj = obj_id;
+    memset(&m_addr, 0, sizeof(struct sockaddr_pn));
+    m_addr.spn_family = AF_PHONET;
+    m_addr.spn_obj = obj_id;
 
-    if(bind(m_fd, (struct sockaddr *) &addr, sizeof(struct sockaddr_pn)) == -1) {
+    if(bind(m_fd, (struct sockaddr *) &m_addr, sizeof(struct sockaddr_pn)) == -1) {
         int save = errno;
 
         ::close(m_fd);
@@ -72,8 +72,14 @@ HAL::PHONETIPCSocket::~PHONETIPCSocket() {
         ::close(m_fd);
 }
 
-ssize_t HAL::PHONETIPCSocket::send(const void *buf, size_t size) {
-    ssize_t bytes = sendto(m_fd, buf, size, 0, (struct sockaddr *) &addr, sizeof(struct sockaddr_pn));
+ssize_t HAL::PHONETIPCSocket::send(const void *buf, size_t size, int obj_id) {
+    struct sockaddr_pn send_addr;
+    memcpy(&send_addr, &m_addr, sizeof(struct sockaddr_pn));
+
+    if(obj_id != -1)
+        send_addr.spn_obj = obj_id;
+
+    ssize_t bytes = sendto(m_fd, buf, size, 0, (struct sockaddr *) &send_addr, sizeof(struct sockaddr_pn));
 
     if(bytes == -1)
         HAL::throwErrno();

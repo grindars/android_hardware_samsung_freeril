@@ -26,7 +26,7 @@ namespace SamsungIPC {
         virtual ~IIPCSocket() {};
 
         virtual void close() = 0;
-        virtual ssize_t send(const void *buf, size_t size) = 0;
+        virtual ssize_t send(const void *buf, size_t size, int object = -1) = 0;
         virtual ssize_t recv(void *buf, size_t size, int timeout = 250) = 0;
     };
 }

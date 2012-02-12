@@ -62,7 +62,7 @@ namespace SamsungIPC {
         typedef struct {
             uint16_t check;
             uint16_t cmd;
-            uint32_t info_size;
+            uint32_t data_size;
         } bootloader_cmd_t;
 
         enum FlashImageType {
@@ -70,7 +70,8 @@ namespace SamsungIPC {
             NVDataFlashImage    = 3
         };
 
-        void rebootModem();
+        void rebootModem(bool soft = false);
+
         void sendPSI(IIPCSocket *socket);
         void sendEBL(IIPCSocket *socket);
         void readBootInfo(IIPCSocket *socket);

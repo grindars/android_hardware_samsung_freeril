@@ -32,11 +32,11 @@ namespace HAL {
         virtual ~PHONETIPCSocket();
 
         virtual void close();
-        virtual ssize_t send(const void *buf, size_t size);
+        virtual ssize_t send(const void *buf, size_t size, int object = -1);
         virtual ssize_t recv(void *buf, size_t size, int timeout = 250);
 
     private:
-        struct sockaddr_pn addr;
+        struct sockaddr_pn m_addr;
         int m_fd;
     };
 }
