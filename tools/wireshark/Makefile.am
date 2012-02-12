@@ -16,15 +16,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-AC_INIT([freeril-i9100], [1.0.0], [grindars@gmail.com])
-AM_INIT_AUTOMAKE
-AC_PROG_RANLIB
-AC_PROG_CXX
-AC_PROG_CC
-
-AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile libsamsung-ipc/Makefile libandroidhal/Makefile
-                 ril/Makefile tools/Makefile tools/bootmodem/Makefile
-                 tools/extractfw/Makefile tools/wireshark/Makefile])
-
-AC_OUTPUT
+EXTRA_DIST = dissectors.lua phonet.lua hsic6260_boot.lua hsic6260_boot_req.lua
