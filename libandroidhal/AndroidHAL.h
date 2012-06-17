@@ -24,8 +24,6 @@
 namespace HAL {
     class AndroidHAL : public SamsungIPC::ISamsungIPCHAL {
     public:
-        virtual SamsungIPC::IEHCISwitcher *createEHCISwitcher();
-        virtual SamsungIPC::IModemControl *createModemControl();
         virtual SamsungIPC::IIPCTransport *createIPCTransport();
         virtual SamsungIPC::IFileSystem *createFilesystem();
     };

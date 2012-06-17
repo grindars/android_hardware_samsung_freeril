@@ -39,3 +39,7 @@ TimeoutException::TimeoutException(const std::string &msg) : BaseStringException
 CommunicationErrorException::CommunicationErrorException(const std::string &msg) : BaseStringException(msg) {
 
 }
+
+InternalErrorException::InternalErrorException(const std::string &msg) : BaseStringException(msg) {
+
+}

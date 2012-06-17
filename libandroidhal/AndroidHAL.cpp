@@ -17,21 +17,11 @@
  */
 
 #include "AndroidHAL.h"
-#include "SysfsEHCISwitcher.h"
-#include "SysfsModemControl.h"
-#include "PHONETIPCTransport.h"
+#include "USBIPCTransport.h"
 #include "AndroidFileSystem.h"
 
-SamsungIPC::IEHCISwitcher *HAL::AndroidHAL::createEHCISwitcher() {
-    return new SysfsEHCISwitcher("/sys/devices/platform/s5p-ehci");
-}
-
-SamsungIPC::IModemControl *HAL::AndroidHAL::createModemControl() {
-    return new SysfsModemControl("/sys/devices/platform/modemctl");
-}
-
 SamsungIPC::IIPCTransport *HAL::AndroidHAL::createIPCTransport() {
-    return new PHONETIPCTransport("svnet0");
+    return new USBIPCTransport("/dev/", "/sys/devices/platform/s5p-ehci");
 }
 
 SamsungIPC::IFileSystem *HAL::AndroidHAL::createFilesystem() {

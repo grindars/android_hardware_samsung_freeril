@@ -18,8 +18,6 @@
 
 #include "SamsungModem.h"
 #include "ISamsungIPCHAL.h"
-#include "IEHCISwitcher.h"
-#include "IModemControl.h"
 #include "IIPCTransport.h"
 #include "Exceptions.h"
 #include "IIPCSocket.h"
@@ -35,110 +33,45 @@
 using namespace SamsungIPC;
 
 SamsungModem::SamsungModem(SamsungIPC::ISamsungIPCHAL *hal) {
-    m_ehci = hal->createEHCISwitcher();
-    m_modemctl = hal->createModemControl();
     m_ipctransport = hal->createIPCTransport();
     m_filesystem = hal->createFilesystem();
 }
 
 SamsungModem::~SamsungModem() {
-    delete m_ehci;
-    delete m_modemctl;
     delete m_ipctransport;
     delete m_filesystem;
 }
 
 void SamsungModem::boot() {
-    printf("Rebooting modem\n");
+    uint32_t reset_magic = 0x00111001;
 
-    rebootModem();
-
-    printf("Modem rebooted, opening socket\n");
-
-    std::auto_ptr<IIPCSocket> bootSocket(m_ipctransport->createSocket(0x60));
+    std::auto_ptr<IIPCSocket> bootSocket(m_ipctransport->createSocket(IIPCTransport::Boot));
+    m_ipctransport->connect();
 
     unsigned char ack[2];
 
-    bootSocket->send("ATAT", 4, 0x00);
+    bootSocket->send("ATAT", 4);
     if(bootSocket->recv(ack, 1) == 0)
         throw TimeoutException("Bootloader greet timeout");
 
     if(bootSocket->recv(ack, 1) == 0)
         throw TimeoutException("Chip id read timeout");
 
-    printf("Bootloader ready, loading PSI\n");
-
     sendPSI(bootSocket.get());
-
-    printf("PSI sent\n");
 
     ack[0] = 0x00;
     ack[1] = 0xAA;
     expectAck(bootSocket.get(), ack, 2);
 
-    printf("PSI ready, loading EBL\n");
-
     sendEBL(bootSocket.get());
-
-    printf("EBL sent and ready, configuring modem\n");
 
     readBootInfo(bootSocket.get());
 
-    printf("Port configured, sending secure image\n");
-
     sendSecureImage(bootSocket.get());
 
-    printf("Secure image sent, rebooting modem\n");
-
+    bootloaderCommand(bootSocket.get(), ReqForceHwReset, &reset_magic, 4);
     bootSocket->close();
-
-    rebootModem(true);
-
-    printf("Modem boot sequence complete\n");
-}
-
-void SamsungModem::rebootModem(bool soft) {
-    int tries = 4;
-
-    if(!soft) {
-        m_ehci->setRun(true);
-
-        m_modemctl->setState(IModemControl::Reset);
-        usleep(100000);
-        m_modemctl->setState(IModemControl::On);
-    } else {
-        usleep(300000);
-    }
-
-    m_ehci->setPower(false);
-
-    m_modemctl->setWakeup(true);
-    while(!m_modemctl->isWokenUp()) {
-        if(--tries == 0) {
-            m_modemctl->setWakeup(false);
-
-            throw TimeoutException("Modem wake timeout");
-        }
-
-        usleep(500000);
-    }
-
-    m_ehci->setPower(true);
-    m_modemctl->setState(IModemControl::On);
-
-    sleep(1);
-
-    tries = 4;
-
-    while(!m_ipctransport->isLinkUp()) {
-        if(--tries == 0)
-            throw TimeoutException("PHONET link timeout");
-
-        usleep(500000);
-    }
-
-    m_ipctransport->setUp(false);
-    m_ipctransport->setUp(true);
+    m_ipctransport->redetect();
 }
 
 void SamsungModem::sendPSI(IIPCSocket *socket) {
@@ -149,19 +82,19 @@ void SamsungModem::sendPSI(IIPCSocket *socket) {
     header.length = image.length();
     header.dummy = 0xFF;
 
-    socket->send(&header, sizeof(psi_header_t), 0x00);
+    socket->send(&header, sizeof(psi_header_t));
 
     unsigned int offset = 0;
 
     while(offset < image.length()) {
-        ssize_t bytes = socket->send(image.data() + offset, image.length() - offset, 0x00);
+        ssize_t bytes = socket->send(image.data() + offset, image.length() - offset);
 
         offset += bytes;
     }
 
     unsigned char crc = calculateCRC(image);
 
-    socket->send(&crc, 1, 0x00);
+    socket->send(&crc, 1);
 
     for(unsigned int i = 0; i < 22; i++) {
         unsigned char ack;
@@ -180,7 +113,7 @@ void SamsungModem::sendEBL(IIPCSocket *socket) {
     unsigned char valid_ack[2] = { 0xCC, 0xCC };
 
     unsigned int length = image.length();
-    socket->send(&length, sizeof(unsigned int), 0x00);
+    socket->send(&length, sizeof(unsigned int));
     expectAck(socket, valid_ack, 2);
 
     unsigned int offset = 0;
@@ -188,14 +121,14 @@ void SamsungModem::sendEBL(IIPCSocket *socket) {
     while(offset < image.length()) {
         size_t chunk = std::min<size_t>(image.length() - offset, 32768);
 
-        ssize_t bytes = socket->send(image.data() + offset, chunk, 0x00);
+        ssize_t bytes = socket->send(image.data() + offset, chunk);
 
         offset += bytes;
     }
 
     unsigned char crc = calculateCRC(image);
 
-    socket->send(&crc, 1, 0x00);
+    socket->send(&crc, 1);
 
     valid_ack[0] = 0x51;
     valid_ack[1] = 0xA5;
@@ -237,11 +170,9 @@ void SamsungModem::bootloaderCommand(IIPCSocket *socket,
     memcpy(buf.get(), &header, sizeof(bootloader_cmd_t));
     memcpy(buf.get() + 8, data, data_size);
 
-    socket->send(buf.get(), size, 0x00);
+    socket->send(buf.get(), size);
 
     if(cmd != ReqForceHwReset && cmd != ReqFlashWriteBlock) {
-        printf("Cmd sent:\n");
-        dump(buf.get(), sizeof(bootloader_cmd_t) + data_size);
 
         if(socket->recv(&reply, sizeof(bootloader_cmd_t)) !=
             sizeof(bootloader_cmd_t))
@@ -257,16 +188,11 @@ void SamsungModem::bootloaderCommand(IIPCSocket *socket,
         std::auto_ptr<char> reply_buf(new char[size]);
         if(socket->recv(reply_buf.get(), size) != (ssize_t) size)
             throw TimeoutException("Bootloader command reply data timeout");
-
-        printf("reply:\n");
-        dump(&reply, sizeof(bootloader_cmd_t));
-        dump(reply_buf.get(), reply.data_size);
     }
 }
 
 void SamsungModem::sendSecureImage(IIPCSocket *socket) {
     uint16_t end_magic   = 0x0000;
-    uint32_t reset_magic = 0x00111001;
 
     std::string secure = m_filesystem->getFirmware(IFileSystem::SecureImage);
     std::string firmware = m_filesystem->getFirmware(IFileSystem::Firmware);
@@ -288,7 +214,6 @@ void SamsungModem::sendSecureImage(IIPCSocket *socket) {
     loadFlashImage(socket, 0x60e80000, nvdata);
 
     bootloaderCommand(socket, ReqSecEnd, &end_magic, 2);
-    bootloaderCommand(socket, ReqForceHwReset, &reset_magic, 4);
 }
 
 void SamsungModem::loadFlashImage(IIPCSocket *socket, uint32_t address,
@@ -306,8 +231,6 @@ void SamsungModem::loadFlashImage(IIPCSocket *socket, uint32_t address,
 
         offset += chunk;
     }
-
-    usleep(200000);
 }
 
 unsigned char SamsungModem::calculateCRC(const std::string &data) {

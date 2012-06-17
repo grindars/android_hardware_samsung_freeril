@@ -18,7 +18,7 @@
 
 lib_LIBRARIES = libsamsung-ipc.a
 
-libsamsung_ipc_a_SOURCES = IEHCISwitcher.h ISamsungIPCHAL.h SamsungModem.h \
-	SamsungModem.cpp IModemControl.h IIPCTransport.h Exceptions.h \
-	Exceptions.cpp IIPCSocket.h Utilities.cpp Utilities.h
+libsamsung_ipc_a_SOURCES = SamsungIPCHAL.h SamsungModem.h SamsungModem.cpp \
+	IIPCTransport.h Exceptions.h Exceptions.cpp IIPCSocket.h Utilities.cpp \
+	Utilities.h
 AM_CXXFLAGS = -Wall -W -O2

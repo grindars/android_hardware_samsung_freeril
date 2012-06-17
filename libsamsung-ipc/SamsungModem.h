@@ -24,8 +24,6 @@
 
 namespace SamsungIPC {
     class ISamsungIPCHAL;
-    class IEHCISwitcher;
-    class IModemControl;
     class IIPCTransport;
     class IFileSystem;
     class IIPCSocket;
@@ -70,8 +68,6 @@ namespace SamsungIPC {
             NVDataFlashImage    = 3
         };
 
-        void rebootModem(bool soft = false);
-
         void sendPSI(IIPCSocket *socket);
         void sendEBL(IIPCSocket *socket);
         void readBootInfo(IIPCSocket *socket);
@@ -85,8 +81,6 @@ namespace SamsungIPC {
 
         static unsigned char calculateCRC(const std::string &data);
 
-        IEHCISwitcher *m_ehci;
-        IModemControl *m_modemctl;
         IIPCTransport *m_ipctransport;
         IFileSystem *m_filesystem;
     };

@@ -16,30 +16,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __ANDROIDHAL__PHONETIPCSOCKET__H__
-#define __ANDROIDHAL__PHONETIPCSOCKET__H__
+#ifndef __USBIPCSOCKET__H__
+#define __USBIPCSOCKET__H__
 
-#include <IIPCSocket.h>
-#include <linux/phonet.h>
 #include <string>
+#include "IIPCSocket.h"
 
 namespace HAL {
-    class PHONETIPCSocket: public SamsungIPC::IIPCSocket {
-        friend class PHONETIPCTransport;
+    class NativeFile;
+    class USBIPCTransport;
 
-        PHONETIPCSocket(const std::string &interface, int obj_id);
+    class USBIPCSocket : public SamsungIPC::IIPCSocket {
+    protected:
+        friend class USBIPCTransport;
+        USBIPCSocket(const std::string &name, USBIPCTransport *transport);
+
+        int fd() const;
+
     public:
-        virtual ~PHONETIPCSocket();
+        virtual ~USBIPCSocket();
 
         virtual void close();
-        virtual ssize_t send(const void *buf, size_t size, int object = -1);
+        virtual ssize_t send(const void *buf, size_t size);
         virtual ssize_t recv(void *buf, size_t size, int timeout = 250);
 
     private:
-        struct sockaddr_pn m_addr;
-        int m_fd;
+        NativeFile *m_file;
+        USBIPCTransport *m_transport;
     };
 }
 
 #endif
-

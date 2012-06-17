@@ -20,14 +20,16 @@
 #ifndef __SAMSUNGIPC__IIPCSOCKET__H__
 #define __SAMSUNGIPC__IIPCSOCKET__H__
 
+#include <sys/types.h>
+
 namespace SamsungIPC {
     class IIPCSocket {
     public:
         virtual ~IIPCSocket() {};
 
         virtual void close() = 0;
-        virtual ssize_t send(const void *buf, size_t size, int object = -1) = 0;
-        virtual ssize_t recv(void *buf, size_t size, int timeout = 250) = 0;
+        virtual ssize_t send(const void *buf, size_t size) = 0;
+        virtual ssize_t recv(void *buf, size_t size, int timeout = 1000) = 0;
     };
 }
 

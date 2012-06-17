@@ -44,6 +44,11 @@ namespace SamsungIPC {
     public:
         CommunicationErrorException(const std::string &msg);
     };
+
+    class InternalErrorException: public BaseStringException {
+    public:
+        InternalErrorException(const std::string &msg);
+    };
 }
 
 #endif

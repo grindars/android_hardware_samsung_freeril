@@ -24,14 +24,26 @@ namespace SamsungIPC {
 
     class IIPCTransport {
     public:
+        enum Channel {
+            Boot,
+            IPC,
+            Loopback,
+            RamDump,
+            RFS
+        };
+
+        enum ModemState {
+            On = 1,
+            Off
+        };
+
+
         virtual ~IIPCTransport() {};
 
-        virtual bool isLinkUp() const = 0;
+        virtual void connect() = 0;
+        virtual void redetect() = 0;
 
-        virtual bool isUp() const = 0;
-        virtual void setUp(bool up) = 0;
-
-        virtual IIPCSocket *createSocket(int obj_id) = 0;
+        virtual IIPCSocket *createSocket(Channel channel) = 0;
     };
 }
 
