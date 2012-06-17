@@ -18,3 +18,4 @@ config.h
 stamp-h1
 *.kate-swp
 tools/extractfw/extractfw
+tools/dumpmodem/dumpmodem

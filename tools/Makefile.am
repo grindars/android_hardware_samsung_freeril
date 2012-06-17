@@ -16,4 +16,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-SUBDIRS = bootmodem extractfw wireshark
+SUBDIRS = bootmodem extractfw wireshark dumpmodem

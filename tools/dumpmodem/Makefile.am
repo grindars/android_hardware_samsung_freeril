@@ -16,16 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-AC_INIT([freeril-i9100], [1.0.0], [grindars@gmail.com])
-AM_INIT_AUTOMAKE
-AC_PROG_RANLIB
-AC_PROG_CXX
-AC_PROG_CC
+bin_PROGRAMS = dumpmodem
+dumpmodem_SOURCES = main.cpp
 
-AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile libsamsung-ipc/Makefile libandroidhal/Makefile
-                 ril/Makefile tools/Makefile tools/bootmodem/Makefile
-                 tools/extractfw/Makefile tools/wireshark/Makefile
-                 tools/dumpmodem/Makefile])
-
-AC_OUTPUT
+AM_CPPFLAGS = -I../../libandroidhal -I../../libsamsung-ipc
+AM_CXXFLAGS = -Wall -W -O2
+dumpmodem_LDADD = -L../../libandroidhal -L../../libsamsung-ipc \
+  -lsamsung-ipc -landroidhal

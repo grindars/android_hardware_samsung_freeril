@@ -21,12 +21,14 @@
 
 #include <stdint.h>
 #include <string>
+#include <ostream>
 
 namespace SamsungIPC {
     class ISamsungIPCHAL;
     class IIPCTransport;
     class IFileSystem;
     class IIPCSocket;
+    class IProgressCallback;
 
     class SamsungModem {
     public:
@@ -34,6 +36,7 @@ namespace SamsungIPC {
         virtual ~SamsungModem();
 
         void boot();
+        void dump(std::ostream &stream, IProgressCallback *callback = 0);
 
     private:
         enum {

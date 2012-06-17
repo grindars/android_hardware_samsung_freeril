@@ -23,10 +23,12 @@
 #include "IIPCSocket.h"
 #include "IFileSystem.h"
 #include "Utilities.h"
+#include "IProgressCallback.h"
 
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 #include <memory>
 
@@ -48,20 +50,7 @@ void SamsungModem::boot() {
     std::auto_ptr<IIPCSocket> bootSocket(m_ipctransport->createSocket(IIPCTransport::Boot));
     m_ipctransport->connect();
 
-    unsigned char ack[2];
-
-    bootSocket->send("ATAT", 4);
-    if(bootSocket->recv(ack, 1) == 0)
-        throw TimeoutException("Bootloader greet timeout");
-
-    if(bootSocket->recv(ack, 1) == 0)
-        throw TimeoutException("Chip id read timeout");
-
     sendPSI(bootSocket.get());
-
-    ack[0] = 0x00;
-    ack[1] = 0xAA;
-    expectAck(bootSocket.get(), ack, 2);
 
     sendEBL(bootSocket.get());
 
@@ -74,8 +63,59 @@ void SamsungModem::boot() {
     m_ipctransport->redetect();
 }
 
+void SamsungModem::dump(std::ostream &stream, IProgressCallback *progress) {
+    uint32_t upload_key = 0xDEADDEAD;
+    unsigned char error_ack[4] = { 'P', 'A', 'S', 'S' };
+    size_t total = 0, expected_total = 50 * 1024 * 1024;
+
+    std::auto_ptr<IIPCSocket> bootSocket(m_ipctransport->createSocket(IIPCTransport::Boot));
+    m_ipctransport->connect();
+
+    sendPSI(bootSocket.get());
+
+    bootSocket->send(&upload_key, sizeof(upload_key));
+
+    std::auto_ptr<char> buf(new char[16384]);
+
+    if(bootSocket->recv(buf.get(), 150) != 150)
+        throw TimeoutException("Error message timeout");
+
+    stream.write(buf.get(), 150);
+    if(stream.bad())
+        throw InternalErrorException(strerror(errno));
+
+    bootSocket->send(error_ack, sizeof(error_ack));
+
+    if(progress)
+        progress->progress(total, expected_total);
+
+    int bytes;
+    do {
+        bytes = bootSocket->recv(buf.get(), 16384);
+
+        stream.write(buf.get(), bytes);
+        if(stream.bad())
+            throw InternalErrorException(strerror(errno));
+
+        total += bytes;
+        if(progress)
+            progress->progress(total / 16384, expected_total / 16384);
+    } while(bytes != 0);
+
+    bootSocket->close();
+}
+
 void SamsungModem::sendPSI(IIPCSocket *socket) {
     std::string image = m_filesystem->getFirmware(IFileSystem::PSI);
+
+    unsigned char ack[2];
+
+    socket->send("ATAT", 4);
+    if(socket->recv(ack, 1) == 0)
+        throw TimeoutException("Bootloader greet timeout");
+
+    if(socket->recv(ack, 1) == 0)
+        throw TimeoutException("Chip id read timeout");
 
     psi_header_t header;
     header.indicate = 0x30;
@@ -97,14 +137,17 @@ void SamsungModem::sendPSI(IIPCSocket *socket) {
     socket->send(&crc, 1);
 
     for(unsigned int i = 0; i < 22; i++) {
-        unsigned char ack;
-        if(socket->recv(&ack, 1) == 0)
+        if(socket->recv(ack, 1) == 0)
             throw TimeoutException("PSI ACK timeout");
     }
 
     unsigned char valid_ack = 0x01;
     expectAck(socket, &valid_ack, 1);
     expectAck(socket, &valid_ack, 1);
+
+    ack[0] = 0x00;
+    ack[1] = 0xAA;
+    expectAck(socket, ack, 2);
 }
 
 void SamsungModem::sendEBL(IIPCSocket *socket) {
