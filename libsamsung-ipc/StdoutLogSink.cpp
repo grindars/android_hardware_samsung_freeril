@@ -16,25 +16,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __CSTYLEXCEPTION__H__
-#define __CSTYLEXCEPTION__H__
+#include <stdio.h>
 
-#include <exception>
-#include <string>
+#include "StdoutLogSink.h"
 
-namespace SamsungIPC {
-    class CStyleException: public std::exception {
-    public:
-        CStyleException();
-        virtual ~CStyleException() throw();
+using namespace SamsungIPC;
 
-        virtual const char *what() const throw();
+void StdoutLogSink::print(Log::Level level, const std::string &message) {
+    switch(level) {
+        case Log::Debug:
+            fputs("debug ", stdout);
 
-    private:
-        std::string m_error;
-    };
+            break;
 
-    inline void throwErrno() { throw CStyleException(); }
+        case Log::Info:
+            fputs("info ", stdout);
+
+            break;
+
+        case Log::Warning:
+            fputs("warning ", stdout);
+
+            break;
+
+        default:
+        case Log::Error:
+            fputs("error ", stdout);
+
+            break;
+    }
+
+    puts(message.c_str());
 }
-
-#endif

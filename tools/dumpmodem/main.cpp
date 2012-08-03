@@ -20,11 +20,14 @@
 
 #include <SamsungModem.h>
 #include <AndroidHAL.h>
-#include <CStyleException.h>
 #include <IProgressCallback.h>
+#include <Log.h>
+#include <StdoutLogSink.h>
 
+#include <unistd.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 
 #define DEFAULT_DUMP "dump.bin"
 
@@ -123,27 +126,27 @@ int main(int argc, char *argv[]) {
     }
 
     HAL::AndroidHAL hal;
+    SamsungIPC::StdoutLogSink sink;
+    (void) sink;
 
     SamsungIPC::SamsungModem modem(&hal);
 
-    try {
-        std::ofstream stream;
-        stream.open(output.c_str(), std::ios_base::binary | std::ios_base::out |
-                                    std::ios_base::trunc);
-        if(stream.fail())
-            SamsungIPC::throwErrno();
+    std::ofstream stream;
+    stream.open(output.c_str(), std::ios_base::binary | std::ios_base::out |
+                                std::ios_base::trunc);
+    if(stream.fail())
+        SamsungIPC::Log::panicErrno("stream.open");
 
-        ConsoleProgressCallback callback;
-        modem.dump(stream, &callback);
+    ConsoleProgressCallback callback;
+    if(modem.dump(stream, &callback)) {
+        fputs("Modem dump failed\n", stderr);
 
         stream.close();
-    } catch(std::exception &e) {
-        fprintf(stderr, "Dump failed: %s\n", e.what());
-        unlink(output.c_str());
 
         return 1;
     }
 
+    stream.close();
     printf("Modem dumped to %s\n", output.c_str());
 
     return 0;

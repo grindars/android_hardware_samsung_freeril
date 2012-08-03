@@ -17,7 +17,6 @@
  */
 
 #include "PowerMessages.h"
-#include "Exceptions.h"
 #include "IMessageVisitor.h"
 
 using namespace SamsungIPC;
@@ -27,7 +26,7 @@ Message *PowerCompleted::parse(const Header &header, const void *data) {
     (void) data;
 
     if(header.length != sizeof(Header))
-        throw CommunicationErrorException("Unexpected size of message");
+        return NULL;
 
     return new PowerCompleted;
 }
@@ -38,7 +37,7 @@ void PowerCompleted::accept(IMessageVisitor *visitor) {
 
 Message *PhonePowerOff::parse(const Header &header, const void *data) {
     if(header.length != sizeof(Header) + sizeof(Data))
-        throw CommunicationErrorException("Unexpected size of message");
+        return NULL;
 
     const Data *msg_data = (const Data *) data;
 
@@ -56,7 +55,7 @@ Message *PhoneReset::parse(const Header &header, const void *data) {
     (void) data;
 
     if(header.length != sizeof(Header))
-        throw CommunicationErrorException("Unexpected size of message");
+        return NULL;
 
     return new PhoneReset;
 }
@@ -67,7 +66,7 @@ void PhoneReset::accept(IMessageVisitor *visitor) {
 
 Message *LPMToNormalCompleted::parse(const Header &header, const void *data) {
     if(header.length != sizeof(Header) + sizeof(Data))
-        throw CommunicationErrorException("Unexpected size of message");
+        return NULL;
 
     const Data *msg_data = (const Data *) data;
 

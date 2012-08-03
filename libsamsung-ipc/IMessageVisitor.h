@@ -30,6 +30,8 @@ namespace Messages {
 
 class IMessageVisitor {
 public:
+    virtual ~IMessageVisitor() {}
+    
     virtual void visit(Messages::PowerCompleted *msg) = 0;
     virtual void visit(Messages::PhonePowerOff *msg) = 0;
     virtual void visit(Messages::PhoneReset *msg) = 0;

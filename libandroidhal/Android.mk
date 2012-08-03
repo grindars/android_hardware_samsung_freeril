@@ -16,16 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-AC_INIT([freeril-i9100], [1.0.0], [grindars@gmail.com])
-AM_INIT_AUTOMAKE
-AC_PROG_RANLIB
-AC_PROG_CXX
-AC_PROG_CC
+LOCAL_PATH:= $(call my-dir)
+include $(CLEAR_VARS)
 
-AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile libsamsung-ipc/Makefile libandroidhal/Makefile
-                 ril/Makefile tools/Makefile tools/bootmodem/Makefile
-                 tools/extractfw/Makefile tools/wireshark/Makefile
-                 tools/dumpmodem/Makefile])
+LOCAL_SRC_FILES:= \
+    NativeFile.cpp AndroidHAL.cpp SysfsControlledDevice.cpp USBIPCTransport.cpp \
+    USBIPCSocket.cpp AndroidFileSystem.cpp
 
-AC_OUTPUT
+LOCAL_MODULE = libAndroidHAL
+LOCAL_LDLIBS = -lpthread
+LOCAL_SHARED_LIBRARIES = libstlport
+LOCAL_C_INCLUDES = external/stlport/stlport bionic $(LOCAL_PATH)/../libsamsung-ipc
+
+include $(BUILD_STATIC_LIBRARY)

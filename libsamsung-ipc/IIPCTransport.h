@@ -40,8 +40,8 @@ namespace SamsungIPC {
 
         virtual ~IIPCTransport() {};
 
-        virtual void connect() = 0;
-        virtual void redetect() = 0;
+        virtual bool connect() = 0;
+        virtual bool redetect() = 0;
 
         virtual IIPCSocket *createSocket(Channel channel) = 0;
     };

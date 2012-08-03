@@ -16,30 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Exceptions.h"
+#ifndef __STDOUT_LOG_SINK__H__
+#define __STDOUT_LOG_SINK__H__
 
-using namespace SamsungIPC;
+#include "LogSink.h"
 
-BaseStringException::BaseStringException(const std::string &msg) : m_msg(msg) {
-
+namespace SamsungIPC {
+    class StdoutLogSink: public LogSink {
+    public:
+        virtual void print(Log::Level level, const std::string &message);
+    };
 }
 
-BaseStringException::~BaseStringException() throw() {
-
-}
-
-const char *BaseStringException::what() const throw() {
-    return m_msg.c_str();
-}
-
-TimeoutException::TimeoutException(const std::string &msg) : BaseStringException(msg) {
-
-}
-
-CommunicationErrorException::CommunicationErrorException(const std::string &msg) : BaseStringException(msg) {
-
-}
-
-InternalErrorException::InternalErrorException(const std::string &msg) : BaseStringException(msg) {
-
-}
+#endif

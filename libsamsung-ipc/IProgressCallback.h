@@ -24,6 +24,8 @@
 namespace SamsungIPC {
     class IProgressCallback {
     public:
+        virtual ~IProgressCallback() {}
+        
         virtual void progress(size_t progress, size_t total) = 0;
     };
 }

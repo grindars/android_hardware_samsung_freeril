@@ -25,6 +25,8 @@ namespace SamsungIPC {
 
     class ISamsungIPCHAL {
     public:
+        virtual ~ISamsungIPCHAL() {}
+        
         virtual IIPCTransport *createIPCTransport() = 0;
         virtual IFileSystem   *createFilesystem() = 0;
     };

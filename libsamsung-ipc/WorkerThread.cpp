@@ -19,8 +19,7 @@
 #include <errno.h>
 
 #include "WorkerThread.h"
-#include "CStyleException.h"
-#include "Exceptions.h"
+#include "Log.h"
 
 using namespace SamsungIPC;
 
@@ -30,19 +29,18 @@ WorkerThread::WorkerThread() : m_thread(0) {
 
 WorkerThread::~WorkerThread() {
     if(m_thread != 0) {
-        if(pthread_tryjoin_np(m_thread, NULL) == -1 && errno == EBUSY)
-            throw InternalErrorException("WorkerThread destroyed while thread is still running");
+        Log::panic("WorkerThread destroyed while thread is still running");
     }
 }
 
 int WorkerThread::wait() {
     if(m_thread == 0)
-        throw InternalErrorException("Thread is not yet started");
+        Log::panic("Thread is not yet started");
 
     void *ret;
 
     if(pthread_join(m_thread, &ret) == -1)
-        throwErrno();
+        Log::panicErrno("thread_join");
 
     m_thread = 0;
 
@@ -51,20 +49,12 @@ int WorkerThread::wait() {
 
 void WorkerThread::start() {
     if(m_thread != 0)
-        throw InternalErrorException("Thread is already started");
+        Log::panic("Thread is already started");
 
     if(pthread_create(&m_thread, NULL, WorkerThread::threadRoutine, this) == -1) {
         m_thread = 0;
-        throwErrno();
+        Log::panicErrno("pthread_create");
     }
-}
-
-void WorkerThread::terminate() {
-    if(m_thread == 0)
-        throw InternalErrorException("Thread is not yet started");
-
-    if(pthread_cancel(m_thread) == -1)
-        throwErrno();
 }
 
 void *WorkerThread::threadRoutine(void *arg) {

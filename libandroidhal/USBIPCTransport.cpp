@@ -18,14 +18,14 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <Exceptions.h>
-#include <CStyleException.h>
+#include <Log.h>
 
 #include "USBIPCTransport.h"
 #include "USBIPCSocket.h"
 #include "modem_prj.h"
 
 using namespace HAL;
+using namespace SamsungIPC;
 
 USBIPCTransport::USBIPCTransport(const std::string &directory, const std::string &ehci_directory) :
     SysfsControlledDevice(ehci_directory), m_directory(directory),
@@ -38,11 +38,11 @@ USBIPCTransport::~USBIPCTransport() {
 
 }
 
-SamsungIPC::IIPCSocket *USBIPCTransport::createSocket(SamsungIPC::IIPCTransport::Channel channel) {
+IIPCSocket *USBIPCTransport::createSocket(IIPCTransport::Channel channel) {
     USBIPCSocket *socket;
 
     switch(channel) {
-        case SamsungIPC::IIPCTransport::Boot:
+        case IIPCTransport::Boot:
             socket = new USBIPCSocket(m_directory + "umts_boot0", this);
 
             if(m_bootSocket == NULL)
@@ -50,21 +50,20 @@ SamsungIPC::IIPCSocket *USBIPCTransport::createSocket(SamsungIPC::IIPCTransport:
 
             return socket;
 
-        case SamsungIPC::IIPCTransport::IPC:
+        case IIPCTransport::IPC:
             return new USBIPCSocket(m_directory + "umts_ipc0", this);
 
-        case SamsungIPC::IIPCTransport::Loopback:
+        case IIPCTransport::Loopback:
             return new USBIPCSocket(m_directory + "umts_loopback0", this);
 
-        case SamsungIPC::IIPCTransport::RamDump:
+        case IIPCTransport::RamDump:
             return new USBIPCSocket(m_directory + "umts_ramdump0", this);
 
-        case SamsungIPC::IIPCTransport::RFS:
+        case IIPCTransport::RFS:
             return new USBIPCSocket(m_directory + "umts_rfs0", this);
 
         default:
-            errno = EINVAL;
-            SamsungIPC::throwErrno();
+            Log::panic("Invalid channel requested");
 
             return NULL;
     }
@@ -75,7 +74,7 @@ void USBIPCTransport::setLink(bool up, bool keepModem) {
 
     if(!keepModem) {
         if(m_bootSocket == NULL) {
-            throw SamsungIPC::InternalErrorException("Open boot socket is required for modem power switching due to limitations of kernel mode driver interface.");
+            Log::panic("Open boot socket is required for modem power switching due to limitations of kernel mode driver interface.");
         }
 
         if(active)
@@ -84,20 +83,20 @@ void USBIPCTransport::setLink(bool up, bool keepModem) {
             ret = ioctl(m_bootSocket->fd(), IOCTL_MODEM_OFF);
 
         if(ret == -1)
-            SamsungIPC::throwErrno();
+            Log::panicErrno("ioctl(IOCTL_MODEM_ON/OFF)");
     }
 
     ret = ioctl(m_controlFile.fd(), IOCTL_LINK_CONTROL_ENABLE, &active);
 
     if(ret == -1)
-        SamsungIPC::throwErrno();
+        Log::panicErrno("ioctl(IOCTL_LINK_CONTROL_ENABLE)");
 
     write("ehci_power", active ? "1" : "0");
 
     ret = ioctl(m_controlFile.fd(), IOCTL_LINK_CONTROL_ACTIVE, &active);
 
     if(ret == -1)
-        SamsungIPC::throwErrno();
+        Log::panicErrno("ioctl(IOCTL_LINK_CONTROL_ACTIVE)");
 }
 
 
@@ -105,7 +104,7 @@ bool USBIPCTransport::isLinkUp() {
     int ret = ioctl(m_controlFile.fd(), IOCTL_LINK_CONNECTED);
 
     if(ret == -1)
-        SamsungIPC::throwErrno();
+        Log::panicErrno("ioctl(IOCTL_LINK_CONNECTED)");
 
     return ret != 0;
 }
@@ -114,57 +113,60 @@ bool USBIPCTransport::isWokenUp() {
     int ret = ioctl(m_controlFile.fd(), IOCTL_LINK_GET_HOSTWAKE);
 
     if(ret == -1)
-        SamsungIPC::throwErrno();
+        Log::panicErrno("ioctl(IOCTL_LINK_GET_HOSTWAKE)");
 
     return ret == 0;
 }
 
-void USBIPCTransport::connect(void) {
-    toggleTransport(false);
+bool USBIPCTransport::connect(void) {
+    return toggleTransport(false);
 }
 
-void USBIPCTransport::redetect(void) {
-    toggleTransport(true);
+bool USBIPCTransport::redetect(void) {
+    return toggleTransport(true);
 }
 
-void USBIPCTransport::toggleTransport(bool keep_modem) {
-    if(keep_modem)
-        waitForWakeup(true);
+bool USBIPCTransport::toggleTransport(bool keep_modem) {
+    if(keep_modem) {
+        if(!waitForWakeup(true))
+            return false;
+    }
 
     setLink(false, keep_modem);
 
-    if(keep_modem)
-        try {
-                waitForWakeup(false);
-        } catch(SamsungIPC::TimeoutException &e) {
+    if(keep_modem) {
+        if(!waitForWakeup(false)) {
             setLink(true, true);
 
-            throw e;
+            return false;
         }
+    }
 
     setLink(true, keep_modem);
 
     int tries = 4;
 
     while(!isLinkUp()) {
-        if(--tries == 0)
-            throw SamsungIPC::TimeoutException("IPC link timeout");
+        if(--tries == 0) {
+            return false;
+        }
 
         usleep(500000);
     }
+
+    return true;
 }
 
-void USBIPCTransport::waitForWakeup(bool status) {
+bool USBIPCTransport::waitForWakeup(bool status) {
     int tries = 10;
     while(isWokenUp() != status) {
         if(--tries == 0)
-            throw SamsungIPC::TimeoutException("Wakeup timeout");
+            return false;
 
         usleep(500000);
     }
 
-    // for bug compatibility with RIL
-    (void) isWokenUp();
+    return true;
 }
 
 void USBIPCTransport::socketDestroyed(USBIPCSocket *socket) {

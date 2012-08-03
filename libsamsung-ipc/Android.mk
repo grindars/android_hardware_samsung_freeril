@@ -16,19 +16,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-lib_LIBRARIES = libsamsung-ipc.a
+LOCAL_PATH:= $(call my-dir)
+include $(CLEAR_VARS)
 
-libsamsung_ipc_a_SOURCES = SamsungIPCHAL.h SamsungModem.h SamsungModem.cpp \
-	IIPCTransport.h Exceptions.h Exceptions.cpp IIPCSocket.h Utilities.cpp \
-	Utilities.h IProgressCallback.h WorkerThread.h WorkerThread.cpp \
-	IPCWorkerThread.h IPCWorkerThread.cpp CStyleException.h \
-	CStyleException.cpp SocketHandler.h SocketHandler.cpp Mutex.h \
-	Mutex.cpp IPCSocketHandler.h IPCSocketHandler.cpp RFSSocketHandler.h \
-	RFSSocketHandler.cpp Message.h Message.cpp PowerMessages.h \
-	PowerMessages.cpp IMessageVisitor.h UnsolicitedHandler.h \
-	UnsolicitedHandler.cpp
+LOCAL_SRC_FILES:= \
+    IPCSocketHandler.cpp Message.cpp Mutex.cpp RFSSocketHandler.cpp \
+    SocketHandler.cpp Utilities.cpp IPCWorkerThread.cpp \
+    MessageInspector.cpp PowerMessages.cpp SamsungModem.cpp \
+    UnsolicitedHandler.cpp WorkerThread.cpp Log.cpp LogSink.cpp \
+    StdoutLogSink.cpp
 
-AM_CXXFLAGS = -Wall -W -O2
+LOCAL_MODULE = libSamsungIPC
+LOCAL_LDLIBS = -lpthread
+LOCAL_SHARED_LIBRARIES = libstlport
+LOCAL_C_INCLUDES = external/stlport/stlport bionic
 
-AM_CPPFLAGS = -DMESSAGE_INSPECTION
-libsamsung_ipc_a_SOURCES += MessageInspector.h MessageInspector.cpp
+include $(BUILD_STATIC_LIBRARY)

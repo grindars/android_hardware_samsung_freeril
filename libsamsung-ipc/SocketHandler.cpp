@@ -19,8 +19,7 @@
 #include "SocketHandler.h"
 #include "IIPCSocket.h"
 #include "Utilities.h"
-#include "Exceptions.h"
-#include "CStyleException.h"
+#include "Log.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +31,7 @@ SocketHandler::SocketHandler(IIPCSocket *socket) : m_socket(socket),
 
     m_reassemblyBuf = (unsigned char *) malloc(IOBufSize);
     if(m_reassemblyBuf == NULL)
-        throwErrno();
+        Log::panicErrno("malloc");
 }
 
 SocketHandler::~SocketHandler() {
@@ -62,7 +61,7 @@ void SocketHandler::readable() {
     ssize_t size = m_socket->recv(m_reassemblyBuf + m_reassemblyBufUsed, m_reassemblyBufSize - m_reassemblyBufUsed, -1);
 
     if(size == 0)
-        throw CommunicationErrorException("End of stream");
+        handleEOF();
 
     m_reassemblyBufUsed += size;
 
@@ -83,7 +82,7 @@ void SocketHandler::readable() {
         size_t newSize = m_reassemblyBufUsed + IOBufSize;
         unsigned char *newBuf = (unsigned char *) realloc(m_reassemblyBuf, newSize);
         if(newBuf == NULL)
-            throwErrno();
+            Log::panicErrno("realloc");
 
         m_reassemblyBufSize = newSize;
         m_reassemblyBuf = newBuf;
@@ -97,7 +96,7 @@ void SocketHandler::writable(void) {
         size_t size = m_socket->send(record.data, record.size);
 
         if(size != record.size)
-            throw CommunicationErrorException("Not all data written");
+            handleIOError();
 
         delete[] record.data;
         m_sendQueue.pop_front();
@@ -113,13 +112,17 @@ void SocketHandler::sendMessage(const Message::Header &header,
     memcpy(buf + sizeof(Message::Header), data, header.length -
                                                 sizeof(Message::Header));
 
-    try {
-        send_record record;
-        record.data = buf;
-        record.size = header.length;
+    send_record record;
+    record.data = buf;
+    record.size = header.length;
 
-        m_sendQueue.push_back(record);
-    } catch(std::exception &e) {
-        delete[] buf;
-    }
+    m_sendQueue.push_back(record);
+}
+
+void SocketHandler::handleEOF() {
+    Log::panic("End of stream");
+}
+
+void SocketHandler::handleIOError() {
+    Log::panic("Input/output error");
 }

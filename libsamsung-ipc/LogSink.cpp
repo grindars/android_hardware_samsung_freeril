@@ -16,21 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>
-#include <string.h>
-
-#include "CStyleException.h"
+#include "LogSink.h"
 
 using namespace SamsungIPC;
 
-CStyleException::CStyleException() {
-    m_error = strerror(errno);
+LogSink::LogSink() {
+    Log::registerSink(this);
 }
 
-CStyleException::~CStyleException() throw() {
-
-}
-
-const char *CStyleException::what() const throw() {
-    return m_error.c_str();
+LogSink::~LogSink() {
+    Log::unregisterSink(this);
 }

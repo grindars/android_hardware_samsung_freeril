@@ -19,7 +19,7 @@
 #ifndef __SAMSUNGIPC__IFILESYSTEM__H__
 #define __SAMSUNGIPC__IFILESYSTEM__H__
 
-#include <string>
+#include <vector>
 
 namespace SamsungIPC {
     class IFileSystem {
@@ -34,10 +34,10 @@ namespace SamsungIPC {
 
         virtual ~IFileSystem() {}
 
-        virtual std::string getFirmware(FirmwareType type) = 0;
+        virtual bool getFirmware(FirmwareType type, std::vector<char> &data) = 0;
 
-        virtual std::string readNVData() = 0;
-        virtual void writeNVData(const std::string &data) = 0;
+        virtual bool readNVData(std::vector<char> &data) = 0;
+        virtual bool writeNVData(const std::vector<char> &data) = 0;
     };
 }
 

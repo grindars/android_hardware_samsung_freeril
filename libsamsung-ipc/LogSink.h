@@ -16,38 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SAMSUNGIPC__EXCEPTIONS__H__
-#define __SAMSUNGIPC__EXCEPTIONS__H__
+#ifndef __LOG_SINK_H__
+#define __LOG_SINK_H__
 
-#include <string>
+#include "Log.h"
 
 namespace SamsungIPC {
-    class BaseStringException: public std::exception {
-    protected:
-        BaseStringException(const std::string &msg);
-
+    class LogSink {
     public:
-        virtual ~BaseStringException() throw();
+        LogSink();
+        virtual ~LogSink();
 
-        virtual const char *what() const throw();
-
-    private:
-        std::string m_msg;
-    };
-
-    class TimeoutException: public BaseStringException {
-    public:
-        TimeoutException(const std::string &msg);
-    };
-
-    class CommunicationErrorException: public BaseStringException {
-    public:
-        CommunicationErrorException(const std::string &msg);
-    };
-
-    class InternalErrorException: public BaseStringException {
-    public:
-        InternalErrorException(const std::string &msg);
+        virtual void print(Log::Level level, const std::string &message) = 0;
     };
 }
 

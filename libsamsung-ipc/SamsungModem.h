@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <string>
 #include <ostream>
+#include <vector>
 
 namespace SamsungIPC {
     class ISamsungIPCHAL;
@@ -36,8 +37,8 @@ namespace SamsungIPC {
         SamsungModem(ISamsungIPCHAL *hal);
         virtual ~SamsungModem();
 
-        void boot();
-        void dump(std::ostream &stream, IProgressCallback *callback = 0);
+        bool boot();
+        bool dump(std::ostream &stream, IProgressCallback *callback = 0);
 
         void initialize();
 
@@ -74,18 +75,18 @@ namespace SamsungIPC {
             NVDataFlashImage    = 3
         };
 
-        void sendPSI(IIPCSocket *socket);
-        void sendEBL(IIPCSocket *socket);
-        void readBootInfo(IIPCSocket *socket);
-        void sendSecureImage(IIPCSocket *socket);
+        bool sendPSI(IIPCSocket *socket);
+        bool sendEBL(IIPCSocket *socket);
+        bool readBootInfo(IIPCSocket *socket);
+        bool sendSecureImage(IIPCSocket *socket);
 
-        void loadFlashImage(IIPCSocket *socket, uint32_t address,
-            std::string image);
-        void bootloaderCommand(IIPCSocket *socket, uint16_t cmd,
+        bool loadFlashImage(IIPCSocket *socket, uint32_t address,
+            const std::vector<char> &image);
+        bool bootloaderCommand(IIPCSocket *socket, uint16_t cmd,
                                const void *data, size_t data_size);
-        void expectAck(IIPCSocket *socket, const unsigned char *data, size_t size);
+        bool expectAck(IIPCSocket *socket, const unsigned char *data, size_t size);
 
-        static unsigned char calculateCRC(const std::string &data);
+        static unsigned char calculateCRC(const std::vector<char> &data);
 
         IIPCTransport *m_ipctransport;
         IFileSystem *m_filesystem;

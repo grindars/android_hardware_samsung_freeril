@@ -18,42 +18,31 @@
 
 #include <SamsungModem.h>
 #include <AndroidHAL.h>
+#include <Log.h>
+#include <StdoutLogSink.h>
 #include <stdio.h>
 #include <poll.h>
 
-#define MAX_BOOT_TRIES  4
+using namespace SamsungIPC;
 
 int main(void) {
     HAL::AndroidHAL hal;
+    StdoutLogSink sink;
+    (void) sink;
 
     SamsungIPC::SamsungModem modem(&hal);
 
-    puts("Booting modem\n");
+    Log::info("Booting modem");
 
-    int bootTry = 0;
-    do {
-        try {
-            modem.boot();
-
-            break;
-        } catch(std::exception &e) {
-            fprintf(stderr, "Boot failed, try %d/%d: %s\n",
-                ++bootTry, MAX_BOOT_TRIES, e.what());
-
-            if(bootTry == MAX_BOOT_TRIES)
-                return 1;
-        }
-    } while(1);
-
-    puts("Initializing modem");
-
-    try {
-        modem.initialize();
-    } catch(std::exception &e) {
-        fprintf(stderr, "Modem initialization failed: %s\n", e.what());
+    if(!modem.boot()) {
+        Log::error("Modem boot failed");
 
         return 1;
     }
+
+    Log::info("Initializing modem");
+
+    modem.initialize();
 
     puts("Modem operational.");
 

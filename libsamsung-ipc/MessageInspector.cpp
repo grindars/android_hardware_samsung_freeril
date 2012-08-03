@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
+#include "Log.h"
 #include "PowerMessages.h"
 #include "MessageInspector.h"
 
@@ -25,26 +25,26 @@ using namespace SamsungIPC;
 void MessageInspector::visit(Messages::PowerCompleted *msg) {
     (void) msg;
 
-    printf("PowerCompleted\n"
-           "\n");
+    Log::debug("PowerCompleted\n"
+              "\n");
 }
 
 void MessageInspector::visit(Messages::PhonePowerOff *msg) {
-    printf("PhonePowerOff\n"
-           " - reason: %d\n"
-           "\n", msg->reason());
+    Log::debug("PhonePowerOff\n"
+               " - reason: %d\n"
+               "\n", msg->reason());
 }
 
 void MessageInspector::visit(Messages::PhoneReset *msg) {
     (void) msg;
 
-    printf("PhoneReset\n"
-           "\n");
+    Log::debug("PhoneReset\n"
+               "\n");
 }
 
 void MessageInspector::visit(Messages::LPMToNormalCompleted *msg) {
     (void) msg;
 
-    printf("LPMToNormalCompleted\n"
-           "\n");
+    Log::debug("LPMToNormalCompleted\n"
+               "\n");
 }

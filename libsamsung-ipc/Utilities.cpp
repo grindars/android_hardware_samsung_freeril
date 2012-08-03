@@ -21,38 +21,49 @@
 
 #include <algorithm>
 
+#include "Log.h"
 #include "Utilities.h"
 
 void SamsungIPC::dump(const void *data, size_t size) {
     const unsigned char *cdata = (const unsigned char *) data;
 
+    char line[90];
+
     for(size_t row = 0; row < size; row += 16) {
-        printf("%08X  ", row);
+        int pos = 0;
+
+        pos += sprintf(&line[pos], "%08X  ", row);
 
         size_t row_size = std::min<size_t>(size - row, 16);
 
         for(size_t row_index = 0; row_index < row_size; row_index++) {
             if(row_index == 8)
-                putchar(' ');
+                line[pos++] = ' ';
 
-            printf("%02hhX ", cdata[row + row_index]);
+            pos += sprintf(&line[pos], "%02hhX ", cdata[row + row_index]);
         }
 
         for(size_t row_index = row_size; row_index < 16; row_index++) {
             if(row_index == 8)
-                putchar(' ');
+                line[pos++] = ' ';
 
-            fputs("   ", stdout);
+            line[pos++] = ' ';
+            line[pos++] = ' ';
+            line[pos++] = ' ';
         }
 
-        fputs(" |", stdout);
+        line[pos++] = ' ';
+        line[pos++] = '|';
 
         for(size_t row_index = 0; row_index < row_size; row_index++) {
             char ch = (char) cdata[row + row_index];
 
-            fputc(isprint(ch) ? ch : '.', stdout);
+            line[pos++] = isprint(ch) ? ch : '.';
         }
 
-        puts("|");
+        line[pos++] = '|';
+        line[pos++] = 0;
+
+        Log::debug("%s", line);
     }
 }

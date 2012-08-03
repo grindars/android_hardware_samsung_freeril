@@ -20,6 +20,7 @@
 #define __ANDROIDHAL__ANDROIDFILESYSTEM__H__
 
 #include <IFileSystem.h>
+#include <string>
 
 namespace HAL {
     class AndroidFileSystem: public SamsungIPC::IFileSystem {
@@ -27,10 +28,10 @@ namespace HAL {
         AndroidFileSystem(const std::string &firmware,
                           const std::string &nvdata);
 
-        virtual std::string getFirmware(SamsungIPC::IFileSystem::FirmwareType type);
+        virtual bool getFirmware(SamsungIPC::IFileSystem::FirmwareType type, std::vector<char> &data);
 
-        virtual std::string readNVData();
-        virtual void writeNVData(const std::string &data);
+        virtual bool readNVData(std::vector<char> &data);
+        virtual bool writeNVData(const std::vector<char> &data);
 
     private:
         std::string m_firmware, m_nvdata;

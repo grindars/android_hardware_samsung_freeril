@@ -16,8 +16,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-EXTRA_DIST = generate-gitfiles.sh
-SUBDIRS    = libsamsung-ipc libandroidhal ril tools
+LOCAL_PATH := $(call my-dir)
+include $(CLEAR_VARS)
 
-dist-hook:
-	sh $(top_srcdir)/generate-gitfiles.sh $(top_srcdir) $(distdir)
+LOCAL_SRC_FILES := main.cpp
+
+LOCAL_LDLIBS = -lpthread
+LOCAL_SHARED_LIBRARIES = libstlport
+LOCAL_C_INCLUDES = external/stlport/stlport bionic $(LOCAL_PATH)/../../libandroidhal $(LOCAL_PATH)/../../libsamsung-ipc
+LOCAL_STATIC_LIBRARIES = libSamsungIPC libAndroidHAL
+
+LOCAL_MODULE := dumpmodem
+# Should be debug, actually.
+LOCAL_MODULE_TAGS := optional
+
+include $(BUILD_EXECUTABLE)

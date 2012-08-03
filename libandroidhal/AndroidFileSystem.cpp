@@ -19,12 +19,14 @@
 #include <fcntl.h>
 #include <memory>
 #include <errno.h>
-#include <CStyleException.h>
+#include <Log.h>
 
 #include "AndroidFileSystem.h"
 #include "NativeFile.h"
 
 #define NVDATA_SIZE (2 * 1024 * 1024)
+
+using namespace SamsungIPC;
 
 HAL::AndroidFileSystem::AndroidFileSystem(const std::string &firmware,
                                           const std::string &nvdata) :
@@ -32,7 +34,7 @@ HAL::AndroidFileSystem::AndroidFileSystem(const std::string &firmware,
 
 }
 
-std::string HAL::AndroidFileSystem::getFirmware(SamsungIPC::IFileSystem::FirmwareType type) {
+bool HAL::AndroidFileSystem::getFirmware(SamsungIPC::IFileSystem::FirmwareType type, std::vector<char> &data) {
     unsigned int offset, length;
 
     switch(type) {
@@ -67,8 +69,7 @@ std::string HAL::AndroidFileSystem::getFirmware(SamsungIPC::IFileSystem::Firmwar
         break;
 
     default:
-        offset = 0;
-        length = 0;
+        Log::panic("Invalid firmware type");
 
         break;
     }
@@ -77,46 +78,45 @@ std::string HAL::AndroidFileSystem::getFirmware(SamsungIPC::IFileSystem::Firmwar
 
     file.seek(offset, SEEK_SET);
 
-    std::auto_ptr<char> data(new char[length]);
-    ssize_t bytes = file.read(data.get(), length);
-    if((unsigned int) bytes != length) {
-        errno = EIO;
+    data.resize(length);
 
-        SamsungIPC::throwErrno();
+    ssize_t bytes = file.read(&data[0], length);
+    if((unsigned int) bytes != length) {
+        Log::panic("Short read");
     }
 
-    std::string out;
-    out.assign(data.get(), length);
-    return out;
+    return true;
 }
 
 // TODO: MD5 checking.
 
-std::string HAL::AndroidFileSystem::readNVData() {
+bool HAL::AndroidFileSystem::readNVData(std::vector<char> &nvdata) {
+    if(access(m_nvdata.c_str(), F_OK) == -1)
+        return false;
+
     HAL::NativeFile file = HAL::NativeFile::open(m_nvdata, O_RDONLY);
 
-    std::auto_ptr<char> data(new char[NVDATA_SIZE]);
-    ssize_t bytes = file.read(data.get(), NVDATA_SIZE);
-    if(bytes != NVDATA_SIZE) {
-        errno = EIO;
+    nvdata.resize(NVDATA_SIZE);
 
-        SamsungIPC::throwErrno();
-    }
+    ssize_t bytes = file.read(&nvdata[0], NVDATA_SIZE);
+    if(bytes != NVDATA_SIZE)
+        Log::panic("Short read");
 
-    std::string out;
-    out.assign(data.get(), NVDATA_SIZE);
-    return out;
+    return true;
 }
 
-void HAL::AndroidFileSystem::writeNVData(const std::string &data) {
+bool HAL::AndroidFileSystem::writeNVData(const std::vector<char> &nvdata) {
+#if 0
     HAL::NativeFile file = HAL::NativeFile::open(m_nvdata, O_WRONLY | O_TRUNC | O_CREAT, 0600);
 
-    ssize_t bytes = file.write(data.data(), data.length());
+    ssize_t bytes = file.write(&nvdata[0], nvdata.size());
 
-    if(bytes != (ssize_t) data.length()) {
-        errno = EIO;
+    if(bytes != (ssize_t) nvdata.size())
+        Log::panic("Short write");
+#else
+    Log::error("AndroidFileSystem::writeNVData: disabled for safety.");
 
-        SamsungIPC::throwErrno();
-    }
+    return false;
+#endif
 }
 

@@ -21,9 +21,9 @@
 #include "MessageInspector.h"
 #endif
 
+#include "Log.h"
 #include "Utilities.h"
 #include "IPCSocketHandler.h"
-#include "Exceptions.h"
 #include "UnsolicitedHandler.h"
 
 using namespace SamsungIPC;
@@ -37,55 +37,51 @@ void IPCSocketHandler::handleMessage(const Message::Header &header,
 
     Message *message = NULL;
 
-    try {
-        message = Message::create(header, data);
+    message = Message::create(header, data);
 
-        if(message == NULL) {
-            throw CommunicationErrorException("Unknown message type");
-        }
+    if(message == NULL) {
+        Log::debug("Unknown message type:");
+        dumpMessage("RX", header, data);
+        Log::debug("");
+
+        return;
+    }
 
 
 #if defined(MESSAGE_INSPECTION)
-        printf("mseq: %02hhX, aseq: %02hhX, response: %02hhX\n",
-        header.mseq, header.aseq, header.responseType);
+    Log::debug("mseq: %02hhX, aseq: %02hhX, response: %02hhX",
+               header.mseq, header.aseq, header.responseType);
 
-        MessageInspector inspector;
-        message->accept(&inspector);
+    MessageInspector inspector;
+    message->accept(&inspector);
 #endif
 
-        switch(header.responseType) {
-            case Message::IPC_CMD_INDI:
-            case Message::IPC_CMD_NOTI:
-            {
-                UnsolicitedHandler handler;
-                message->accept(&handler);
+    switch(header.responseType) {
+        case Message::IPC_CMD_INDI:
+        case Message::IPC_CMD_NOTI:
+        {
+            UnsolicitedHandler handler;
+            message->accept(&handler);
 
-                break;
-            }
-
-            case Message::IPC_CMD_RESP:
-                printf("Message %p is response for 0x%02hhX\n", message,
-                       header.aseq);
-
-                break;
+            break;
         }
 
-    } catch(std::exception &e) {
-        fprintf(stderr, "IPCSocketHandler::handleMessage: processing of message failed: %s\n", e.what());
-        dumpMessage("RX", header, data);
-        fputs("\n", stderr);
+        case Message::IPC_CMD_RESP:
+            Log::debug("Message %p is response for 0x%02hhX", message,
+                        header.aseq);
+
+            break;
     }
 
-    if(message)
-        delete message;
+    delete message;
 }
 
 void IPCSocketHandler::dumpMessage(const char *type, const Message::Header &header,
                                    const void *data) {
 
-    printf("%s: %hu bytes, mseq: %02hhX, aseq: %02hhX, %02hhX, %02hhX, %02hhX\n",
-           type, header.length, header.mseq, header.aseq, header.mainCommand,
-           header.subCommand, header.responseType);
+    Log::debug("%s: %hu bytes, mseq: %02hhX, aseq: %02hhX, %02hhX, %02hhX, %02hhX",
+               type, header.length, header.mseq, header.aseq, header.mainCommand,
+               header.subCommand, header.responseType);
 
     if(header.length > sizeof(Message::Header))
         dump(data, header.length - sizeof(Message::Header));

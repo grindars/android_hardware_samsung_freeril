@@ -26,11 +26,10 @@ namespace SamsungIPC {
     class WorkerThread {
     public:
         WorkerThread();
-        ~WorkerThread();
+        virtual ~WorkerThread();
 
         int wait();
         void start();
-        void terminate();
 
     protected:
         virtual int run() = 0;

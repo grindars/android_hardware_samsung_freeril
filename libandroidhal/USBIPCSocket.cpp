@@ -18,13 +18,14 @@
 
 #include <fcntl.h>
 #include <errno.h>
-#include <CStyleException.h>
+#include <Log.h>
 
 #include "USBIPCTransport.h"
 #include "USBIPCSocket.h"
 #include "NativeFile.h"
 
 using namespace HAL;
+using namespace SamsungIPC;
 
 USBIPCSocket::USBIPCSocket(const std::string &name, USBIPCTransport *transport) :
     m_file(new NativeFile(NativeFile::open(name, O_RDWR, 0))),
@@ -39,20 +40,16 @@ USBIPCSocket::~USBIPCSocket() {
 }
 
 ssize_t USBIPCSocket::send(const void *buf, size_t size) {
-    if(m_file == NULL) {
-        errno = EBADF;
-        SamsungIPC::throwErrno();
-    }
+    if(m_file == NULL)
+        Log::panic("Socket isn't open");
 
     return m_file->write(buf, size);
 }
 
 // NOTE: not signal-safe.
 ssize_t USBIPCSocket::recv(void *buf, size_t size, int timeout) {
-    if(m_file == NULL) {
-        errno = EBADF;
-        SamsungIPC::throwErrno();
-    }
+    if(m_file == NULL)
+        Log::panic("Socket isn't open");
 
     if(timeout != -1) {
         fd_set read_set;
@@ -65,7 +62,7 @@ ssize_t USBIPCSocket::recv(void *buf, size_t size, int timeout) {
         int ret = select(m_file->fd() + 1, &read_set, NULL, NULL, &val);
 
         if(ret == -1)
-            SamsungIPC::throwErrno();
+            Log::panicErrno("select");
         else if(ret == 0)
             return 0;
     }
@@ -75,8 +72,7 @@ ssize_t USBIPCSocket::recv(void *buf, size_t size, int timeout) {
 
 void USBIPCSocket::close() {
     if(m_file == NULL) {
-        errno = EBADF;
-        SamsungIPC::throwErrno();
+        Log::panic("Socket isn't open");
     }
 
     delete m_file;
@@ -85,8 +81,7 @@ void USBIPCSocket::close() {
 
 int USBIPCSocket::fd() const {
     if(m_file == NULL) {
-        errno = EBADF;
-        SamsungIPC::throwErrno();
+        Log::panic("Socket isn't open");
     }
 
     return m_file->fd();

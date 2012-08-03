@@ -35,8 +35,8 @@ namespace HAL {
                         const std::string &ehci_directory);
         virtual ~USBIPCTransport();
 
-        virtual void connect();
-        virtual void redetect();
+        virtual bool connect();
+        virtual bool redetect();
 
         virtual SamsungIPC::IIPCSocket *createSocket(SamsungIPC::IIPCTransport::Channel channel);
 
@@ -45,8 +45,8 @@ namespace HAL {
         void socketDestroyed(USBIPCSocket *socket);
 
     private:
-        void toggleTransport(bool keepModem);
-        void waitForWakeup(bool state);
+        bool toggleTransport(bool keepModem);
+        bool waitForWakeup(bool state);
         void setLink(bool up, bool keepModem);
         bool isLinkUp();
         bool isWokenUp();

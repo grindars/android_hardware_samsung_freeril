@@ -19,23 +19,23 @@
 #include <errno.h>
 
 #include "Mutex.h"
-#include "CStyleException.h"
+#include "Log.h"
 
 using namespace SamsungIPC;
 
 Mutex::Mutex() {
-    if(pthread_mutex_init(&m_mutex, NULL) == -1)
-        throwErrno();
+    if(pthread_mutex_init(&m_mutex, NULL) == -1) 
+        Log::panicErrno("pthread_mutex_init");
 }
 
 Mutex::~Mutex() {
     if(pthread_mutex_destroy(&m_mutex) == -1)
-        throwErrno();
+        Log::panicErrno("pthread_mutex_destroy");
 }
 
 void Mutex::lock() {
     if(pthread_mutex_lock(&m_mutex) == -1)
-        throwErrno();
+        Log::panicErrno("pthread_mutex_lock");
 }
 
 bool Mutex::tryLock() {
@@ -44,13 +44,13 @@ bool Mutex::tryLock() {
     if(ret == -1 && errno == EBUSY)
         return false;
     else if(ret == -1)
-        throwErrno();
+        Log::panicErrno("pthread_mutex_trylock");        
 
     return true;
 }
 
 void Mutex::unlock() {
-    if(pthread_mutex_unlock(&m_mutex) == -1)
-        throwErrno();
+    if(pthread_mutex_unlock(&m_mutex) == -1) 
+        Log::panicErrno("pthread_mutex_unlock");        
 }
 

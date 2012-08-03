@@ -19,21 +19,22 @@
 #include <stdio.h>
 
 #include "UnsolicitedHandler.h"
+#include "Log.h"
 
 using namespace SamsungIPC;
 
 void UnsolicitedHandler::visit(Messages::PowerCompleted *msg) {
-    printf("PowerCompleted: %p\n", msg);
+    Log::debug("PowerCompleted: %p\n", msg);
 }
 
 void UnsolicitedHandler::visit(Messages::PhonePowerOff *msg) {
-    printf("PhonePowerOff: %p\n", msg);
+    Log::debug("PhonePowerOff: %p\n", msg);
 }
 
 void UnsolicitedHandler::visit(Messages::PhoneReset *msg) {
-    printf("PhoneReset: %p\n", msg);
+    Log::debug("PhoneReset: %p\n", msg);
 }
 
 void UnsolicitedHandler::visit(Messages::LPMToNormalCompleted *msg) {
-    printf("LPMToNormalCompleted: %p\n", msg);
+    Log::debug("LPMToNormalCompleted: %p\n", msg);
 }
