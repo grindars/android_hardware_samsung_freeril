@@ -16,23 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
+#include <string.h>
 
-#ifndef __SAMSUNGIPC__IIPCSOCKET__H__
-#define __SAMSUNGIPC__IIPCSOCKET__H__
+#include "CStyleException.h"
 
-#include <sys/types.h>
+using namespace SamsungIPC;
 
-namespace SamsungIPC {
-    class IIPCSocket {
-    public:
-        virtual ~IIPCSocket() {};
-
-        virtual void close() = 0;
-        virtual ssize_t send(const void *buf, size_t size) = 0;
-        virtual ssize_t recv(void *buf, size_t size, int timeout = 1000) = 0;
-
-        virtual int fd() const = 0;
-    };
+CStyleException::CStyleException() {
+    m_error = strerror(errno);
 }
 
-#endif
+CStyleException::~CStyleException() throw() {
+
+}
+
+const char *CStyleException::what() const throw() {
+    return m_error.c_str();
+}

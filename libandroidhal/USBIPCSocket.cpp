@@ -18,11 +18,11 @@
 
 #include <fcntl.h>
 #include <errno.h>
+#include <CStyleException.h>
 
 #include "USBIPCTransport.h"
 #include "USBIPCSocket.h"
 #include "NativeFile.h"
-#include "CStyleException.h"
 
 using namespace HAL;
 
@@ -41,7 +41,7 @@ USBIPCSocket::~USBIPCSocket() {
 ssize_t USBIPCSocket::send(const void *buf, size_t size) {
     if(m_file == NULL) {
         errno = EBADF;
-        HAL::throwErrno();
+        SamsungIPC::throwErrno();
     }
 
     return m_file->write(buf, size);
@@ -51,7 +51,7 @@ ssize_t USBIPCSocket::send(const void *buf, size_t size) {
 ssize_t USBIPCSocket::recv(void *buf, size_t size, int timeout) {
     if(m_file == NULL) {
         errno = EBADF;
-        HAL::throwErrno();
+        SamsungIPC::throwErrno();
     }
 
     if(timeout != -1) {
@@ -65,7 +65,7 @@ ssize_t USBIPCSocket::recv(void *buf, size_t size, int timeout) {
         int ret = select(m_file->fd() + 1, &read_set, NULL, NULL, &val);
 
         if(ret == -1)
-            HAL::throwErrno();
+            SamsungIPC::throwErrno();
         else if(ret == 0)
             return 0;
     }
@@ -76,7 +76,7 @@ ssize_t USBIPCSocket::recv(void *buf, size_t size, int timeout) {
 void USBIPCSocket::close() {
     if(m_file == NULL) {
         errno = EBADF;
-        HAL::throwErrno();
+        SamsungIPC::throwErrno();
     }
 
     delete m_file;
@@ -86,7 +86,7 @@ void USBIPCSocket::close() {
 int USBIPCSocket::fd() const {
     if(m_file == NULL) {
         errno = EBADF;
-        HAL::throwErrno();
+        SamsungIPC::throwErrno();
     }
 
     return m_file->fd();

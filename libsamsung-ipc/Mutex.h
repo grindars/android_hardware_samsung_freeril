@@ -16,22 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __MUTEX__H__
+#define __MUTEX__H__
 
-#ifndef __SAMSUNGIPC__IIPCSOCKET__H__
-#define __SAMSUNGIPC__IIPCSOCKET__H__
-
-#include <sys/types.h>
+#include <pthread.h>
 
 namespace SamsungIPC {
-    class IIPCSocket {
+    class Mutex {
     public:
-        virtual ~IIPCSocket() {};
+        Mutex();
+        ~Mutex();
 
-        virtual void close() = 0;
-        virtual ssize_t send(const void *buf, size_t size) = 0;
-        virtual ssize_t recv(void *buf, size_t size, int timeout = 1000) = 0;
+        void lock();
+        bool tryLock();
 
-        virtual int fd() const = 0;
+        void unlock();
+
+    private:
+        pthread_mutex_t m_mutex;
     };
 }
 

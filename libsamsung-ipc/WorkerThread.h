@@ -16,22 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __WORKER_THREAD__H__
+#define __WORKER_THREAD__H__
 
-#ifndef __SAMSUNGIPC__IIPCSOCKET__H__
-#define __SAMSUNGIPC__IIPCSOCKET__H__
-
-#include <sys/types.h>
+#include "WorkerThread.h"
+#include <pthread.h>
 
 namespace SamsungIPC {
-    class IIPCSocket {
+    class WorkerThread {
     public:
-        virtual ~IIPCSocket() {};
+        WorkerThread();
+        ~WorkerThread();
 
-        virtual void close() = 0;
-        virtual ssize_t send(const void *buf, size_t size) = 0;
-        virtual ssize_t recv(void *buf, size_t size, int timeout = 1000) = 0;
+        int wait();
+        void start();
+        void terminate();
 
-        virtual int fd() const = 0;
+    protected:
+        virtual int run() = 0;
+
+    private:
+        static void *threadRoutine(void *arg);
+
+        pthread_t m_thread;
     };
 }
 

@@ -29,6 +29,7 @@ namespace SamsungIPC {
     class IFileSystem;
     class IIPCSocket;
     class IProgressCallback;
+    class IPCWorkerThread;
 
     class SamsungModem {
     public:
@@ -37,6 +38,8 @@ namespace SamsungIPC {
 
         void boot();
         void dump(std::ostream &stream, IProgressCallback *callback = 0);
+
+        void initialize();
 
     private:
         enum {
@@ -86,6 +89,7 @@ namespace SamsungIPC {
 
         IIPCTransport *m_ipctransport;
         IFileSystem *m_filesystem;
+        IPCWorkerThread *m_worker;
     };
 }
 

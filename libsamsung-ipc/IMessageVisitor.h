@@ -1,5 +1,5 @@
 /*
- * Free HAL implementation for Samsung Android-based smartphones.
+ * Free RIL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,19 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>
-#include <string.h>
+#ifndef __IMESSAGE_VISITOR__H__
+#define __IMESSAGE_VISITOR__H__
 
-#include "CStyleException.h"
+namespace SamsungIPC {
 
-HAL::CStyleException::CStyleException() {
-    m_error = strerror(errno);
+namespace Messages {
+    class PowerCompleted;
+    class PhonePowerOff;
+    class PhoneReset;
+    class LPMToNormalCompleted;
 }
 
-HAL::CStyleException::~CStyleException() throw() {
-
+class IMessageVisitor {
+public:
+    virtual void visit(Messages::PowerCompleted *msg) = 0;
+    virtual void visit(Messages::PhonePowerOff *msg) = 0;
+    virtual void visit(Messages::PhoneReset *msg) = 0;
+    virtual void visit(Messages::LPMToNormalCompleted *msg) = 0;
+};
 }
 
-const char *HAL::CStyleException::what() const throw() {
-    return m_error.c_str();
-}
+#endif

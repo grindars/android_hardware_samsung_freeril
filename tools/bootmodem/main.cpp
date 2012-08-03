@@ -19,6 +19,7 @@
 #include <SamsungModem.h>
 #include <AndroidHAL.h>
 #include <stdio.h>
+#include <poll.h>
 
 #define MAX_BOOT_TRIES  4
 
@@ -26,6 +27,9 @@ int main(void) {
     HAL::AndroidHAL hal;
 
     SamsungIPC::SamsungModem modem(&hal);
+
+    puts("Booting modem\n");
+
     int bootTry = 0;
     do {
         try {
@@ -41,7 +45,19 @@ int main(void) {
         }
     } while(1);
 
+    puts("Initializing modem");
+
+    try {
+        modem.initialize();
+    } catch(std::exception &e) {
+        fprintf(stderr, "Modem initialization failed: %s\n", e.what());
+
+        return 1;
+    }
+
     puts("Modem operational.");
+
+    poll(NULL, 0, -1);
 
     return 0;
 }

@@ -23,3 +23,4 @@ AM_CPPFLAGS = -I../../libandroidhal -I../../libsamsung-ipc
 AM_CXXFLAGS = -Wall -W -O2
 bootmodem_LDADD = -L../../libandroidhal -L../../libsamsung-ipc \
   -lsamsung-ipc -landroidhal
+bootmodem_LDFLAGS = -pthread

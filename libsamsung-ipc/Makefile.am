@@ -20,5 +20,15 @@ lib_LIBRARIES = libsamsung-ipc.a
 
 libsamsung_ipc_a_SOURCES = SamsungIPCHAL.h SamsungModem.h SamsungModem.cpp \
 	IIPCTransport.h Exceptions.h Exceptions.cpp IIPCSocket.h Utilities.cpp \
-	Utilities.h IProgressCallback.h
+	Utilities.h IProgressCallback.h WorkerThread.h WorkerThread.cpp \
+	IPCWorkerThread.h IPCWorkerThread.cpp CStyleException.h \
+	CStyleException.cpp SocketHandler.h SocketHandler.cpp Mutex.h \
+	Mutex.cpp IPCSocketHandler.h IPCSocketHandler.cpp RFSSocketHandler.h \
+	RFSSocketHandler.cpp Message.h Message.cpp PowerMessages.h \
+	PowerMessages.cpp IMessageVisitor.h UnsolicitedHandler.h \
+	UnsolicitedHandler.cpp
+
 AM_CXXFLAGS = -Wall -W -O2
+
+AM_CPPFLAGS = -DMESSAGE_INSPECTION
+libsamsung_ipc_a_SOURCES += MessageInspector.h MessageInspector.cpp

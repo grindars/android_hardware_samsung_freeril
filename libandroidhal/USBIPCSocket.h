@@ -31,8 +31,6 @@ namespace HAL {
         friend class USBIPCTransport;
         USBIPCSocket(const std::string &name, USBIPCTransport *transport);
 
-        int fd() const;
-
     public:
         virtual ~USBIPCSocket();
 
@@ -40,6 +38,7 @@ namespace HAL {
         virtual ssize_t send(const void *buf, size_t size);
         virtual ssize_t recv(void *buf, size_t size, int timeout = 250);
 
+        virtual int fd() const;
     private:
         NativeFile *m_file;
         USBIPCTransport *m_transport;

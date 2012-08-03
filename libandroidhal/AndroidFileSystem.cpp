@@ -19,10 +19,10 @@
 #include <fcntl.h>
 #include <memory>
 #include <errno.h>
+#include <CStyleException.h>
 
 #include "AndroidFileSystem.h"
 #include "NativeFile.h"
-#include "CStyleException.h"
 
 #define NVDATA_SIZE (2 * 1024 * 1024)
 
@@ -82,7 +82,7 @@ std::string HAL::AndroidFileSystem::getFirmware(SamsungIPC::IFileSystem::Firmwar
     if((unsigned int) bytes != length) {
         errno = EIO;
 
-        HAL::throwErrno();
+        SamsungIPC::throwErrno();
     }
 
     std::string out;
@@ -100,7 +100,7 @@ std::string HAL::AndroidFileSystem::readNVData() {
     if(bytes != NVDATA_SIZE) {
         errno = EIO;
 
-        HAL::throwErrno();
+        SamsungIPC::throwErrno();
     }
 
     std::string out;
@@ -116,7 +116,7 @@ void HAL::AndroidFileSystem::writeNVData(const std::string &data) {
     if(bytes != (ssize_t) data.length()) {
         errno = EIO;
 
-        HAL::throwErrno();
+        SamsungIPC::throwErrno();
     }
 }
 

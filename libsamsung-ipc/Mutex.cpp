@@ -16,23 +16,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
 
-#ifndef __SAMSUNGIPC__IIPCSOCKET__H__
-#define __SAMSUNGIPC__IIPCSOCKET__H__
+#include "Mutex.h"
+#include "CStyleException.h"
 
-#include <sys/types.h>
+using namespace SamsungIPC;
 
-namespace SamsungIPC {
-    class IIPCSocket {
-    public:
-        virtual ~IIPCSocket() {};
-
-        virtual void close() = 0;
-        virtual ssize_t send(const void *buf, size_t size) = 0;
-        virtual ssize_t recv(void *buf, size_t size, int timeout = 1000) = 0;
-
-        virtual int fd() const = 0;
-    };
+Mutex::Mutex() {
+    if(pthread_mutex_init(&m_mutex, NULL) == -1)
+        throwErrno();
 }
 
-#endif
+Mutex::~Mutex() {
+    if(pthread_mutex_destroy(&m_mutex) == -1)
+        throwErrno();
+}
+
+void Mutex::lock() {
+    if(pthread_mutex_lock(&m_mutex) == -1)
+        throwErrno();
+}
+
+bool Mutex::tryLock() {
+    int ret = pthread_mutex_trylock(&m_mutex);
+
+    if(ret == -1 && errno == EBUSY)
+        return false;
+    else if(ret == -1)
+        throwErrno();
+
+    return true;
+}
+
+void Mutex::unlock() {
+    if(pthread_mutex_unlock(&m_mutex) == -1)
+        throwErrno();
+}
+

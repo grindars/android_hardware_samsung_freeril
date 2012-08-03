@@ -18,11 +18,11 @@
 
 lib_LIBRARIES = libandroidhal.a
 
-libandroidhal_a_SOURCES = NativeFile.h NativeFile.cpp CStyleException.h \
-	CStyleException.cpp AndroidHAL.h AndroidHAL.cpp \
-	SysfsControlledDevice.h SysfsControlledDevice.cpp USBIPCTransport.h \
-	USBIPCTransport.cpp USBIPCSocket.h USBIPCSocket.cpp \
-	AndroidFileSystem.cpp AndroidFileSystem.h modem_prj.h
+libandroidhal_a_SOURCES = NativeFile.h NativeFile.cpp AndroidHAL.h \
+	AndroidHAL.cpp SysfsControlledDevice.h SysfsControlledDevice.cpp \
+	USBIPCTransport.h USBIPCTransport.cpp USBIPCSocket.h \
+	USBIPCSocket.cpp AndroidFileSystem.cpp AndroidFileSystem.h \
+	modem_prj.h
 
 AM_CPPFLAGS = -I../libsamsung-ipc
 AM_CXXFLAGS = -Wall -W -O2

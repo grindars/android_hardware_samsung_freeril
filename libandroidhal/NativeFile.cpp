@@ -17,9 +17,9 @@
  */
 
 #include <fcntl.h>
+#include <CStyleException.h>
 
 #include "NativeFile.h"
-#include "CStyleException.h"
 
 HAL::NativeFileData::NativeFileData(int _fd) : refs(1), fd(_fd) {
 
@@ -55,7 +55,7 @@ HAL::NativeFile HAL::NativeFile::open(const std::string &file, int flags,
     int fd = ::open(file.c_str(), flags, mode);
 
     if(fd == -1)
-        throwErrno();
+        SamsungIPC::throwErrno();
 
     return NativeFile(fd);
 }
@@ -64,7 +64,7 @@ ssize_t HAL::NativeFile::read(void *buf, size_t size) {
     ssize_t bytes = ::read(fd(), buf, size);
 
     if(bytes == -1)
-        throwErrno();
+        SamsungIPC::throwErrno();
 
     return bytes;
 }
@@ -73,7 +73,7 @@ ssize_t HAL::NativeFile::write(const void *buf, size_t size) {
     ssize_t bytes = ::write(fd(), buf, size);
 
     if(bytes == -1)
-        throwErrno();
+        SamsungIPC::throwErrno();
 
     return bytes;
 }
@@ -82,7 +82,7 @@ off_t HAL::NativeFile::seek(off_t offset, int whence) {
     off_t ret = ::lseek(fd(), offset, whence);
 
     if(ret == -1)
-        throwErrno();
+        SamsungIPC::throwErrno();
 
     return ret;
 }

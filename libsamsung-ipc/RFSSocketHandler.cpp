@@ -16,23 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "RFSSocketHandler.h"
 
-#ifndef __SAMSUNGIPC__IIPCSOCKET__H__
-#define __SAMSUNGIPC__IIPCSOCKET__H__
+using namespace SamsungIPC;
 
-#include <sys/types.h>
+RFSSocketHandler::RFSSocketHandler(IIPCSocket *socket) : SocketHandler(socket) {
 
-namespace SamsungIPC {
-    class IIPCSocket {
-    public:
-        virtual ~IIPCSocket() {};
-
-        virtual void close() = 0;
-        virtual ssize_t send(const void *buf, size_t size) = 0;
-        virtual ssize_t recv(void *buf, size_t size, int timeout = 1000) = 0;
-
-        virtual int fd() const = 0;
-    };
 }
-
-#endif

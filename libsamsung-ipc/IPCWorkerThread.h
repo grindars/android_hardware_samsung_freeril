@@ -1,5 +1,5 @@
 /*
- * Free HAL implementation for Samsung Android-based smartphones.
+ * Free RIL implementation for Samsung Android-based smartphones.
  * Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,25 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __ANDROIDHAL__CSTYLEXCEPTION__H__
-#define __ANDROIDHAL__CSTYLEXCEPTION__H__
+#ifndef __IPC_WORKER_THREAD__H__
+#define __IPC_WORKER_THREAD__H__
 
-#include <exception>
-#include <string>
+#include <list>
 
-namespace HAL {
-    class CStyleException: public std::exception {
+#include "WorkerThread.h"
+
+namespace SamsungIPC {
+    class SocketHandler;
+
+    class IPCWorkerThread: public WorkerThread {
     public:
-        CStyleException();
-        virtual ~CStyleException() throw();
+        IPCWorkerThread();
 
-        virtual const char *what() const throw();
+        void addHandler(SocketHandler *handler);
+        void removeHandler(SocketHandler *handler);
+
+    protected:
+        virtual int run();
 
     private:
-        std::string m_error;
-    };
+        void dispatchEvents();
 
-    inline void throwErrno() { throw CStyleException(); }
+        std::list<SocketHandler *> m_handlers;
+    };
 }
 
 #endif

@@ -16,22 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef __UNSOLICITED_HANDLER__H__
+#define __UNSOLICITED_HANDLER__H__
 
-#ifndef __SAMSUNGIPC__IIPCSOCKET__H__
-#define __SAMSUNGIPC__IIPCSOCKET__H__
-
-#include <sys/types.h>
+#include "IMessageVisitor.h"
 
 namespace SamsungIPC {
-    class IIPCSocket {
+    class UnsolicitedHandler: public IMessageVisitor {
     public:
-        virtual ~IIPCSocket() {};
-
-        virtual void close() = 0;
-        virtual ssize_t send(const void *buf, size_t size) = 0;
-        virtual ssize_t recv(void *buf, size_t size, int timeout = 1000) = 0;
-
-        virtual int fd() const = 0;
+        virtual void visit(Messages::PowerCompleted *msg);
+        virtual void visit(Messages::PhonePowerOff *msg);
+        virtual void visit(Messages::PhoneReset *msg);
+        virtual void visit(Messages::LPMToNormalCompleted *msg);
     };
 }
 

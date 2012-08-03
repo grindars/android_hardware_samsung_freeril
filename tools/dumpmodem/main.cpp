@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
         stream.open(output.c_str(), std::ios_base::binary | std::ios_base::out |
                                     std::ios_base::trunc);
         if(stream.fail())
-            HAL::throwErrno();
+            SamsungIPC::throwErrno();
 
         ConsoleProgressCallback callback;
         modem.dump(stream, &callback);

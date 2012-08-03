@@ -24,6 +24,10 @@
 #include "IFileSystem.h"
 #include "Utilities.h"
 #include "IProgressCallback.h"
+#include "IPCWorkerThread.h"
+#include "CStyleException.h"
+#include "IPCSocketHandler.h"
+#include "RFSSocketHandler.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -40,6 +44,13 @@ SamsungModem::SamsungModem(SamsungIPC::ISamsungIPCHAL *hal) {
 }
 
 SamsungModem::~SamsungModem() {
+    if(m_worker) {
+        printf("Requesting worker stop\n");
+
+        m_worker->wait();
+        delete m_worker;
+    }
+
     delete m_ipctransport;
     delete m_filesystem;
 }
@@ -95,7 +106,7 @@ void SamsungModem::dump(std::ostream &stream, IProgressCallback *progress) {
 
         stream.write(buf.get(), bytes);
         if(stream.bad())
-            throw InternalErrorException(strerror(errno));
+            SamsungIPC::throwErrno();
 
         total += bytes;
         if(progress)
@@ -300,3 +311,11 @@ void SamsungModem::expectAck(IIPCSocket *socket, const unsigned char *data,
         throw TimeoutException("Valid ACK timeout");
 }
 
+void SamsungModem::initialize() {
+    m_worker = new IPCWorkerThread();
+
+    m_worker->addHandler(new IPCSocketHandler(m_ipctransport->createSocket(IIPCTransport::IPC)));
+//    m_worker->addHandler(new RFSSocketHandler(m_ipctransport->createSocket(IIPCTransport::RFS)));
+
+    m_worker->start();
+}

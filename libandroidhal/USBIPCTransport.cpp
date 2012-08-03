@@ -19,10 +19,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <Exceptions.h>
+#include <CStyleException.h>
 
 #include "USBIPCTransport.h"
 #include "USBIPCSocket.h"
-#include "CStyleException.h"
 #include "modem_prj.h"
 
 using namespace HAL;
@@ -64,7 +64,7 @@ SamsungIPC::IIPCSocket *USBIPCTransport::createSocket(SamsungIPC::IIPCTransport:
 
         default:
             errno = EINVAL;
-            HAL::throwErrno();
+            SamsungIPC::throwErrno();
 
             return NULL;
     }
@@ -84,20 +84,20 @@ void USBIPCTransport::setLink(bool up, bool keepModem) {
             ret = ioctl(m_bootSocket->fd(), IOCTL_MODEM_OFF);
 
         if(ret == -1)
-            HAL::throwErrno();
+            SamsungIPC::throwErrno();
     }
 
     ret = ioctl(m_controlFile.fd(), IOCTL_LINK_CONTROL_ENABLE, &active);
 
     if(ret == -1)
-        HAL::throwErrno();
+        SamsungIPC::throwErrno();
 
     write("ehci_power", active ? "1" : "0");
 
     ret = ioctl(m_controlFile.fd(), IOCTL_LINK_CONTROL_ACTIVE, &active);
 
     if(ret == -1)
-        HAL::throwErrno();
+        SamsungIPC::throwErrno();
 }
 
 
@@ -105,7 +105,7 @@ bool USBIPCTransport::isLinkUp() {
     int ret = ioctl(m_controlFile.fd(), IOCTL_LINK_CONNECTED);
 
     if(ret == -1)
-        HAL::throwErrno();
+        SamsungIPC::throwErrno();
 
     return ret != 0;
 }
@@ -114,7 +114,7 @@ bool USBIPCTransport::isWokenUp() {
     int ret = ioctl(m_controlFile.fd(), IOCTL_LINK_GET_HOSTWAKE);
 
     if(ret == -1)
-        HAL::throwErrno();
+        SamsungIPC::throwErrno();
 
     return ret == 0;
 }
