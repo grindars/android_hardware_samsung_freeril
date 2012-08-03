@@ -24,11 +24,12 @@ LOCAL_SRC_FILES:= \
     SocketHandler.cpp Utilities.cpp IPCWorkerThread.cpp \
     MessageInspector.cpp PowerMessages.cpp SamsungModem.cpp \
     UnsolicitedHandler.cpp WorkerThread.cpp Log.cpp LogSink.cpp \
-    StdoutLogSink.cpp
+    StdoutLogSink.cpp Semaphore.cpp
 
 LOCAL_MODULE = libSamsungIPC
 LOCAL_LDLIBS = -lpthread
 LOCAL_SHARED_LIBRARIES = libstlport
 LOCAL_C_INCLUDES = external/stlport/stlport bionic
+LOCAL_CFLAGS = -fvisibility=hidden
 
 include $(BUILD_STATIC_LIBRARY)

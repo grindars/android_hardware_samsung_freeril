@@ -16,18 +16,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := main.cpp
+LOCAL_SRC_FILES = ril.cpp RIL.cpp AndroidLogSink.cpp Request.cpp \
+                  RequestQueue.cpp RequestQueueWorkerThread.cpp \
+                  RequestHandler.cpp
 
-LOCAL_LDLIBS = -lpthread
-LOCAL_SHARED_LIBRARIES = libstlport
-LOCAL_C_INCLUDES = external/stlport/stlport bionic $(LOCAL_PATH)/../../libandroidhal $(LOCAL_PATH)/../../libsamsung-ipc
-LOCAL_STATIC_LIBRARIES = libSamsungIPC libAndroidHAL
-
-LOCAL_MODULE := bootmodem
-# Should be debug, actually.
+LOCAL_LDLIBS += -lpthread
+LOCAL_MODULE := libril-freei9100-1
 LOCAL_MODULE_TAGS := optional
+LOCAL_SHARED_LIBRARIES = libstlport liblog
+LOCAL_C_INCLUDES = external/stlport/stlport bionic $(LOCAL_PATH)/../libandroidhal $(LOCAL_PATH)/../libsamsung-ipc
+LOCAL_STATIC_LIBRARIES = libSamsungIPC libAndroidHAL
+LOCAL_CFLAGS = -fvisibility=hidden -DRIL_SHLIB
 
-include $(BUILD_EXECUTABLE)
+include $(BUILD_SHARED_LIBRARY)
