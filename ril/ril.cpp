@@ -64,7 +64,7 @@ static void requestThunk(int request, void *data, size_t datalen, RIL_Token t) {
 }
 
 static RIL_RadioState stateRequestThunk() {
-    return ril->stateRequest();
+    return ril->radioState();
 }
 
 static int supportsThunk(int requestCode) {

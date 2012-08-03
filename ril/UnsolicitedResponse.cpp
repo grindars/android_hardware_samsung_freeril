@@ -16,18 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __ICOMPLETION_HANDLER__H__
-#define __ICOMPLETION_HANDLER__H__
 
-#include <telephony/ril.h>
+#include "UnsolicitedResponse.h"
 
-class ICompletionHandler {
-public:
-    virtual ~ICompletionHandler() {}
+UnsolicitedResponse::UnsolicitedResponse(int code, const std::vector<char> &data) :
+    m_code(code), m_data(data) {
 
-    virtual void completed(RIL_Token t, RIL_Errno e,
-                           const void *response, size_t responselen) = 0;
-    virtual void unsolicited(int code, const void *data, size_t datalen) = 0;
-};
-
-#endif
+    }

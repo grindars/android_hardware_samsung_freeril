@@ -32,6 +32,7 @@ class ICompletionHandler;
 class IRequestHandler;
 
 class Request;
+class UnsolicitedResponse;
 
 class RequestQueue {
 public:
@@ -41,6 +42,7 @@ public:
     void request(int code, const void *data, size_t data_size, RIL_Token t);
     void cancel(RIL_Token t);
     bool supports(int code);
+    void enqueue(UnsolicitedResponse *response);
 
 private:
     friend class RequestQueueWorkerThread;
@@ -50,6 +52,7 @@ private:
     inline ICompletionHandler *handler() const { return m_handler; }
     inline IRequestHandler *exec() const { return m_exec; }
 
+    UnsolicitedResponse *getUnsolicited();
     Request *getReadyRequest();
 
 private:
@@ -61,6 +64,7 @@ private:
     ICompletionHandler *m_handler;
     IRequestHandler *m_exec;
     std::list<Request *> m_queue, m_completionQueue;
+    std::list<UnsolicitedResponse *> m_unsolicitedQueue;
     SamsungIPC::Mutex m_queueMutex;
     SamsungIPC::Semaphore m_queueSemaphore;
     RequestQueueWorkerThread m_worker;

@@ -23,6 +23,7 @@
 #include "Request.h"
 #include "ICompletionHandler.h"
 #include "IRequestHandler.h"
+#include "UnsolicitedResponse.h"
 
 using namespace SamsungIPC;
 
@@ -38,22 +39,31 @@ int RequestQueueWorkerThread::run() {
         if(m_queue->closeDown())
             break;
 
-        Request *request = m_queue->getReadyRequest();
+        UnsolicitedResponse *unsolicited = m_queue->getUnsolicited();
+        if(unsolicited) {
+            const std::vector<char> &data = unsolicited->data();
 
-        if(request == NULL) {
-            continue;
-        }
+            m_queue->handler()->unsolicited(unsolicited->code(),
+                                            &data[0], data.size());
 
-        if(request->state() == Request::Finished) {
+            delete unsolicited;
 
-            const std::vector<char> &data = request->reply();
-
-            m_queue->handler()->completed(request->token(), request->errno(),
-                                          &data[0], data.size());
-
-            delete request;
         } else {
-            m_queue->exec()->handle(request);
+            Request *request = m_queue->getReadyRequest();
+
+            if(request != NULL) {
+                if(request->state() == Request::Finished) {
+
+                    const std::vector<char> &data = request->reply();
+
+                    m_queue->handler()->completed(request->token(), request->errno(),
+                                                &data[0], data.size());
+
+                    delete request;
+                } else {
+                    m_queue->exec()->handle(request);
+                }
+            }
         }
     }
 

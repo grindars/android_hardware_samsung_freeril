@@ -142,3 +142,30 @@ void RequestQueue::completeRequest(Request *request) {
 bool RequestQueue::supports(int code) {
     return m_exec->supports(code);
 }
+
+void RequestQueue::enqueue(UnsolicitedResponse *response) {
+    m_queueMutex.lock();
+
+    m_unsolicitedQueue.push_back(response);
+    m_queueSemaphore.give();
+
+    m_queueMutex.unlock();
+}
+
+UnsolicitedResponse *RequestQueue::getUnsolicited() {
+    m_queueMutex.lock();
+
+    UnsolicitedResponse *response;
+
+    if(m_unsolicitedQueue.size() == 0)
+        response = NULL;
+    else {
+        response = m_unsolicitedQueue.front();
+        m_unsolicitedQueue.pop_front();
+    }
+
+    m_queueMutex.unlock();
+
+    return response;
+}
+

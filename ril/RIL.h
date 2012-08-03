@@ -34,22 +34,31 @@ namespace SamsungIPC {
 
 class RequestQueue;
 class RequestHandler;
+class UnsolicitedResponse;
 
 class RIL: public ICompletionHandler {
 public:
     RIL(const struct RIL_Env *env);
     ~RIL();
 
+    inline RIL_RadioState radioState() {
+        return m_radioState;
+    }
+
+    void setRadioState(RIL_RadioState state);
+
     bool initialize(int argc, char **argv);
 
     void request(int request, void *data, size_t datalen, RIL_Token t);
-    RIL_RadioState stateRequest();
     int supports(int requestCode);
     void cancel(RIL_Token t);
     const char *getVersion();
 
     virtual void completed(RIL_Token t, RIL_Errno e,
                            const void *response, size_t responselen);
+    virtual void unsolicited(int code, const void *data, size_t datalen);
+
+    void enqueue(UnsolicitedResponse *response);
 
 private:
     AndroidLogSink m_sink;

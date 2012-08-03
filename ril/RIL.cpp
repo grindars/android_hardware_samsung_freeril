@@ -23,6 +23,7 @@
 #include "RIL.h"
 #include "RequestQueue.h"
 #include "RequestHandler.h"
+#include "UnsolicitedResponse.h"
 
 using namespace SamsungIPC;
 using namespace HAL;
@@ -58,28 +59,14 @@ bool RIL::initialize(int argc, char **argv) {
 }
 
 void RIL::request(int request, void *data, size_t datalen, RIL_Token t) {
-    Log::debug("RIL::request(%d, %p, %u, %p)", request, data, datalen, t);
-
     m_queue->request(request, data, datalen, t);
 }
 
-RIL_RadioState RIL::stateRequest() {
-    Log::debug("RIL::stateRequest() => %d", m_radioState);
-
-    return m_radioState;
-}
-
 int RIL::supports(int requestCode) {
-    int supports = 0;
-
-    Log::debug("RIL::supports(%d) => %d\n", requestCode, supports);
-
-    return supports;
+    return m_handler->supports(requestCode) ? 1 : 0;
 }
 
 void RIL::cancel(RIL_Token t) {
-    Log::debug("RIL::cancel(%p)", t);
-
     m_queue->cancel(t);
 }
 
@@ -93,3 +80,17 @@ void RIL::completed(RIL_Token t, RIL_Errno e,
     m_env->OnRequestComplete(t, e, const_cast<void *>(response), responselen);
 }
 
+void RIL::unsolicited(int code, const void *data, size_t datalen) {
+    m_env->OnUnsolicitedResponse(code, data, datalen);
+}
+
+void RIL::enqueue(UnsolicitedResponse *response) {
+    m_queue->enqueue(response);
+}
+
+void RIL::setRadioState(RIL_RadioState state) {
+    m_radioState = state;
+
+    Log::debug("Radio state changed to %d", m_radioState);
+    enqueue(new UnsolicitedResponse(RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED));
+}
