@@ -30,7 +30,7 @@ int main(void) {
     StdoutLogSink sink;
     (void) sink;
 
-    SamsungIPC::SamsungModem modem(&hal);
+    SamsungIPC::SamsungModem modem(&hal, 0);
 
     Log::info("Booting modem");
 
@@ -40,13 +40,7 @@ int main(void) {
         return 1;
     }
 
-    Log::info("Initializing modem");
-
-    modem.initialize();
-
     puts("Modem operational.");
-
-    poll(NULL, 0, -1);
 
     return 0;
 }

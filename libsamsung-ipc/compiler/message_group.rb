@@ -16,20 +16,38 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-LOCAL_PATH:= $(call my-dir)
-include $(CLEAR_VARS)
+class MessageGroup
+    attr_accessor :id, :type, :messages, :bindings, :unsolicited_messages
 
-LOCAL_SRC_FILES = ril.cpp RIL.cpp AndroidLogSink.cpp Request.cpp \
-                  RequestQueue.cpp RequestQueueWorkerThread.cpp \
-                  RequestHandler.cpp UnsolicitedResponse.cpp
+    def initialize(id, type)
+        @id = id
+        @type = type
+        @messages = []
+        @bindings = {}
+        @unsolicited_messages = []
+    end
 
-LOCAL_LDLIBS += -lpthread
-LOCAL_MODULE := libril-freei9100-1
-LOCAL_MODULE_TAGS := optional
-LOCAL_SHARED_LIBRARIES = libstlport liblog libcutils
-LOCAL_C_INCLUDES = external/stlport/stlport bionic $(LOCAL_PATH)/../libandroidhal $(LOCAL_PATH)/../libsamsung-ipc \
-     $(call intermediates-dir-for,STATIC_LIBRARIES,libSamsungIPC)
-LOCAL_STATIC_LIBRARIES = libSamsungIPC libAndroidHAL
-LOCAL_CFLAGS = -fvisibility=hidden -DRIL_SHLIB
+    def out(id, type, &block)
+        message = Message.new :out, id, type
 
-include $(BUILD_SHARED_LIBRARY)
+        yield message if block_given?
+
+        @messages << message
+    end
+
+    def in(id, type, &block)
+        message = Message.new :in, id, type
+
+        yield message if block_given?
+
+        @messages << message
+    end
+
+    def bind(request, reply)
+        @bindings[request] = reply
+    end
+
+    def unsolicited(reply)
+        @unsolicited_messages << reply
+    end
+end

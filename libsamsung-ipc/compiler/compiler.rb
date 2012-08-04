@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 #
 # Free RIL implementation for Samsung Android-based smartphones.
 # Copyright (C) 2012  Sergey Gridasov <grindars@gmail.com>
@@ -16,20 +17,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-LOCAL_PATH:= $(call my-dir)
-include $(CLEAR_VARS)
+require_relative "field.rb"
+require_relative "message.rb"
+require_relative "message_group.rb"
+require_relative "protocol.rb"
+require_relative "generator.rb"
 
-LOCAL_SRC_FILES = ril.cpp RIL.cpp AndroidLogSink.cpp Request.cpp \
-                  RequestQueue.cpp RequestQueueWorkerThread.cpp \
-                  RequestHandler.cpp UnsolicitedResponse.cpp
+if ARGV.count != 2
+    $stderr.puts "Usage: compiler.rb <DESTINATION DIRECTORY> <SOURCE DIRECTORY>"
 
-LOCAL_LDLIBS += -lpthread
-LOCAL_MODULE := libril-freei9100-1
-LOCAL_MODULE_TAGS := optional
-LOCAL_SHARED_LIBRARIES = libstlport liblog libcutils
-LOCAL_C_INCLUDES = external/stlport/stlport bionic $(LOCAL_PATH)/../libandroidhal $(LOCAL_PATH)/../libsamsung-ipc \
-     $(call intermediates-dir-for,STATIC_LIBRARIES,libSamsungIPC)
-LOCAL_STATIC_LIBRARIES = libSamsungIPC libAndroidHAL
-LOCAL_CFLAGS = -fvisibility=hidden -DRIL_SHLIB
+    exit 1
+end
 
-include $(BUILD_SHARED_LIBRARY)
+protocol = Protocol.new
+
+Dir.foreach(ARGV[1]) do |filename|
+    filename = File.join(ARGV[1], filename)
+
+    if File.file? filename
+        content = File.read filename
+
+        protocol.evaluate content, filename
+    end
+end
+
+generator = Generator.new ARGV[0]
+generator.implement protocol

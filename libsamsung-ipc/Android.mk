@@ -21,15 +21,28 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES:= \
     IPCSocketHandler.cpp Message.cpp Mutex.cpp RFSSocketHandler.cpp \
-    SocketHandler.cpp Utilities.cpp IPCWorkerThread.cpp \
-    MessageInspector.cpp PowerMessages.cpp SamsungModem.cpp \
-    UnsolicitedHandler.cpp WorkerThread.cpp Log.cpp LogSink.cpp \
-    StdoutLogSink.cpp Semaphore.cpp
+    SocketHandler.cpp Utilities.cpp IPCWorkerThread.cpp SamsungModem.cpp \
+    WorkerThread.cpp Log.cpp LogSink.cpp StdoutLogSink.cpp Semaphore.cpp \
+    DataStream.cpp
 
 LOCAL_MODULE = libSamsungIPC
 LOCAL_LDLIBS = -lpthread
 LOCAL_SHARED_LIBRARIES = libstlport
 LOCAL_C_INCLUDES = external/stlport/stlport bionic
 LOCAL_CFLAGS = -fvisibility=hidden
+
+LOCAL_MODULE_CLASS := STATIC_LIBRARIES
+COMPILED_PROTOCOL_PATH := $(call local-intermediates-dir)
+
+GEN := $(addprefix $(COMPILED_PROTOCOL_PATH)/,IUnsolicitedReceiver.h MessageFactory.cpp MessageFactory.h \
+                       Messages.cpp Messages.h MessageTypes.h)
+
+$(GEN): PRIVATE_PATH := $(LOCAL_PATH)
+$(GEN): PRIVATE_CUSTOM_TOOL := $(PRIVATE_PATH)/compiler/compiler.rb $(COMPILED_PROTOCOL_PATH) $(PRIVATE_PATH)/protocol
+$(GEN): $(LOCAL_PATH)/protocol/*.rb $(LOCAL_PATH)/compiler/*.rb
+	echo $(PRIVATE_CUSTOM_TOOL) $(GEN)
+	$(transform-generated-source)
+
+LOCAL_GENERATED_SOURCES = $(GEN)
 
 include $(BUILD_STATIC_LIBRARY)

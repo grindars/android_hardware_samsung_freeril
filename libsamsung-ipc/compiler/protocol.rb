@@ -16,20 +16,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-LOCAL_PATH:= $(call my-dir)
-include $(CLEAR_VARS)
+class Protocol
+    attr_accessor :groups
 
-LOCAL_SRC_FILES = ril.cpp RIL.cpp AndroidLogSink.cpp Request.cpp \
-                  RequestQueue.cpp RequestQueueWorkerThread.cpp \
-                  RequestHandler.cpp UnsolicitedResponse.cpp
+    def initialize
+        @groups = []
+    end
 
-LOCAL_LDLIBS += -lpthread
-LOCAL_MODULE := libril-freei9100-1
-LOCAL_MODULE_TAGS := optional
-LOCAL_SHARED_LIBRARIES = libstlport liblog libcutils
-LOCAL_C_INCLUDES = external/stlport/stlport bionic $(LOCAL_PATH)/../libandroidhal $(LOCAL_PATH)/../libsamsung-ipc \
-     $(call intermediates-dir-for,STATIC_LIBRARIES,libSamsungIPC)
-LOCAL_STATIC_LIBRARIES = libSamsungIPC libAndroidHAL
-LOCAL_CFLAGS = -fvisibility=hidden -DRIL_SHLIB
+    def message_group(id, type, &block)
+        group = MessageGroup.new id, type
 
-include $(BUILD_SHARED_LIBRARY)
+        yield group
+
+        @groups << group
+    end
+
+    def evaluate(source, file)
+        eval source, binding, file, 1
+    end
+end

@@ -17,6 +17,7 @@
  */
 
 #include <Log.h>
+#include <Utilities.h>
 
 #include "RequestQueue.h"
 #include "Request.h"
@@ -42,7 +43,9 @@ RequestQueue::~RequestQueue() {
 }
 
 void RequestQueue::request(int code, const void *data, size_t data_size, RIL_Token t) {
-    Request *request = new Request(code, std::vector<char>((char *)data, (char *) data + data_size), t, this);
+    const char *ptr = (const char *) data;
+
+    Request *request = new Request(code, std::vector<char>(ptr, ptr + data_size), t, this);
 
     m_queueMutex.lock();
     m_queue.push_back(request);

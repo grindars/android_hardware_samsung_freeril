@@ -22,10 +22,14 @@
 #include "SocketHandler.h"
 
 namespace SamsungIPC {
+    class IUnsolicitedReceiver;
+    class Message;
+
     class IPCSocketHandler: public SocketHandler {
     public:
+        IPCSocketHandler(IIPCSocket *socket, IUnsolicitedReceiver *unsolicitedHandler);
 
-        IPCSocketHandler(IIPCSocket *socket);
+        void submit(Message *message);
 
     protected:
         virtual void handleMessage(const Message::Header &header,
@@ -34,6 +38,8 @@ namespace SamsungIPC {
     private:
         static void dumpMessage(const char *type, const Message::Header &header,
                                 const void *data);
+
+        IUnsolicitedReceiver *m_unsolicitedHandler;
     };
 }
 

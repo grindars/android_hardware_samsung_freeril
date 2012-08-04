@@ -24,24 +24,27 @@
 #include "IIPCSocket.h"
 #include "SocketHandler.h"
 #include "Log.h"
+#include "IPCSocketHandler.h"
 
 using namespace SamsungIPC;
 
 IPCWorkerThread::IPCWorkerThread() {
+    if(pipe(m_controlPipe) == -1)
+        Log::panicErrno("pipe");
+}
 
+IPCWorkerThread::~IPCWorkerThread() {
+    close(m_controlPipe[0]);
+    close(m_controlPipe[1]);
 }
 
 int IPCWorkerThread::run() {
-    Log::debug("IPCWorkerThread: started\n");
-    
     dispatchEvents();
-
-    Log::debug("IPCWorkerThread: cleaning up\n");
 
     for(std::list<SocketHandler *>::iterator it = m_handlers.begin(), end = m_handlers.end(); it != end; it++) {
         delete *it;
     }
-    
+
     return 0;
 }
 
@@ -71,10 +74,11 @@ void IPCWorkerThread::dispatchEvents() {
                 FD_SET(fd, &write_set);
         }
 
+        FD_SET(m_controlPipe[0], &read_set);
 
         int ret = select(maxfd + 1, &read_set, &write_set, NULL, NULL);
 
-        if(ret == -1) 
+        if(ret == -1)
             Log::panicErrno("select");
 
         for(std::list<SocketHandler *>::iterator it = m_handlers.begin(), end = m_handlers.end(); it != end; it++) {
@@ -87,5 +91,31 @@ void IPCWorkerThread::dispatchEvents() {
             if(FD_ISSET(fd, &write_set))
                 handler->writable();
         }
+
+        if(FD_ISSET(m_controlPipe[0], &read_set)) {
+            Message *msg;
+
+            int bytes = read(m_controlPipe[0], &msg, sizeof(msg));
+            if(bytes == -1)
+                Log::panicErrno("read(controlPipe)");
+
+            if(msg == NULL) {
+                Log::info("Shutdown requested");
+
+                break;
+            } else {
+                Log::debug("Submitting message %p to IPC handler", msg);
+
+                static_cast<IPCSocketHandler *>(m_handlers.front())->submit(msg);
+            }
+        }
     }
 }
+
+void IPCWorkerThread::submit(Message *message) {
+    int bytes = write(m_controlPipe[1], &message, sizeof(message));
+
+    if(bytes != sizeof(message))
+        Log::panicErrno("write(controlPipe)");
+}
+

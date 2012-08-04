@@ -52,7 +52,7 @@ private:
 private:
     State m_state;
     int m_code;
-    const std::vector<char> &m_data;
+    std::vector<char> m_data;
     RIL_Token m_token;
     RequestQueue *m_queue;
     RIL_Errno m_errno;

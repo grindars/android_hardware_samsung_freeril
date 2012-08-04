@@ -29,9 +29,10 @@ using namespace SamsungIPC;
 using namespace HAL;
 
 RIL::RIL(const struct RIL_Env *env) : m_env(env), m_radioState(RADIO_STATE_UNAVAILABLE),
-    m_hal(new AndroidHAL), m_modem(new SamsungModem(m_hal)) {
+    m_hal(new AndroidHAL) {
 
     m_handler = new RequestHandler(this);
+    m_modem = new SamsungModem(m_hal, m_handler);
     m_queue = new RequestQueue(this, m_handler);
 }
 
@@ -94,3 +95,10 @@ void RIL::setRadioState(RIL_RadioState state) {
     Log::debug("Radio state changed to %d", m_radioState);
     enqueue(new UnsolicitedResponse(RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED));
 }
+
+void RIL::submit(SamsungIPC::Message *message) {
+    Log::debug("Sending message %p to modem", message);
+
+    m_modem->submit(message);
+}
+

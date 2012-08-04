@@ -30,6 +30,7 @@ namespace HAL {
 
 namespace SamsungIPC {
     class SamsungModem;
+    class Message;
 }
 
 class RequestQueue;
@@ -59,6 +60,7 @@ public:
     virtual void unsolicited(int code, const void *data, size_t datalen);
 
     void enqueue(UnsolicitedResponse *response);
+    void submit(SamsungIPC::Message *message);
 
 private:
     AndroidLogSink m_sink;

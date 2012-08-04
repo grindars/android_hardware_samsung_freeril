@@ -16,27 +16,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __IMESSAGE_VISITOR__H__
-#define __IMESSAGE_VISITOR__H__
+#include <string.h>
 
-namespace SamsungIPC {
+#include "DataStream.h"
 
-namespace Messages {
-    class PowerCompleted;
-    class PhonePowerOff;
-    class PhoneReset;
-    class LPMToNormalCompleted;
+using namespace SamsungIPC;
+
+DataStream::DataStream(std::vector<unsigned char> *buffer, Mode mode) : m_buffer(buffer),
+    m_mode(mode), m_ptr(buffer->begin()) {
+
 }
 
-class IMessageVisitor {
-public:
-    virtual ~IMessageVisitor() {}
-    
-    virtual void visit(Messages::PowerCompleted *msg) = 0;
-    virtual void visit(Messages::PhonePowerOff *msg) = 0;
-    virtual void visit(Messages::PhoneReset *msg) = 0;
-    virtual void visit(Messages::LPMToNormalCompleted *msg) = 0;
-};
+
+void DataStream::readRawData(void *data, size_t size) {
+    if(m_mode == Write)
+        throwException();
+
+    size_t remaining = m_buffer->end() - m_ptr;
+    if(remaining < size)
+        throwException();
+
+    memcpy(data, (const unsigned char *) m_ptr, size);
+    m_ptr += size;
 }
 
-#endif
+
+void DataStream::writeRawData(const void *data, size_t size) {
+    if(m_mode == Read)
+        throwException();
+
+    m_buffer->insert(m_ptr, (const char *) data, (const char *) data + size);
+    m_ptr = m_buffer->end();
+}

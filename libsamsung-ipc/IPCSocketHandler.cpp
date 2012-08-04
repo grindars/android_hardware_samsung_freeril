@@ -24,11 +24,14 @@
 #include "Log.h"
 #include "Utilities.h"
 #include "IPCSocketHandler.h"
-#include "UnsolicitedHandler.h"
+#include "MessageFactory.h"
+#include "DataStream.h"
+#include <IUnsolicitedReceiver.h>
 
 using namespace SamsungIPC;
 
-IPCSocketHandler::IPCSocketHandler(IIPCSocket *socket) : SocketHandler(socket) {
+IPCSocketHandler::IPCSocketHandler(IIPCSocket *socket, IUnsolicitedReceiver *unsolicitedHandler) : SocketHandler(socket),
+    m_unsolicitedHandler(unsolicitedHandler) {
 
 }
 
@@ -37,31 +40,41 @@ void IPCSocketHandler::handleMessage(const Message::Header &header,
 
     Message *message = NULL;
 
-    message = Message::create(header, data);
+    message = Messages::Factory::create(header.mainCommand, header.subCommand);
 
     if(message == NULL) {
         Log::debug("Unknown message type:");
         dumpMessage("RX", header, data);
-        Log::debug("");
 
         return;
     }
 
+    std::vector<unsigned char> buffer((unsigned char *) data,
+                                      (unsigned char *) data + header.length - sizeof(Message::Header));
 
-#if defined(MESSAGE_INSPECTION)
-    Log::debug("mseq: %02hhX, aseq: %02hhX, response: %02hhX",
+    DataStream stream(&buffer, DataStream::Read);
+    if(!message->readFromStream(stream) || !stream.atEnd()) {
+        Log::error("Message demarshalling failed:");
+        dumpMessage("RX", header, data);
+
+        delete message;
+
+        return;
+    }
+
+    Log::debug("RX mseq: %02hhX, aseq: %02hhX, response: %02hhX",
                header.mseq, header.aseq, header.responseType);
 
-    MessageInspector inspector;
-    message->accept(&inspector);
-#endif
+    Log::debug("Message: %s", message->inspect().c_str());
 
     switch(header.responseType) {
         case Message::IPC_CMD_INDI:
         case Message::IPC_CMD_NOTI:
         {
-            UnsolicitedHandler handler;
-            message->accept(&handler);
+            if(!message->deliver(m_unsolicitedHandler)) {
+                Log::error("Message %s unexpectly sent with response type %d.",
+                           message->inspect().c_str(), header.responseType);
+            }
 
             break;
         }
@@ -85,4 +98,41 @@ void IPCSocketHandler::dumpMessage(const char *type, const Message::Header &head
 
     if(header.length > sizeof(Message::Header))
         dump(data, header.length - sizeof(Message::Header));
+}
+
+void IPCSocketHandler::submit(Message *message) {
+    Log::debug("IPCSocketHandler: message %p submitted", message);
+
+    std::vector<unsigned char> data;
+    DataStream stream(&data, DataStream::Write);
+
+    Log::debug("Marshalling message");
+
+    if(!message->writeToStream(stream)) {
+        Log::error("Message marshalling failed:\n%s", message->inspect().c_str());
+
+        message->complete(NULL);
+        delete message;
+
+        return;
+    }
+
+    Log::debug("Marshalled into %d bytes", data.size());
+
+    Message::Header header;
+    header.length = sizeof(header) + data.size();
+    header.mseq = 0x01;
+    header.aseq = 0x00;
+    header.mainCommand = message->command();
+    header.subCommand = message->subcommand();
+    header.responseType = Message::IPC_CMD_EXEC;
+
+    Log::debug("TX mseq: %02hhX, aseq: %02hhX, response: %02hhX",
+               header.mseq, header.aseq, header.responseType);
+
+    Log::debug("Message: %s", message->inspect().c_str());
+
+    dumpMessage("TX", header, &data[0]);
+
+    sendMessage(header, &data[0]);
 }

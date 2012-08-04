@@ -38,7 +38,9 @@
 
 using namespace SamsungIPC;
 
-SamsungModem::SamsungModem(SamsungIPC::ISamsungIPCHAL *hal) {
+SamsungModem::SamsungModem(SamsungIPC::ISamsungIPCHAL *hal, IUnsolicitedReceiver *unsolicitedHandler) :
+    m_unsolicitedHandler(unsolicitedHandler) {
+
     m_ipctransport = hal->createIPCTransport();
     m_filesystem = hal->createFilesystem();
 }
@@ -417,8 +419,12 @@ bool SamsungModem::expectAck(IIPCSocket *socket, const unsigned char *data,
 void SamsungModem::initialize() {
     m_worker = new IPCWorkerThread();
 
-    m_worker->addHandler(new IPCSocketHandler(m_ipctransport->createSocket(IIPCTransport::IPC)));
+    m_worker->addHandler(new IPCSocketHandler(m_ipctransport->createSocket(IIPCTransport::IPC), m_unsolicitedHandler));
 //    m_worker->addHandler(new RFSSocketHandler(m_ipctransport->createSocket(IIPCTransport::RFS)));
 
     m_worker->start();
+}
+
+void SamsungModem::submit(Message *message) {
+    m_worker->submit(message);
 }

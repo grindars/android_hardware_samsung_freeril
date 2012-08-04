@@ -25,13 +25,17 @@
 
 namespace SamsungIPC {
     class SocketHandler;
+    class Message;
 
     class IPCWorkerThread: public WorkerThread {
     public:
         IPCWorkerThread();
+        ~IPCWorkerThread();
 
         void addHandler(SocketHandler *handler);
         void removeHandler(SocketHandler *handler);
+
+        void submit(Message *message);
 
     protected:
         virtual int run();
@@ -40,6 +44,7 @@ namespace SamsungIPC {
         void dispatchEvents();
 
         std::list<SocketHandler *> m_handlers;
+        int m_controlPipe[2];
     };
 }
 

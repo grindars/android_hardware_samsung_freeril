@@ -45,7 +45,7 @@ namespace SamsungIPC {
                                    const void *data) = 0;
         virtual void handleEOF();
         virtual void handleIOError();
-        
+
         void sendMessage(const Message::Header &header, const void *data);
 
     private:

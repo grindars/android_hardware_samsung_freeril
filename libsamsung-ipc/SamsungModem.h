@@ -31,16 +31,19 @@ namespace SamsungIPC {
     class IIPCSocket;
     class IProgressCallback;
     class IPCWorkerThread;
+    class IUnsolicitedReceiver;
+    class Message;
 
     class SamsungModem {
     public:
-        SamsungModem(ISamsungIPCHAL *hal);
+        SamsungModem(ISamsungIPCHAL *hal, IUnsolicitedReceiver *unsolicitedHandler);
         virtual ~SamsungModem();
 
         bool boot();
         bool dump(std::ostream &stream, IProgressCallback *callback = 0);
 
         void initialize();
+        void submit(Message *message);
 
     private:
         enum {
@@ -91,6 +94,7 @@ namespace SamsungIPC {
         IIPCTransport *m_ipctransport;
         IFileSystem *m_filesystem;
         IPCWorkerThread *m_worker;
+        IUnsolicitedReceiver *m_unsolicitedHandler;
     };
 }
 

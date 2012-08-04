@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
     SamsungIPC::StdoutLogSink sink;
     (void) sink;
 
-    SamsungIPC::SamsungModem modem(&hal);
+    SamsungIPC::SamsungModem modem(&hal, 0);
 
     std::ofstream stream;
     stream.open(output.c_str(), std::ios_base::binary | std::ios_base::out |

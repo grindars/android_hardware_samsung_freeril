@@ -19,19 +19,53 @@
 #ifndef __REQUEST_HANDLER__H__
 #define __REQUEST_HANDLER__H__
 
+#include <telephony/ril.h>
+
 #include "IRequestHandler.h"
+#include <IUnsolicitedReceiver.h>
+
+namespace SamsungIPC {
+    class Message;
+}
 
 class RIL;
 
-class RequestHandler: public IRequestHandler {
+class RequestHandler: public IRequestHandler, public SamsungIPC::IUnsolicitedReceiver {
 public:
     RequestHandler(RIL *ril);
 
     virtual void handle(Request *request);
     virtual bool supports(int request);
 
+    virtual void handle(SamsungIPC::Messages::PwrPhonePowerOnReply *message);
+    virtual void handle(SamsungIPC::Messages::PwrPhonePowerOffReply *message);
+    virtual void handle(SamsungIPC::Messages::PwrPhoneReset *message);
+
 private:
+    struct RequestBinding {
+        RequestBinding(RequestHandler *_handler, Request *_request) : handler(_handler), request(_request) {
+
+        }
+
+        RequestHandler *handler;
+        Request *request;
+    };
+
+    static void radioOnComplete(SamsungIPC::Message *reply, void *arg);
+    static void radioOffComplete(SamsungIPC::Message *reply, void *arg);
+    void handleRadioPower(Request *request);
+
+    static void requestComplete(SamsungIPC::Message *reply, void *arg);
+
+    enum {
+        FirstRequest = RIL_REQUEST_GET_SIM_STATUS,
+        LastRequest = RIL_REQUEST_STK_SEND_ENVELOPE_WITH_STATUS
+    };
+
     RIL *m_ril;
+
+    static void (RequestHandler::*m_requestHandlers[LastRequest - FirstRequest + 1])(Request *request);
+    bool m_radioIsOff;
 };
 
 #endif
