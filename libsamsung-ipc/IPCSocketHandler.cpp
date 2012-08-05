@@ -33,6 +33,10 @@ using namespace SamsungIPC;
 IPCSocketHandler::IPCSocketHandler(IIPCSocket *socket, IUnsolicitedReceiver *unsolicitedHandler) : SocketHandler(socket),
     m_unsolicitedHandler(unsolicitedHandler) {
 
+    for(unsigned char i = 0; i <= 0xFE; i++)
+        m_freeSequenceNumbers.insert(i);
+
+    m_allocationIterator = m_freeSequenceNumbers.begin();
 }
 
 void IPCSocketHandler::handleMessage(const Message::Header &header,
@@ -70,18 +74,48 @@ void IPCSocketHandler::handleMessage(const Message::Header &header,
     switch(header.responseType) {
         case Message::IPC_CMD_INDI:
         case Message::IPC_CMD_NOTI:
-        {
             if(!message->deliver(m_unsolicitedHandler)) {
                 Log::error("Message %s unexpectly sent with response type %d.",
                            message->inspect().c_str(), header.responseType);
             }
 
             break;
-        }
 
         case Message::IPC_CMD_RESP:
-            Log::debug("Message %p is response for 0x%02hhX", message,
-                        header.aseq);
+        {
+            std::map<uint8_t, Message *>::iterator request = m_messagesInAir.find(header.aseq);
+
+            if(request == m_messagesInAir.end()) {
+                Log::error("No message with sequence 0x%02hhX in air", header.aseq);
+            } else {
+                Message *requestMessage = (*request).second;
+
+                m_freeSequenceNumbers.insert(header.aseq);
+                m_messagesInAir.erase(header.aseq);
+
+                if(m_allocationIterator == m_freeSequenceNumbers.end()) {
+                    m_allocationIterator = m_freeSequenceNumbers.begin();
+
+                    if(m_messageQueue.size() > 0) {
+                        Message *queued = m_messageQueue.front();
+                        m_messageQueue.pop_front();
+
+                        submit(queued);
+                    }
+                }
+
+                requestMessage->complete(message);
+                delete requestMessage;
+
+                break;
+            }
+
+            break;
+        }
+
+
+        default:
+            Log::error("Unexpected response type 0x%02hhX", header.responseType);
 
             break;
     }
@@ -92,7 +126,7 @@ void IPCSocketHandler::handleMessage(const Message::Header &header,
 void IPCSocketHandler::dumpMessage(const char *type, const Message::Header &header,
                                    const void *data) {
 
-    Log::debug("%s: %hu bytes, mseq: %02hhX, aseq: %02hhX, %02hhX, %02hhX, %02hhX",
+    Log::debug("%s: %hu bytes, mseq: %02hhX, aseq: %02hhX, cmd: %02hhX, %02hhX, resp: %02hhX",
                type, header.length, header.mseq, header.aseq, header.mainCommand,
                header.subCommand, header.responseType);
 
@@ -103,10 +137,16 @@ void IPCSocketHandler::dumpMessage(const char *type, const Message::Header &head
 void IPCSocketHandler::submit(Message *message) {
     Log::debug("IPCSocketHandler: message %p submitted", message);
 
+    if(m_freeSequenceNumbers.size() == 0) {
+        Log::debug("No free sequence numbers - queueing");
+
+        m_messageQueue.push_back(message);
+
+        return;
+    }
+
     std::vector<unsigned char> data;
     DataStream stream(&data, DataStream::Write);
-
-    Log::debug("Marshalling message");
 
     if(!message->writeToStream(stream)) {
         Log::error("Message marshalling failed:\n%s", message->inspect().c_str());
@@ -117,22 +157,25 @@ void IPCSocketHandler::submit(Message *message) {
         return;
     }
 
-    Log::debug("Marshalled into %d bytes", data.size());
+    std::set<uint8_t>::iterator val = m_allocationIterator++;
+
+    if(m_allocationIterator == m_freeSequenceNumbers.end())
+        m_allocationIterator = m_freeSequenceNumbers.begin();
 
     Message::Header header;
     header.length = sizeof(header) + data.size();
-    header.mseq = 0x01;
+    header.mseq = *val;
     header.aseq = 0x00;
     header.mainCommand = message->command();
     header.subCommand = message->subcommand();
     header.responseType = Message::IPC_CMD_EXEC;
 
+    m_freeSequenceNumbers.erase(val);
+    m_messagesInAir.insert(std::pair<uint8_t, Message *>(header.mseq, message));
+
     Log::debug("TX mseq: %02hhX, aseq: %02hhX, response: %02hhX",
                header.mseq, header.aseq, header.responseType);
-
     Log::debug("Message: %s", message->inspect().c_str());
-
-    dumpMessage("TX", header, &data[0]);
 
     sendMessage(header, &data[0]);
 }

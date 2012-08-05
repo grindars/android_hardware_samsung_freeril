@@ -19,6 +19,7 @@
 class Generator
     TYPE_MAP = {
         u8:   'uint8_t',
+        u16:  'uint16_t',
         data: 'raw'
     }
 
@@ -293,6 +294,10 @@ eos
             virtual std::string inspect() const;
             virtual Message *createResponse() const;
             virtual bool deliver(IUnsolicitedReceiver *receiver);
+
+            static inline bool isTypeOf(Message *message) {
+                return message->command() == #{msg[:command]} && message->subcommand() == #{msg[:type]};
+            }
 
 #{field_enums.join("\n")}
 #{accessors.join("\n")}

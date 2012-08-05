@@ -84,4 +84,11 @@ namespace SamsungIPC {
     };
 }
 
+template<class T> inline T *message_cast(SamsungIPC::Message *message) {
+    if(T::isTypeOf(message))
+        return static_cast<T *>(message);
+    else
+        return 0;
+}
+
 #endif

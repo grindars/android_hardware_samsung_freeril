@@ -92,13 +92,10 @@ void RIL::enqueue(UnsolicitedResponse *response) {
 void RIL::setRadioState(RIL_RadioState state) {
     m_radioState = state;
 
-    Log::debug("Radio state changed to %d", m_radioState);
     enqueue(new UnsolicitedResponse(RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED));
 }
 
 void RIL::submit(SamsungIPC::Message *message) {
-    Log::debug("Sending message %p to modem", message);
-
     m_modem->submit(message);
 }
 

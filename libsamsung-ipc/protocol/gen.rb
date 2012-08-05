@@ -16,25 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-class Message
-    attr_accessor :direction, :id, :type, :fields
+message_group :GEN, 128 do |g|
 
-    def initialize(direction, id, type)
-        @direction = direction
-        @id = id
-        @type = type
-        @fields = []
-    end
+    g.in :COMMAND_COMPLETE, 1 do |m|
+        # Original command header
+        m.u8 :originalCommand
+        m.u8 :originalSubcommand
+        m.u8 :originalResponseType
 
-    def data(name, *parameters)
-        @fields << Field.new(:data, name, parameters[0] || {})
-    end
-
-    def u8(name, *parameters)
-        @fields << Field.new(:u8, name, parameters[0] || {})
-    end
-
-    def u16(name, *parameters)
-        @fields << Field.new(:u16, name, parameters[0] || {})
+        m.u16 :status, :type => :enum, :values => {
+            :SUCCESS => 0x8000
+        }
     end
 end

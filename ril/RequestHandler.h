@@ -37,9 +37,10 @@ public:
     virtual void handle(Request *request);
     virtual bool supports(int request);
 
-    virtual void handle(SamsungIPC::Messages::PwrPhonePowerOnReply *message);
-    virtual void handle(SamsungIPC::Messages::PwrPhonePowerOffReply *message);
+    virtual void handle(SamsungIPC::Messages::PwrPhoneBootComplete *message);
+    virtual void handle(SamsungIPC::Messages::PwrPhonePoweredOff *message);
     virtual void handle(SamsungIPC::Messages::PwrPhoneReset *message);
+    virtual void handle(SamsungIPC::Messages::PwrPhoneModeChanged *message);
 
 private:
     struct RequestBinding {
@@ -51,11 +52,10 @@ private:
         Request *request;
     };
 
-    static void radioOnComplete(SamsungIPC::Message *reply, void *arg);
-    static void radioOffComplete(SamsungIPC::Message *reply, void *arg);
     void handleRadioPower(Request *request);
 
-    static void requestComplete(SamsungIPC::Message *reply, void *arg);
+    static void modeSwitchComplete(SamsungIPC::Message *reply, void *arg);
+    static void radioOffComplete(SamsungIPC::Message *reply, void *arg);
 
     enum {
         FirstRequest = RIL_REQUEST_GET_SIM_STATUS,
@@ -65,7 +65,6 @@ private:
     RIL *m_ril;
 
     static void (RequestHandler::*m_requestHandlers[LastRequest - FirstRequest + 1])(Request *request);
-    bool m_radioIsOff;
 };
 
 #endif

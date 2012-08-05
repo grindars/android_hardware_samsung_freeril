@@ -104,8 +104,6 @@ void IPCWorkerThread::dispatchEvents() {
 
                 break;
             } else {
-                Log::debug("Submitting message %p to IPC handler", msg);
-
                 static_cast<IPCSocketHandler *>(m_handlers.front())->submit(msg);
             }
         }

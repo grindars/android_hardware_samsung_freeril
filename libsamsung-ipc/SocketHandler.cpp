@@ -38,10 +38,6 @@ SocketHandler::~SocketHandler() {
     delete[] m_buf;
     delete m_socket;
 
-    for(std::list<send_record>::iterator it = m_sendQueue.begin(), end = m_sendQueue.end(); it != end; it++) {
-        delete[] (*it).data;
-    }
-
     free(m_reassemblyBuf);
 }
 
@@ -54,7 +50,7 @@ bool SocketHandler::wantRead() const {
 }
 
 bool SocketHandler::wantWrite() const {
-    return !m_sendQueue.empty();
+    return false;
 }
 
 void SocketHandler::readable() {
@@ -90,17 +86,7 @@ void SocketHandler::readable() {
 }
 
 void SocketHandler::writable(void) {
-    if(m_sendQueue.size() != 0) {
-        send_record &record = m_sendQueue.front();
 
-        size_t size = m_socket->send(record.data, record.size);
-
-        if(size != record.size)
-            handleIOError();
-
-        delete[] record.data;
-        m_sendQueue.pop_front();
-    }
 }
 
 void SocketHandler::sendMessage(const Message::Header &header,
@@ -112,11 +98,10 @@ void SocketHandler::sendMessage(const Message::Header &header,
     memcpy(buf + sizeof(Message::Header), data, header.length -
                                                 sizeof(Message::Header));
 
-    send_record record;
-    record.data = buf;
-    record.size = header.length;
+    // 'Ready for write' event and writev call aren't implemented in kernel driver.
 
-    m_sendQueue.push_back(record);
+    m_socket->send(buf, header.length);
+    delete[] buf;
 }
 
 void SocketHandler::handleEOF() {

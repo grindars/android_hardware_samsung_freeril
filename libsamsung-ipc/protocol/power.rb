@@ -22,24 +22,23 @@ message_group :PWR, 1 do |g|
         m.data :reserved, :size => 8196
     end
 
-    g.in :PHONE_POWER_ON_REPLY, 1 do |m|
+    g.in :PHONE_BOOT_COMPLETE, 1 do |m|
         m.u8 :type, :type => :enum, :values => {
             Normal: 0
         }
     end
 
-    g.bind :PHONE_POWER_ON, :to => :PHONE_POWER_ON_REPLY
-    g.unsolicited :PHONE_POWER_ON_REPLY
+    g.unsolicited :PHONE_BOOT_COMPLETE
 
     g.out :PHONE_POWER_OFF, 2
-    g.in :PHONE_POWER_OFF_REPLY, 2 do |m|
+
+    g.in :PHONE_POWERED_OFF, 2 do |m|
         m.u8 :reason, :type => :enum, :values => {
             LowBattery: 0
         }
     end
 
-    g.bind :PHONE_POWER_OFF, :to => :PHONE_POWER_OFF_REPLY
-    g.unsolicited :PHONE_POWER_OFF_REPLY
+    g.unsolicited :PHONE_POWERED_OFF
 
     g.in :PHONE_RESET, 3
     g.unsolicited :PHONE_RESET
@@ -53,11 +52,12 @@ message_group :PWR, 1 do |g|
         # Set to 0x02 for normal, zero for LPM.
         m.u8 :flags
     end
-    g.in :PHONE_SET_MODE_REPLY, 7 do |m|
-        m.u8 :type, :type => :enum, :values => {
+    g.in :PHONE_MODE_CHANGED, 7 do |m|
+        m.u8 :mode, :type => :enum, :values => {
             LPM:    1,
             Normal: 2
         }
     end
-    g.bind :PHONE_SET_MODE, :to => :PHONE_SET_MODE_REPLY
+    g.unsolicited :PHONE_MODE_CHANGED
+
 end

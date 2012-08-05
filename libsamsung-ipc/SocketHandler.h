@@ -54,14 +54,8 @@ namespace SamsungIPC {
             IOBufSize = 4096
         };
 
-        struct send_record {
-            size_t size;
-            unsigned char *data;
-        };
-
         IIPCSocket *m_socket;
         unsigned char *m_buf;
-        std::list<send_record> m_sendQueue;
         unsigned char *m_reassemblyBuf;
         size_t m_reassemblyBufSize, m_reassemblyBufUsed;
     };

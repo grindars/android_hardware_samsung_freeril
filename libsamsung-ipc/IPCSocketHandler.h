@@ -19,6 +19,10 @@
 #ifndef __IPC_SOCKET_HANDLER__H__
 #define __IPC_SOCKET_HANDLER__H__
 
+#include <map>
+#include <set>
+#include <list>
+
 #include "SocketHandler.h"
 
 namespace SamsungIPC {
@@ -40,6 +44,11 @@ namespace SamsungIPC {
                                 const void *data);
 
         IUnsolicitedReceiver *m_unsolicitedHandler;
+        std::map<uint8_t, Message *> m_messagesInAir;
+        std::set<uint8_t> m_freeSequenceNumbers;
+        std::list<Message *> m_messageQueue;
+
+        std::set<uint8_t>::iterator m_allocationIterator;
     };
 }
 
