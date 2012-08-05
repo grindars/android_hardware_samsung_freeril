@@ -420,7 +420,7 @@ void SamsungModem::initialize() {
     m_worker = new IPCWorkerThread();
 
     m_worker->addHandler(new IPCSocketHandler(m_ipctransport->createSocket(IIPCTransport::IPC), m_unsolicitedHandler));
-//    m_worker->addHandler(new RFSSocketHandler(m_ipctransport->createSocket(IIPCTransport::RFS)));
+    //m_worker->addHandler(new RFSSocketHandler(m_ipctransport->createSocket(IIPCTransport::RFS)));
 
     m_worker->start();
 }

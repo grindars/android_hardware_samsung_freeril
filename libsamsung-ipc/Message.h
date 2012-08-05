@@ -32,29 +32,6 @@ namespace SamsungIPC {
     public:
         typedef void (*CompletionFunction)(Message *reply, void *arg);
 
-        virtual ~Message();
-
-        inline void subscribe(CompletionFunction func, void *arg) {
-            m_completionFunction = func;
-            m_completionArg = arg;
-        }
-
-        inline void complete(Message *reply) {
-            if(m_completionFunction) {
-                m_completionFunction(reply, m_completionArg);
-            }
-        }
-
-        virtual uint8_t command() const = 0;
-        virtual uint8_t subcommand() const = 0;
-        virtual std::string inspect() const = 0;
-        virtual Message *createResponse() const = 0;
-        virtual bool deliver(IUnsolicitedReceiver *receiver) = 0;
-
-        virtual bool readFromStream(DataStream &stream) = 0;
-        virtual bool writeToStream(DataStream &stream) = 0;
-
-
         enum ResponseType {
             IPC_CMD_INDI = 1,
             IPC_CMD_RESP = 2,
@@ -77,6 +54,35 @@ namespace SamsungIPC {
             uint8_t subCommand;
             uint8_t responseType;
         } __attribute__((packed));
+
+        struct RFSHeader {
+            uint32_t length;
+            uint8_t type;
+            uint8_t sequence;
+        } __attribute__((packed));
+
+
+        virtual ~Message();
+
+        inline void subscribe(CompletionFunction func, void *arg) {
+            m_completionFunction = func;
+            m_completionArg = arg;
+        }
+
+        inline void complete(Message *reply) {
+            if(m_completionFunction) {
+                m_completionFunction(reply, m_completionArg);
+            }
+        }
+
+        virtual uint8_t command() const = 0;
+        virtual uint8_t subcommand() const = 0;
+        virtual RequestType requestType() const = 0;
+        virtual std::string inspect() const = 0;
+        virtual bool deliver(IUnsolicitedReceiver *receiver) = 0;
+
+        virtual bool readFromStream(DataStream &stream) = 0;
+        virtual bool writeToStream(DataStream &stream) = 0;
 
     private:
         CompletionFunction m_completionFunction;

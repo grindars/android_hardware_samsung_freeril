@@ -48,6 +48,9 @@ namespace SamsungIPC {
         inline void read(uint16_t &value) { readRawData(&value, sizeof(uint16_t)); }
         inline void write(uint16_t value) { writeRawData(&value, sizeof(uint16_t)); }
 
+        inline void read(uint32_t &value) { readRawData(&value, sizeof(uint32_t)); }
+        inline void write(uint32_t value) { writeRawData(&value, sizeof(uint32_t)); }
+
     private:
         inline void throwException() { longjmp(m_buf, 1); }
 

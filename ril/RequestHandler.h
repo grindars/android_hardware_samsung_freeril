@@ -41,6 +41,7 @@ public:
     virtual void handle(SamsungIPC::Messages::PwrPhonePoweredOff *message);
     virtual void handle(SamsungIPC::Messages::PwrPhoneReset *message);
     virtual void handle(SamsungIPC::Messages::PwrPhoneModeChanged *message);
+    virtual void handle(SamsungIPC::Messages::MiscGetMobileEquipImsiReply *message);
 
 private:
     struct RequestBinding {
@@ -53,9 +54,17 @@ private:
     };
 
     void handleRadioPower(Request *request);
-
     static void modeSwitchComplete(SamsungIPC::Message *reply, void *arg);
     static void radioOffComplete(SamsungIPC::Message *reply, void *arg);
+
+    void handleBasebandVersion(Request *request);
+    static void handleBasebandVersionComplete(SamsungIPC::Message *reply, void *arg);
+
+    void handleIMEI(Request *request);
+    static void handleIMEIComplete(SamsungIPC::Message *reply, void *arg);
+
+    void handleIMSI(Request *request);
+    static void handleIMSIComplete(SamsungIPC::Message *reply, void *arg);
 
     enum {
         FirstRequest = RIL_REQUEST_GET_SIM_STATUS,

@@ -36,8 +36,12 @@ namespace SamsungIPC {
         void submit(Message *message);
 
     protected:
-        virtual void handleMessage(const Message::Header &header,
-                                   const void *data);
+        void handleMessage(const Message::Header &header,
+                           const void *data);
+        void sendMessage(const Message::Header &header, const void *data);
+        virtual size_t headerSize();
+        virtual size_t messageSize(const unsigned char *data);
+        virtual void handleReassembledMessage(const unsigned char *data);
 
     private:
         static void dumpMessage(const char *type, const Message::Header &header,

@@ -41,12 +41,12 @@ namespace SamsungIPC {
         void writable();
 
     protected:
-        virtual void handleMessage(const Message::Header &header,
-                                   const void *data) = 0;
         virtual void handleEOF();
         virtual void handleIOError();
-
-        void sendMessage(const Message::Header &header, const void *data);
+        virtual size_t headerSize() = 0;
+        virtual size_t messageSize(const unsigned char *data) = 0;
+        virtual void handleReassembledMessage(const unsigned char *data) = 0;
+        void sendData(const void *buf, size_t size);
 
     private:
 

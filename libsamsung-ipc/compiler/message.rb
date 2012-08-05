@@ -17,12 +17,13 @@
 #
 
 class Message
-    attr_accessor :direction, :id, :type, :fields
+    attr_accessor :direction, :id, :type, :fields, :op
 
-    def initialize(direction, id, type)
+    def initialize(direction, id, type, op)
         @direction = direction
         @id = id
         @type = type
+        @op = op
         @fields = []
     end
 
@@ -36,5 +37,13 @@ class Message
 
     def u16(name, *parameters)
         @fields << Field.new(:u16, name, parameters[0] || {})
+    end
+
+    def u32(name, *parameters)
+        @fields << Field.new(:u32, name, parameters[0] || {})
+    end
+
+    def vector(name, *parameters)
+        @fields << Field.new(:vector, name, parameters[0] || {})
     end
 end

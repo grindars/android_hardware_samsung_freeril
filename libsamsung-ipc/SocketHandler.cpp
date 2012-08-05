@@ -61,16 +61,16 @@ void SocketHandler::readable() {
 
     m_reassemblyBufUsed += size;
 
-    while(m_reassemblyBufUsed >= sizeof(Message::Header)) {
-        Message::Header *header = (Message::Header *) m_reassemblyBuf;
+    while(m_reassemblyBufUsed >= headerSize()) {
+        size_t size = messageSize(m_reassemblyBuf);
 
-        if(m_reassemblyBufUsed < header->length)
+        if(m_reassemblyBufUsed < size)
             break;
 
-        handleMessage(*header, header + 1);
+        handleReassembledMessage(m_reassemblyBuf);
 
-        size_t newUsed = m_reassemblyBufUsed - header->length;
-        memcpy(header, (unsigned char *) header + header->length, newUsed);
+        size_t newUsed = m_reassemblyBufUsed - size;
+        memcpy(m_reassemblyBuf, (unsigned char *) m_reassemblyBuf + size, newUsed);
         m_reassemblyBufUsed = newUsed;
     }
 
@@ -89,19 +89,8 @@ void SocketHandler::writable(void) {
 
 }
 
-void SocketHandler::sendMessage(const Message::Header &header,
-                                const void *data) {
-
-    unsigned char *buf = new unsigned char[header.length];
-
-    memcpy(buf, &header, sizeof(Message::Header));
-    memcpy(buf + sizeof(Message::Header), data, header.length -
-                                                sizeof(Message::Header));
-
-    // 'Ready for write' event and writev call aren't implemented in kernel driver.
-
-    m_socket->send(buf, header.length);
-    delete[] buf;
+void SocketHandler::sendData(const void *data, size_t size) {
+    m_socket->send(data, size);
 }
 
 void SocketHandler::handleEOF() {

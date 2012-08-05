@@ -21,7 +21,8 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES = ril.cpp RIL.cpp AndroidLogSink.cpp Request.cpp \
                   RequestQueue.cpp RequestQueueWorkerThread.cpp \
-                  RequestHandler.cpp UnsolicitedResponse.cpp
+                  RequestHandler.cpp UnsolicitedResponse.cpp \
+                  power.cpp misc.cpp
 
 LOCAL_LDLIBS += -lpthread
 LOCAL_MODULE := libril-freei9100-1

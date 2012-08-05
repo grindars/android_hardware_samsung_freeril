@@ -18,8 +18,10 @@
 
 class Generator
     TYPE_MAP = {
-        u8:   'uint8_t',
-        u16:  'uint16_t',
+        u8:     'uint8_t',
+        u16:    'uint16_t',
+        u32:    'uint32_t',
+        vector: 'std::vector<unsigned char>',
         data: 'raw'
     }
 
@@ -79,12 +81,17 @@ class Generator
         }
 
         protocol.groups.each do |group|
-            enums[:CMD][group.id] = { :type => group.type, :direction => :in }
+            enums[:CMD][group.id] = { :type => group.type, :direction => :in, :op => :exec }
 
             enums[group.id] ||= {}
 
             group.messages.each do |msg|
-                enums[group.id][msg.id] = { :type => msg.type, :direction => msg.direction, :fields => msg.fields }
+                enums[group.id][msg.id] = {
+                    type: msg.type,
+                    direction: msg.direction,
+                    fields: msg.fields,
+                    op: msg.op
+                }
             end
         end
 
@@ -101,17 +108,11 @@ class Generator
 
                     v.reject { |fk, fv| fv.kind_of? Symbol }
                      .map { |fk, fv|
-                            bound_message = group.bindings[fk]
-
-                            unless bound_message.nil?
-                                bound_message = class_name_for "#{k.to_s}_#{bound_message[:to].to_s}"
-                            end
-
                             {
                                 :id          => class_name_for("#{k.to_s}_#{fk.to_s}"),
                                 :command     => enums[:CMD][k][:type],
                                 :unsolicited => group.unsolicited_messages.include?(fk),
-                                :response    => bound_message
+                                :op          => enums[:CMD][k][:op]
                             }.merge fv
                           }
                   }
@@ -258,7 +259,7 @@ eos
             msg[:fields].each do |field|
                 storage_type = TYPE_MAP[field.type]
 
-                if storage_type == 'raw'
+                if field.type == :data
                     data_fields << "            uint8_t m_#{field.name}[#{field.parameters[:size]}];"
 
                 elsif field.parameters[:type] == :enum
@@ -269,11 +270,17 @@ eos
 #{values.join(",\n")}
             };
 eos
-accessors << <<-eos
+                    accessors << <<-eos
             inline #{enum_type} #{field.name}() const { return (#{enum_type}) m_#{field.name}; }
             inline void set#{field.name.capitalize}(#{enum_type} #{field.name}) { m_#{field.name} = (#{storage_type}) #{field.name}; }
 eos
 
+                    data_fields << "            #{storage_type} m_#{field.name};"
+                elsif field.type == :vector
+                    accessors << <<-eos
+            inline const #{storage_type} &#{field.name}() const { return m_#{field.name}; }
+            inline void set#{field.name.capitalize}(const #{storage_type} &#{field.name}) { m_#{field.name} = #{field.name}; }
+eos
                     data_fields << "            #{storage_type} m_#{field.name};"
                 else
                     accessors << <<-eos
@@ -291,8 +298,8 @@ eos
         public:
             virtual uint8_t command() const;
             virtual uint8_t subcommand() const;
+            virtual RequestType requestType() const;
             virtual std::string inspect() const;
-            virtual Message *createResponse() const;
             virtual bool deliver(IUnsolicitedReceiver *receiver);
 
             static inline bool isTypeOf(Message *message) {
@@ -312,6 +319,7 @@ eos
 
         <<-eos
 #include <string.h>
+#include <vector>
 
 #include "Message.h"
 
@@ -339,21 +347,28 @@ eos
                     cast = ""
                 end
 
-                if field.type == :data
+                case field.type
+                when :data
                     field_inspectors << "    stream << \"  #{field.name} = <raw data>\\n\";"
                     field_readers << "        stream.readRawData(m_#{field.name}, sizeof(m_#{field.name}));"
                     field_writers << "        stream.writeRawData(m_#{field.name}, sizeof(m_#{field.name}));"
+
+                when :vector
+                    field_inspectors << "    stream << \"  #{field.name} = <vector of size \" << m_#{field.name}.size() << \">\\n\";"
+                    field_readers << "        m_#{field.name}.resize(#{field.parameters[:read_length]});"
+                    field_readers << "        stream.readRawData(&m_#{field.name}[0], m_#{field.name}.size());"
+                    field_writers << "        stream.writeRawData(&m_#{field.name}[0], m_#{field.name}.size());"
+
                 else
                     field_inspectors << "    stream << \"  #{field.name} = \" << #{cast}m_#{field.name} << \"\\n\";"
                     field_readers << "        stream.read(m_#{field.name});"
+
+                    if field.parameters[:initialize]
+                        field_writers << "        m_#{field.name} = #{field.parameters[:initialize]};"
+                    end
+
                     field_writers << "        stream.write(m_#{field.name});"
                 end
-            end
-
-            if message[:response].nil?
-                response_factory = "NULL"
-            else
-                response_factory = "new #{message[:response]}()"
             end
 
             if message[:unsolicited]
@@ -374,6 +389,21 @@ bool #{message[:id]}::deliver(IUnsolicitedReceiver *receiver) {
 eos
             end
 
+            requestType =
+                case message[:op]
+                when :exec
+                    "IPC_CMD_EXEC"
+
+                when :get
+                    "IPC_CMD_GET"
+
+                when :cfrm
+                    "IPC_CMD_CFRM"
+
+                when :event
+                    "IPC_CMD_EVENT"
+                end
+
             methods << <<-eos
 uint8_t #{message[:id]}::command() const {
     return #{message[:command]};
@@ -381,6 +411,10 @@ uint8_t #{message[:id]}::command() const {
 
 uint8_t #{message[:id]}::subcommand() const {
     return #{message[:type]};
+}
+
+Message::RequestType #{message[:id]}::requestType() const {
+    return #{requestType};
 }
 
 std::string #{message[:id]}::inspect() const {
@@ -391,10 +425,6 @@ std::string #{message[:id]}::inspect() const {
     stream << "}\\n";
 
     return stream.str();
-}
-
-Message *#{message[:id]}::createResponse() const {
-    return #{response_factory};
 }
 
 bool #{message[:id]}::readFromStream(DataStream &stream) {

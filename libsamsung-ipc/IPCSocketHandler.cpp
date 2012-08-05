@@ -168,14 +168,49 @@ void IPCSocketHandler::submit(Message *message) {
     header.aseq = 0x00;
     header.mainCommand = message->command();
     header.subCommand = message->subcommand();
-    header.responseType = Message::IPC_CMD_EXEC;
-
-    m_freeSequenceNumbers.erase(val);
-    m_messagesInAir.insert(std::pair<uint8_t, Message *>(header.mseq, message));
+    header.responseType = message->requestType();
 
     Log::debug("TX mseq: %02hhX, aseq: %02hhX, response: %02hhX",
                header.mseq, header.aseq, header.responseType);
     Log::debug("Message: %s", message->inspect().c_str());
 
     sendMessage(header, &data[0]);
+
+    if(header.responseType != Message::IPC_CMD_EVENT) {
+        m_freeSequenceNumbers.erase(val);
+        m_messagesInAir.insert(std::pair<uint8_t, Message *>(header.mseq, message));
+    } else {
+        delete message;
+    }
 }
+
+
+void IPCSocketHandler::sendMessage(const Message::Header &header,
+                                const void *data) {
+
+    unsigned char *buf = new unsigned char[header.length];
+
+    memcpy(buf, &header, sizeof(Message::Header));
+    memcpy(buf + sizeof(Message::Header), data, header.length -
+                                                sizeof(Message::Header));
+
+    // 'Ready for write' event and writev call aren't implemented in kernel driver.
+
+    sendData(buf, header.length);
+    delete[] buf;
+}
+
+size_t IPCSocketHandler::headerSize() {
+    return sizeof(Message::Header);
+}
+
+size_t IPCSocketHandler::messageSize(const unsigned char *data) {
+    return reinterpret_cast<const Message::Header *>(data)->length;
+}
+
+void IPCSocketHandler::handleReassembledMessage(const unsigned char *data) {
+    const Message::Header *header = reinterpret_cast<const Message::Header *>(data);
+
+    handleMessage(*header, header + 1);
+}
+

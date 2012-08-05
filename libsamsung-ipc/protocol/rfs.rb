@@ -16,34 +16,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-class MessageGroup
-    attr_accessor :id, :type, :messages, :unsolicited_messages
+message_group :RFS, 21 do |g|
 
-    def initialize(id, type)
-        @id = id
-        @type = type
-        @messages = []
-        @bindings = {}
-        @unsolicited_messages = []
+    g.in :NV_READ, 1 do |m|
+        m.u32    :offset
+        m.u32    :bytes
     end
 
-    def out(id, type, op = :exec, &block)
-        message = Message.new :out, id, type, op
-
-        yield message if block_given?
-
-        @messages << message
+    g.out :NV_READ_REPLY, 1 do |m|
+        # TODO
     end
 
-    def in(id, type, &block)
-        message = Message.new :in, id, type, :exec
-
-        yield message if block_given?
-
-        @messages << message
+    g.in :NV_WRITE, 2 do |m|
+        m.u32    :offset
+        m.u32    :bytes, :initialize => "m_data.size()"
+        m.vector :data, :read_length => "m_bytes"
     end
 
-    def unsolicited(reply)
-        @unsolicited_messages << reply
+    g.out :NV_WRITE_REPLY, 2 do |m|
+        m.data :reserved, :size => 9
     end
+
 end

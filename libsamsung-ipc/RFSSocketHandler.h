@@ -19,12 +19,32 @@
 #ifndef __RFS_SOCKET_HANDLER__H__
 #define __RFS_SOCKET_HANDLER__H__
 
+#include "MessageTypes.h"
 #include "SocketHandler.h"
 
 namespace SamsungIPC {
     class RFSSocketHandler: public SocketHandler {
     public:
         RFSSocketHandler(IIPCSocket *socket);
+
+    protected:
+        void handleMessage(const Message::RFSHeader &header,
+                           const void *data);
+        void sendMessage(const Message::RFSHeader &header, const void *data);
+        virtual size_t headerSize();
+        virtual size_t messageSize(const unsigned char *data);
+        virtual void handleReassembledMessage(const unsigned char *data);
+
+    private:
+        Message *handleNvRead(Message *msg);
+        Message *handleNvWrite(Message *msg);
+
+        enum {
+            FirstType = Messages::RFS_NV_READ,
+            LastType  = Messages::RFS_NV_WRITE
+        };
+
+        static Message *(RFSSocketHandler::*const m_handlers[LastType - FirstType + 1])(Message *message);
     };
 }
 

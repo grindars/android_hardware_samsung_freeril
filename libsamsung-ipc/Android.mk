@@ -40,7 +40,6 @@ GEN := $(addprefix $(COMPILED_PROTOCOL_PATH)/,IUnsolicitedReceiver.h MessageFact
 $(GEN): PRIVATE_PATH := $(LOCAL_PATH)
 $(GEN): PRIVATE_CUSTOM_TOOL := $(PRIVATE_PATH)/compiler/compiler.rb $(COMPILED_PROTOCOL_PATH) $(PRIVATE_PATH)/protocol
 $(GEN): $(LOCAL_PATH)/protocol/*.rb $(LOCAL_PATH)/compiler/*.rb
-	echo $(PRIVATE_CUSTOM_TOOL) $(GEN)
 	$(transform-generated-source)
 
 LOCAL_GENERATED_SOURCES = $(GEN)

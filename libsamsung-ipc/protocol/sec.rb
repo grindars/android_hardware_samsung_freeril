@@ -16,34 +16,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-class MessageGroup
-    attr_accessor :id, :type, :messages, :unsolicited_messages
+message_group :SEC, 5 do |g|
 
-    def initialize(id, type)
-        @id = id
-        @type = type
-        @messages = []
-        @bindings = {}
-        @unsolicited_messages = []
+    g.in :PIN_STATUS, 1 do |m|
+        m.u8 :status, :type => :enum, :values => {
+            SimAbsent: 128
+        }
+        # if absent:
+        # m.u8 rsvd
+
+    end
+    #g.unsolicited :PIN_STATUS
+
+    g.in :SIM_CARD_TYPE, 7 do |m|
+        m.u8 :card_type, :type => :enum, :values => {
+            Absent: 0
+        }
+        m.u8 :icc_type, :if => "m_card_type == 3", :else => "0"
     end
 
-    def out(id, type, op = :exec, &block)
-        message = Message.new :out, id, type, op
+    #g.unsolicited :SIM_CARD_TYPE
 
-        yield message if block_given?
-
-        @messages << message
-    end
-
-    def in(id, type, &block)
-        message = Message.new :in, id, type, :exec
-
-        yield message if block_given?
-
-        @messages << message
-    end
-
-    def unsolicited(reply)
-        @unsolicited_messages << reply
-    end
 end
