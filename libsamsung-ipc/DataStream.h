@@ -36,6 +36,7 @@ namespace SamsungIPC {
         DataStream(std::vector<unsigned char> *buffer, Mode mode);
 
         inline bool atEnd() const { return m_ptr == m_buffer->end(); }
+        inline size_t remainingBytes() const { return m_buffer->end() - m_ptr; }
 
         inline bool caughtExceptionHere() { return setjmp(m_buf) == 1; }
 

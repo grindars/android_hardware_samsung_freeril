@@ -48,6 +48,7 @@ public:
 private:
 
     void handleRadioPower(Request *request);
+
     void handleBasebandVersion(Request *request);
     void handleIMEI(Request *request);
     void handleIMEISV(Request *request);
@@ -63,6 +64,16 @@ private:
     static void handlePinStatusRefreshComplete(SamsungIPC::Message *reply, void *arg);
     void setPinStatus(Request *request, const char *pin, const char *puk, int op);
     void changeLockPwd(Request *request, const char *currentPwd, const char *newPwd, int op);
+
+    void handleQueryNetworkSelectionMode(Request *request);
+    void handleSetNetworkSelectionAutomatic(Request *request);
+    void handleSetNetworkSelectionManual(Request *request);
+    void handleQueryAvailableNetworks(Request *request);
+    void handleOperator(Request *request);
+
+    void setPLMNSelection(Request *request, const char *plmn);
+
+    void handleScreenState(Request *request);
 
     bool completeGenCommand(SamsungIPC::Message *reply, const char *name, Request *request);
 

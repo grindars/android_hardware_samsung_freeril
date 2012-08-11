@@ -35,6 +35,15 @@ RequestHandler::RequestHandler(RIL *ril) : m_ril(ril) {
     m_requestHandlers[RIL_REQUEST_GET_IMEI - FirstRequest] = &RequestHandler::handleIMEI;
     m_requestHandlers[RIL_REQUEST_GET_IMEISV - FirstRequest] = &RequestHandler::handleIMEISV;
     m_requestHandlers[RIL_REQUEST_GET_IMSI - FirstRequest] = &RequestHandler::handleIMSI;
+
+    m_requestHandlers[RIL_REQUEST_OPERATOR - FirstRequest] = &RequestHandler::handleOperator;
+
+    m_requestHandlers[RIL_REQUEST_QUERY_NETWORK_SELECTION_MODE - FirstRequest] = &RequestHandler::handleQueryNetworkSelectionMode;
+    m_requestHandlers[RIL_REQUEST_SET_NETWORK_SELECTION_AUTOMATIC - FirstRequest] = &RequestHandler::handleSetNetworkSelectionAutomatic;
+    m_requestHandlers[RIL_REQUEST_SET_NETWORK_SELECTION_MANUAL - FirstRequest] = &RequestHandler::handleSetNetworkSelectionManual;
+    m_requestHandlers[RIL_REQUEST_QUERY_AVAILABLE_NETWORKS - FirstRequest] = &RequestHandler::handleQueryAvailableNetworks;
+
+    m_requestHandlers[RIL_REQUEST_SCREEN_STATE - FirstRequest] = &RequestHandler::handleScreenState;
 }
 
 void RequestHandler::handle(Request *request) {
