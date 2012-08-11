@@ -145,28 +145,42 @@ void RequestHandler::handleEnterSIMPin(Request *request) {
     setPinStatus(request,
                  ((const char **) request->data())[0],
                  NULL,
-                 Messages::SecSetPinStatus::EnterPin);
+                 Messages::SecSetPinStatus::Pin);
 }
 
 void RequestHandler::handleEnterSIMPuk(Request *request) {
     setPinStatus(request,
                  ((const char **) request->data())[0],
                  ((const char **) request->data())[1],
-                 Messages::SecSetPinStatus::EnterPin);
+                 Messages::SecSetPinStatus::Pin);
 }
 
 void RequestHandler::handleEnterSIMPin2(Request *request) {
     setPinStatus(request,
                  ((const char **) request->data())[0],
                  NULL,
-                 Messages::SecSetPinStatus::EnterPin2);
+                 Messages::SecSetPinStatus::Pin2);
 }
 
 void RequestHandler::handleEnterSIMPuk2(Request *request) {
     setPinStatus(request,
                  ((const char **) request->data())[0],
                  ((const char **) request->data())[1],
-                 Messages::SecSetPinStatus::EnterPin2);
+                 Messages::SecSetPinStatus::Pin2);
+}
+
+void RequestHandler::handleChangeSIMPin(Request *request) {
+    changeLockPwd(request,
+                  ((const char **) request->data())[0],
+                  ((const char **) request->data())[1],
+                  Messages::SecChangeLockPwd::Pin);
+}
+
+void RequestHandler::handleChangeSIMPin2(Request *request) {
+    changeLockPwd(request,
+                  ((const char **) request->data())[0],
+                  ((const char **) request->data())[1],
+                  Messages::SecChangeLockPwd::Pin2);
 }
 
 void RequestHandler::setPinStatus(Request *request, const char *pin, const char *puk, int op) {
@@ -188,7 +202,7 @@ void RequestHandler::setPinStatus(Request *request, const char *pin, const char 
         return;
     }
 
-    Log::debug("SetPinStatus: operation %d, pin: %s, puk: %s",
+    Log::debug("SecSetPinStatus: operation %d, pin: %s, puk: %s",
                op,
                pin ? pin : "(none)",
                puk ? puk : "(none)");
@@ -198,7 +212,7 @@ void RequestHandler::setPinStatus(Request *request, const char *pin, const char 
     memcpy(&pin2[0], puk, puk_len);
 
     Messages::SecSetPinStatus *message = new Messages::SecSetPinStatus;
-    message->setType(Messages::SecSetPinStatus::EnterPin);
+    message->setType((Messages::SecSetPinStatus::Type) op);
     message->setPin1Length(pin_len);
     message->setPin2Length(puk_len);
     message->setPin1(pin1);
@@ -208,3 +222,31 @@ void RequestHandler::setPinStatus(Request *request, const char *pin, const char 
     completeGenCommand(reply, "SecSetPinStatus", request);
 }
 
+void RequestHandler::changeLockPwd(Request *request, const char *currentPwd, const char *newPwd, int op) {
+    size_t current_len, new_len;
+
+    current_len = strlen(currentPwd);
+    new_len = strlen(newPwd);
+
+    if(current_len > 39 || new_len > 39) {
+        request->complete(RIL_E_GENERIC_FAILURE);
+
+        return;
+    }
+
+    Log::debug("SecChangeLockPwd: operation %d, current: %s, new: %s", op, currentPwd, newPwd);
+
+    std::vector<unsigned char> currentVector(39), newVector(39);
+    memcpy(&currentVector[0], currentPwd, current_len);
+    memcpy(&newVector[0], newPwd, new_len);
+
+    Messages::SecChangeLockPwd *message = new Messages::SecChangeLockPwd;
+    message->setType((Messages::SecChangeLockPwd::Type) op);
+    message->setCurrentLength(current_len);
+    message->setNewLength(new_len);
+    message->setCurrentPwd(currentVector);
+    message->setNewPwd(newVector);
+
+    Message *reply = m_ril->execute(message);
+    completeGenCommand(reply, "SecChangeLockPwd", request);
+}

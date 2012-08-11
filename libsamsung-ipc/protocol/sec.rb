@@ -19,8 +19,8 @@
 message_group :SEC, 5 do |g|
     g.out :SET_PIN_STATUS, 1, :set do |m|
         m.u8 :type, :type => :enum, :values => {
-            EnterPin:  0x03,
-            EnterPin2: 0x09
+            Pin:  0x03,
+            Pin2: 0x09
         }
 
         m.u8 :pin1Length
@@ -48,6 +48,19 @@ message_group :SEC, 5 do |g|
         # + special handling for PN/PU/PP/PC Lock
     end
     g.unsolicited :GET_PIN_STATUS_REPLY
+
+    g.out :CHANGE_LOCK_PWD, 3, :set do |m|
+        m.u8 :type, :type => :enum, :values => {
+            Pin:  0x03,
+            Pin2: 0x09
+        }
+
+        m.u8 :currentLength
+        m.u8 :newLength
+
+        m.vector :currentPwd, :read_length => 39
+        m.vector :newPwd,     :read_length => 39
+    end
 
     g.in :SIM_CARD_TYPE, 7 do |m|
         m.u8 :cardType

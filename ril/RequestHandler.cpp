@@ -115,6 +115,10 @@ void (RequestHandler::*RequestHandler::m_requestHandlers[LastRequest - FirstRequ
     &RequestHandler::handleEnterSIMPin,
     &RequestHandler::handleEnterSIMPuk,
     &RequestHandler::handleEnterSIMPin2,
-    &RequestHandler::handleEnterSIMPuk2
+    &RequestHandler::handleEnterSIMPuk2,
+    &RequestHandler::handleChangeSIMPin,
+    &RequestHandler::handleChangeSIMPin2,
+    NULL, // RIL_REQUEST_ENTER_NETWORK_DEPERSONALIZATION
+
 };
 
