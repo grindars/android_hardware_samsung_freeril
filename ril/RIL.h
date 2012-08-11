@@ -22,7 +22,7 @@
 #include <telephony/ril.h>
 
 #include "AndroidLogSink.h"
-#include "ICompletionHandler.h"
+#include "Semaphore.h"
 
 namespace HAL {
     class AndroidHAL;
@@ -33,11 +33,10 @@ namespace SamsungIPC {
     class Message;
 }
 
-class RequestQueue;
 class RequestHandler;
 class UnsolicitedResponse;
 
-class RIL: public ICompletionHandler {
+class RIL {
 public:
     RIL(const struct RIL_Env *env);
     ~RIL();
@@ -55,14 +54,22 @@ public:
     void cancel(RIL_Token t);
     const char *getVersion();
 
-    virtual void completed(RIL_Token t, RIL_Errno e,
-                           const void *response, size_t responselen);
-    virtual void unsolicited(int code, const void *data, size_t datalen);
+    void complete(RIL_Token t, RIL_Errno e,
+                  const void *response, size_t responselen);
 
-    void enqueue(UnsolicitedResponse *response);
+    void unsolicited(int code, const void *data = NULL, size_t datalen = 0);
+
     void submit(SamsungIPC::Message *message);
+    SamsungIPC::Message *execute(SamsungIPC::Message *message);
 
 private:
+    struct ExecutionData {
+        SamsungIPC::Message *reply;
+        RIL *ril;
+    };
+
+    static void onExecutionComplete(SamsungIPC::Message *reply, void *arg);
+
     AndroidLogSink m_sink;
     const struct RIL_Env *m_env;
     RIL_RadioState m_radioState;
@@ -70,7 +77,7 @@ private:
     HAL::AndroidHAL *m_hal;
     SamsungIPC::SamsungModem *m_modem;
     RequestHandler *m_handler;
-    RequestQueue *m_queue;
+    SamsungIPC::Semaphore m_executeSemaphore;
 };
 
 #endif

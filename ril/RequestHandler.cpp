@@ -54,9 +54,7 @@ void RequestHandler::handle(Request *request) {
     if(!supports(request->code())) {
         Log::debug("Unsupported request %d:", request->code());
 
-        const std::vector<char> &data = request->data();
-
-        dump(&data[0], data.size());
+        dump(request->data(), request->data_size());
 
         request->complete(RIL_E_REQUEST_NOT_SUPPORTED);
     } else {

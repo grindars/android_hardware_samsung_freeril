@@ -19,37 +19,20 @@
 #include <Log.h>
 
 #include "Request.h"
-#include "RequestQueue.h"
+#include "RIL.h"
 
 using namespace SamsungIPC;
 
-Request::Request(int code, const std::vector<char> &data,
-                 RIL_Token token, RequestQueue *queue) :
-    m_state(Queued), m_code(code), m_data(data), m_token(token),
-    m_queue(queue) {
+Request::Request(int code, const void *data, size_t data_size,
+                 RIL_Token token, RIL *handler) :
+    m_code(code), m_data(data), m_data_size(data_size), m_token(token),
+    m_handler(handler) {
 
 }
 
-void Request::markAsExecuting() {
-    if(m_state != Queued)
-        Log::panic("Illegal request transition from state to %d to state %d\n",
-                   m_state, Executing);
 
-    m_state = Executing;
-}
+void Request::complete(RIL_Errno e, const void *response, size_t responselen) {
+    m_handler->complete(m_token, e, response, responselen);
 
-void Request::markAsFinished() {
-    if(m_state != Executing)
-        Log::panic("Illegal request transition from state to %d to state %d\n",
-                   m_state, Finished);
-
-    m_state = Finished;
-
-}
-
-void Request::complete(RIL_Errno e, const std::vector<char> &reply) {
-    m_errno = e;
-    m_reply = reply;
-
-    m_queue->completeRequest(this);
+    delete this;
 }

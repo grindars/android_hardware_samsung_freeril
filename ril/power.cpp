@@ -47,7 +47,7 @@ void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneReset *message) {
 void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneModeChanged *message) {
     switch(message->mode()) {
         case Messages::PwrPhoneModeChanged::Normal:
-            m_ril->setRadioState(RADIO_STATE_SIM_READY);
+            m_ril->setRadioState(RADIO_STATE_SIM_LOCKED_OR_ABSENT);
 
             break;
 
@@ -60,96 +60,79 @@ void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneModeChanged *message) 
 
 
 void RequestHandler::handleRadioPower(Request *request) {
-    const std::vector<char> &data = request->data();
-
-    if(data.size() != sizeof(int)) {
+    if(request->data_size() != sizeof(int)) {
         request->complete(RIL_E_GENERIC_FAILURE);
 
         return;
     }
 
-    bool on = *(int *) &data[0] != 0;
+    bool on = *(int *)request->data() != 0;
 
     if((on && m_ril->radioState() != RADIO_STATE_OFF) ||
         (!on && m_ril->radioState() == RADIO_STATE_OFF)) {
 
         request->complete(RIL_E_SUCCESS);
 
-    return;
-        }
+        return;
+    }
 
-        char value[PROPERTY_VALUE_MAX];
-        property_get("sys.deviceOffReq", value, "0");
+    char value[PROPERTY_VALUE_MAX];
+    property_get("sys.deviceOffReq", value, "0");
 
-        bool shutdown = atoi(value) != 0;
+    bool shutdown = atoi(value) != 0;
 
+    if(on || !shutdown) {
+        Messages::PwrPhoneSetMode *message = new Messages::PwrPhoneSetMode;
         if(on) {
-            Messages::PwrPhoneSetMode *message = new Messages::PwrPhoneSetMode;
             message->setMode(Messages::PwrPhoneSetMode::Normal);
             message->setFlags(0x02);
-            message->subscribe(modeSwitchComplete, request);
-
-            m_ril->submit(message);
-
-        } else if(!shutdown) {
-            Messages::PwrPhoneSetMode *message = new Messages::PwrPhoneSetMode;
+        } else {
             message->setMode(Messages::PwrPhoneSetMode::LPM);
             message->setFlags(0x00);
-            message->subscribe(modeSwitchComplete, request);
+        }
 
-            m_ril->submit(message);
+        Message *reply = m_ril->execute(message);
+        Messages::GenCommandComplete *complete = message_cast<Messages::GenCommandComplete>(reply);
+
+        if(complete == NULL) {
+            Log::error("Got unexpected message in response to PwrPhoneSetMode: %s", reply->inspect().c_str());
+
+            request->complete(RIL_E_GENERIC_FAILURE);
+        } else if(complete->status() == Messages::GenCommandComplete::SUCCESS) {
+
+            request->complete(RIL_E_SUCCESS);
 
         } else {
-            Log::info("Powering radio off");
+            Log::error("PwrPhoneSetMode failed with status 0x%04X", complete->status());
 
-            Messages::PwrPhonePowerOff *message = new Messages::PwrPhonePowerOff;
-            message->subscribe(radioOffComplete, new RequestBinding(this, request));
-
-            m_ril->submit(message);
+            request->complete(RIL_E_GENERIC_FAILURE);
         }
-}
 
-void RequestHandler::modeSwitchComplete(Message *reply, void *arg) {
-    Request *request = static_cast<Request *>(arg);
-    Messages::GenCommandComplete *complete = message_cast<Messages::GenCommandComplete>(reply);
-
-    if(complete == NULL) {
-        Log::error("Got unexpected message in response to PwrPhoneSetMode: %s", reply->inspect().c_str());
-
-        request->complete(RIL_E_GENERIC_FAILURE);
-
-    } else if(complete->status() == Messages::GenCommandComplete::SUCCESS) {
-
-        request->complete(RIL_E_SUCCESS);
+        delete reply;
 
     } else {
-        Log::error("PwrPhoneSetMode failed with status 0x%04X", complete->status());
+        Log::info("Powering radio off");
 
-        request->complete(RIL_E_GENERIC_FAILURE);
+        Message *reply = m_ril->execute(new Messages::PwrPhonePowerOff);
+        Messages::GenCommandComplete *complete = message_cast<Messages::GenCommandComplete>(reply);
+
+        if(complete == NULL) {
+            Log::error("Got unexpected message in response to PwrPhonePowerOff: %s", reply->inspect().c_str());
+
+            request->complete(RIL_E_GENERIC_FAILURE);
+        } else if(complete->status() == Messages::GenCommandComplete::SUCCESS) {
+
+            request->complete(RIL_E_SUCCESS);
+
+            m_ril->setRadioState(RADIO_STATE_UNAVAILABLE);
+
+        } else {
+            Log::error("PwrPhonePowerOff failed with status 0x%04X", complete->status());
+
+            request->complete(RIL_E_GENERIC_FAILURE);
+        }
+
+        delete reply;
     }
 }
 
-void RequestHandler::radioOffComplete(SamsungIPC::Message *reply, void *arg) {
-    RequestBinding *binding = static_cast<RequestBinding *>(arg);
-    Request *request = binding->request;
-    RequestHandler *handler = binding->handler;
-    delete binding;
-
-    Messages::GenCommandComplete *complete = message_cast<Messages::GenCommandComplete>(reply);
-    if(complete == NULL) {
-        Log::error("Got unexpected message in response to PwrPhonePowerOff: %s", reply->inspect().c_str());
-
-        request->complete(RIL_E_GENERIC_FAILURE);
-
-    } else if(complete->status() == Messages::GenCommandComplete::SUCCESS) {
-
-        request->complete(RIL_E_SUCCESS);
-
-        handler->m_ril->setRadioState(RADIO_STATE_UNAVAILABLE);
-
-    } else {
-        Log::error("PwrPhonePowerOff failed with status 0x%04X", complete->status());
-
-        request->complete(RIL_E_GENERIC_FAILURE);
-    }
-}

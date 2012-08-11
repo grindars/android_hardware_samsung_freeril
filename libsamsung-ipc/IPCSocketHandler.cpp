@@ -79,6 +79,8 @@ void IPCSocketHandler::handleMessage(const Message::Header &header,
                            message->inspect().c_str(), header.responseType);
             }
 
+            delete message;
+
             break;
 
         case Message::IPC_CMD_RESP:
@@ -87,6 +89,9 @@ void IPCSocketHandler::handleMessage(const Message::Header &header,
 
             if(request == m_messagesInAir.end()) {
                 Log::error("No message with sequence 0x%02hhX in air", header.aseq);
+
+                delete message;
+
             } else {
                 Message *requestMessage = (*request).second;
 
@@ -117,10 +122,11 @@ void IPCSocketHandler::handleMessage(const Message::Header &header,
         default:
             Log::error("Unexpected response type 0x%02hhX", header.responseType);
 
+            delete message;
+
             break;
     }
 
-    delete message;
 }
 
 void IPCSocketHandler::dumpMessage(const char *type, const Message::Header &header,

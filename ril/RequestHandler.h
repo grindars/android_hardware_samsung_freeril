@@ -21,7 +21,6 @@
 
 #include <telephony/ril.h>
 
-#include "IRequestHandler.h"
 #include <IUnsolicitedReceiver.h>
 
 namespace SamsungIPC {
@@ -29,8 +28,9 @@ namespace SamsungIPC {
 }
 
 class RIL;
+class Request;
 
-class RequestHandler: public IRequestHandler, public SamsungIPC::IUnsolicitedReceiver {
+class RequestHandler: public SamsungIPC::IUnsolicitedReceiver {
 public:
     RequestHandler(RIL *ril);
 
@@ -54,17 +54,9 @@ private:
     };
 
     void handleRadioPower(Request *request);
-    static void modeSwitchComplete(SamsungIPC::Message *reply, void *arg);
-    static void radioOffComplete(SamsungIPC::Message *reply, void *arg);
-
     void handleBasebandVersion(Request *request);
-    static void handleBasebandVersionComplete(SamsungIPC::Message *reply, void *arg);
-
     void handleIMEI(Request *request);
-    static void handleIMEIComplete(SamsungIPC::Message *reply, void *arg);
-
     void handleIMSI(Request *request);
-    static void handleIMSIComplete(SamsungIPC::Message *reply, void *arg);
 
     enum {
         FirstRequest = RIL_REQUEST_GET_SIM_STATUS,

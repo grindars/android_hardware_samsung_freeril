@@ -22,41 +22,28 @@
 #include <telephony/ril.h>
 #include <vector>
 
-class RequestQueue;
+class RIL;
 
 class Request {
 public:
-    enum State {
-        Queued,
-        Executing,
-        Finished
-    };
 
-    Request(int code, const std::vector<char> &data, RIL_Token token, RequestQueue *queue);
+    Request(int code, const void *data, size_t data_size, RIL_Token token, RIL *handler);
 
-    inline State state() const { return m_state; }
     inline int code() const { return m_code; }
-    inline const std::vector<char> &data() const { return m_data; }
+    inline const void *data() const { return m_data; }
+    inline size_t data_size() const { return m_data_size; }
+
     inline RIL_Token token() const { return m_token; }
-    inline RIL_Errno errno() const { return m_errno; }
-    inline const std::vector<char> &reply() const { return m_reply; }
 
-    void complete(RIL_Errno e, const std::vector<char> &reply = std::vector<char>());
+    void complete(RIL_Errno e, const void *response = NULL, size_t responselen = 0);
 
-private:
-    friend class RequestQueue;
-
-    void markAsExecuting();
-    void markAsFinished();
 
 private:
-    State m_state;
     int m_code;
-    std::vector<char> m_data;
+    const void *m_data;
+    size_t m_data_size;
     RIL_Token m_token;
-    RequestQueue *m_queue;
-    RIL_Errno m_errno;
-    std::vector<char> m_reply;
+    RIL *m_handler;
 };
 
 #endif

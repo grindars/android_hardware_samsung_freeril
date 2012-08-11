@@ -21,9 +21,9 @@
 #include <SamsungModem.h>
 
 #include "RIL.h"
-#include "RequestQueue.h"
 #include "RequestHandler.h"
-#include "UnsolicitedResponse.h"
+#include "Request.h"
+#include "Message.h"
 
 using namespace SamsungIPC;
 using namespace HAL;
@@ -33,12 +33,10 @@ RIL::RIL(const struct RIL_Env *env) : m_env(env), m_radioState(RADIO_STATE_UNAVA
 
     m_handler = new RequestHandler(this);
     m_modem = new SamsungModem(m_hal, m_handler);
-    m_queue = new RequestQueue(this, m_handler);
 }
 
 RIL::~RIL() {
     delete m_handler;
-    delete m_queue;
     delete m_modem;
     delete m_hal;
 }
@@ -60,7 +58,7 @@ bool RIL::initialize(int argc, char **argv) {
 }
 
 void RIL::request(int request, void *data, size_t datalen, RIL_Token t) {
-    m_queue->request(request, data, datalen, t);
+    m_handler->handle(new Request(request, data, datalen, t, this));
 }
 
 int RIL::supports(int requestCode) {
@@ -68,15 +66,15 @@ int RIL::supports(int requestCode) {
 }
 
 void RIL::cancel(RIL_Token t) {
-    m_queue->cancel(t);
+    (void) t;
 }
 
 const char *RIL::getVersion() {
     return "FreeRIL-I9100 (prerelease version)";
 }
 
-void RIL::completed(RIL_Token t, RIL_Errno e,
-               const void *response, size_t responselen) {
+void RIL::complete(RIL_Token t, RIL_Errno e,
+                   const void *response, size_t responselen) {
 
     m_env->OnRequestComplete(t, e, const_cast<void *>(response), responselen);
 }
@@ -85,17 +83,33 @@ void RIL::unsolicited(int code, const void *data, size_t datalen) {
     m_env->OnUnsolicitedResponse(code, data, datalen);
 }
 
-void RIL::enqueue(UnsolicitedResponse *response) {
-    m_queue->enqueue(response);
-}
-
 void RIL::setRadioState(RIL_RadioState state) {
     m_radioState = state;
 
-    enqueue(new UnsolicitedResponse(RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED));
+    unsolicited(RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED);
 }
 
 void RIL::submit(SamsungIPC::Message *message) {
     m_modem->submit(message);
+}
+
+
+SamsungIPC::Message *RIL::execute(SamsungIPC::Message *message) {
+    ExecutionData data;
+    data.ril = this;
+
+    message->subscribe(onExecutionComplete, &data);
+    m_modem->submit(message);
+
+    m_executeSemaphore.take();
+
+    return data.reply;
+}
+
+void RIL::onExecutionComplete(Message *reply, void *arg) {
+    ExecutionData *data = static_cast<ExecutionData *>(arg);
+
+    data->reply = reply;
+    data->ril->m_executeSemaphore.give();
 }
 
