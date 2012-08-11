@@ -42,21 +42,26 @@ public:
     virtual void handle(SamsungIPC::Messages::PwrPhoneReset *message);
     virtual void handle(SamsungIPC::Messages::PwrPhoneModeChanged *message);
     virtual void handle(SamsungIPC::Messages::MiscGetMobileEquipImsiReply *message);
+    virtual void handle(SamsungIPC::Messages::SecGetPinStatusReply *message);
+    virtual void handle(SamsungIPC::Messages::SecSimCardType *message);
 
 private:
-    struct RequestBinding {
-        RequestBinding(RequestHandler *_handler, Request *_request) : handler(_handler), request(_request) {
-
-        }
-
-        RequestHandler *handler;
-        Request *request;
-    };
 
     void handleRadioPower(Request *request);
     void handleBasebandVersion(Request *request);
     void handleIMEI(Request *request);
+    void handleIMEISV(Request *request);
     void handleIMSI(Request *request);
+
+    void handleSIMStatus(Request *request);
+    void handleEnterSIMPin(Request *request);
+    void handleEnterSIMPuk(Request *request);
+    void handleEnterSIMPin2(Request *request);
+    void handleEnterSIMPuk2(Request *request);
+    static void handlePinStatusRefreshComplete(SamsungIPC::Message *reply, void *arg);
+    void setPinStatus(Request *request, const char *pin, const char *puk, int op);
+
+    bool completeGenCommand(SamsungIPC::Message *reply, const char *name, Request *request);
 
     enum {
         FirstRequest = RIL_REQUEST_GET_SIM_STATUS,

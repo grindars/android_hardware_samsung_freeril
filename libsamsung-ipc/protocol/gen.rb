@@ -25,7 +25,8 @@ message_group :GEN, 128 do |g|
         m.u8 :originalResponseType
 
         m.u16 :status, :type => :enum, :values => {
-            :SUCCESS => 0x8000
+            IncorrectPin: 0x0010,
+            Success:      0x8000
         }
     end
 end

@@ -17,24 +17,42 @@
 #
 
 message_group :SEC, 5 do |g|
-
-    g.in :PIN_STATUS, 1 do |m|
-        m.u8 :status, :type => :enum, :values => {
-            SimAbsent: 128
+    g.out :SET_PIN_STATUS, 1, :set do |m|
+        m.u8 :type, :type => :enum, :values => {
+            EnterPin:  0x03,
+            EnterPin2: 0x09
         }
-        # if absent:
-        # m.u8 rsvd
 
+        m.u8 :pin1Length
+        m.u8 :pin2Length
+        m.vector :pin1, :read_length => 8
+        m.vector :pin2, :read_length => 8
     end
-    #g.unsolicited :PIN_STATUS
+
+    g.out :GET_PIN_STATUS, 1, :get
+    g.in :GET_PIN_STATUS_REPLY, 1 do |m|
+        m.u8 :state, :type => :enum, :values => {
+            Ready:          0x00,
+            PINLock:        0x03,
+            PNLock:         0x05,
+            PULock:         0x06,
+            PPLock:         0x07,
+            PCLock:         0x08,
+            NoSimPresent:   0x80,
+            SimUnavailable: 0x81
+        }
+
+        m.u8 :xstate
+
+        # PINLock && xstate != 0x01 -> PUKLock
+        # + special handling for PN/PU/PP/PC Lock
+    end
+    g.unsolicited :GET_PIN_STATUS_REPLY
 
     g.in :SIM_CARD_TYPE, 7 do |m|
-        m.u8 :card_type, :type => :enum, :values => {
-            Absent: 0
-        }
-        m.u8 :icc_type, :if => "m_card_type == 3", :else => "0"
+        m.u8 :cardType
+        m.u8 :iccType
     end
-
-    #g.unsolicited :SIM_CARD_TYPE
+    g.unsolicited :SIM_CARD_TYPE
 
 end

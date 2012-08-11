@@ -264,7 +264,7 @@ eos
 
                 elsif field.parameters[:type] == :enum
                     values = field.parameters[:values].map { |key, value| "                #{key.to_s} = #{value.to_s}" }
-                    enum_type = field.name.to_s.capitalize
+                    enum_type = fieldize(field.name.to_s)
                     field_enums << <<-eos
             enum #{enum_type} {
 #{values.join(",\n")}
@@ -272,20 +272,20 @@ eos
 eos
                     accessors << <<-eos
             inline #{enum_type} #{field.name}() const { return (#{enum_type}) m_#{field.name}; }
-            inline void set#{field.name.capitalize}(#{enum_type} #{field.name}) { m_#{field.name} = (#{storage_type}) #{field.name}; }
+            inline void set#{fieldize(field.name.to_s)}(#{enum_type} #{field.name}) { m_#{field.name} = (#{storage_type}) #{field.name}; }
 eos
 
                     data_fields << "            #{storage_type} m_#{field.name};"
                 elsif field.type == :vector
                     accessors << <<-eos
             inline const #{storage_type} &#{field.name}() const { return m_#{field.name}; }
-            inline void set#{field.name.capitalize}(const #{storage_type} &#{field.name}) { m_#{field.name} = #{field.name}; }
+            inline void set#{fieldize(field.name.to_s)}(const #{storage_type} &#{field.name}) { m_#{field.name} = #{field.name}; }
 eos
                     data_fields << "            #{storage_type} m_#{field.name};"
                 else
                     accessors << <<-eos
             inline #{storage_type} #{field.name}() const { return m_#{field.name}; }
-            inline void set#{field.name.capitalize}(#{storage_type} #{field.name}) { m_#{field.name} = #{field.name}; }
+            inline void set#{fieldize(field.name.to_s)}(#{storage_type} #{field.name}) { m_#{field.name} = #{field.name}; }
 eos
                     data_fields << "            #{storage_type} m_#{field.name};"
                 end
@@ -397,6 +397,9 @@ eos
                 when :get
                     "IPC_CMD_GET"
 
+                when :set
+                    "IPC_CMD_SET"
+
                 when :cfrm
                     "IPC_CMD_CFRM"
 
@@ -484,6 +487,10 @@ namespace SamsungIPC {
     };
 }
         eos
+    end
+
+    def fieldize(s)
+        s[0].upcase + s[1..-1]
     end
 
     def class_name_for(message_name)

@@ -84,9 +84,13 @@ void RIL::unsolicited(int code, const void *data, size_t datalen) {
 }
 
 void RIL::setRadioState(RIL_RadioState state) {
-    m_radioState = state;
+    Log::debug("Radio state is now %d", state);
 
-    unsolicited(RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED);
+    if(state != m_radioState) {
+        m_radioState = state;
+
+        unsolicited(RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED);
+    }
 }
 
 void RIL::submit(SamsungIPC::Message *message) {

@@ -47,9 +47,15 @@ void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneReset *message) {
 void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneModeChanged *message) {
     switch(message->mode()) {
         case Messages::PwrPhoneModeChanged::Normal:
-            m_ril->setRadioState(RADIO_STATE_SIM_LOCKED_OR_ABSENT);
+        {
+            Log::debug("Refreshing PIN status");
+
+            Messages::SecGetPinStatus *msg = new Messages::SecGetPinStatus;
+            msg->subscribe(handlePinStatusRefreshComplete, this);
+            m_ril->submit(msg);
 
             break;
+        }
 
         case Messages::PwrPhoneModeChanged::LPM:
             m_ril->setRadioState(RADIO_STATE_OFF);
@@ -92,47 +98,14 @@ void RequestHandler::handleRadioPower(Request *request) {
         }
 
         Message *reply = m_ril->execute(message);
-        Messages::GenCommandComplete *complete = message_cast<Messages::GenCommandComplete>(reply);
-
-        if(complete == NULL) {
-            Log::error("Got unexpected message in response to PwrPhoneSetMode: %s", reply->inspect().c_str());
-
-            request->complete(RIL_E_GENERIC_FAILURE);
-        } else if(complete->status() == Messages::GenCommandComplete::SUCCESS) {
-
-            request->complete(RIL_E_SUCCESS);
-
-        } else {
-            Log::error("PwrPhoneSetMode failed with status 0x%04X", complete->status());
-
-            request->complete(RIL_E_GENERIC_FAILURE);
-        }
-
-        delete reply;
+        completeGenCommand(reply, "PwrPhoneSetMode", request);
 
     } else {
         Log::info("Powering radio off");
 
         Message *reply = m_ril->execute(new Messages::PwrPhonePowerOff);
-        Messages::GenCommandComplete *complete = message_cast<Messages::GenCommandComplete>(reply);
-
-        if(complete == NULL) {
-            Log::error("Got unexpected message in response to PwrPhonePowerOff: %s", reply->inspect().c_str());
-
-            request->complete(RIL_E_GENERIC_FAILURE);
-        } else if(complete->status() == Messages::GenCommandComplete::SUCCESS) {
-
-            request->complete(RIL_E_SUCCESS);
-
+        if(completeGenCommand(reply, "PwrPhonePowerOff", request))
             m_ril->setRadioState(RADIO_STATE_UNAVAILABLE);
-
-        } else {
-            Log::error("PwrPhonePowerOff failed with status 0x%04X", complete->status());
-
-            request->complete(RIL_E_GENERIC_FAILURE);
-        }
-
-        delete reply;
     }
 }
 

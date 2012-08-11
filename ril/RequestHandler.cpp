@@ -21,6 +21,7 @@
 
 #include <Log.h>
 #include <Utilities.h>
+#include <Messages.h>
 
 #include "RequestHandler.h"
 #include "Request.h"
@@ -28,16 +29,18 @@
 
 using namespace SamsungIPC;
 
-RequestHandler::RequestHandler(RIL *ril) : m_ril(ril){
+RequestHandler::RequestHandler(RIL *ril) : m_ril(ril) {
     m_requestHandlers[RIL_REQUEST_BASEBAND_VERSION - FirstRequest] = &RequestHandler::handleBasebandVersion;
     m_requestHandlers[RIL_REQUEST_RADIO_POWER - FirstRequest] = &RequestHandler::handleRadioPower;
     m_requestHandlers[RIL_REQUEST_GET_IMEI - FirstRequest] = &RequestHandler::handleIMEI;
+    m_requestHandlers[RIL_REQUEST_GET_IMEISV - FirstRequest] = &RequestHandler::handleIMEISV;
     m_requestHandlers[RIL_REQUEST_GET_IMSI - FirstRequest] = &RequestHandler::handleIMSI;
 }
 
 void RequestHandler::handle(Request *request) {
-    if(m_ril->radioState() == RADIO_STATE_UNAVAILABLE ||
-       (m_ril->radioState() == RADIO_STATE_OFF && request->code() != RIL_REQUEST_RADIO_POWER)) {
+    if((m_ril->radioState() == RADIO_STATE_UNAVAILABLE ||
+        (m_ril->radioState() == RADIO_STATE_OFF && request->code() != RIL_REQUEST_RADIO_POWER)) &&
+        request->code() != RIL_REQUEST_GET_SIM_STATUS) {
 
         request->complete(RIL_E_RADIO_NOT_AVAILABLE);
 
@@ -70,8 +73,48 @@ bool RequestHandler::supports(int request) {
     return m_requestHandlers[request - FirstRequest] != 0;
 }
 
-void RequestHandler::handle(SamsungIPC::Messages::MiscGetMobileEquipImsiReply *message) {
-    Log::debug("Unsolicited MiscGetMobileEquipImsiReply");
+bool RequestHandler::completeGenCommand(SamsungIPC::Message *reply, const char *name, Request *request) {
+    bool ret = false;
+
+    Messages::GenCommandComplete *complete = message_cast<Messages::GenCommandComplete>(reply);
+
+    if(complete == NULL) {
+        Log::error("Got unexpected message in response to %s: %s", name, reply->inspect().c_str());
+
+        request->complete(RIL_E_GENERIC_FAILURE);
+
+    } else if(complete->status() == Messages::GenCommandComplete::Success) {
+
+        request->complete(RIL_E_SUCCESS);
+
+        ret = true;
+
+    } else {
+        Log::error("%s failed with status 0x%04X", name, complete->status());
+
+        switch(complete->status()) {
+            case Messages::GenCommandComplete::IncorrectPin:
+                request->complete(RIL_E_PASSWORD_INCORRECT);
+
+                break;
+
+            default:
+                request->complete(RIL_E_GENERIC_FAILURE);
+
+                break;
+        }
+    }
+
+    delete reply;
+
+    return ret;
 }
 
-void (RequestHandler::*RequestHandler::m_requestHandlers[LastRequest - FirstRequest + 1])(Request *request);
+void (RequestHandler::*RequestHandler::m_requestHandlers[LastRequest - FirstRequest + 1])(Request *request) = {
+    &RequestHandler::handleSIMStatus,
+    &RequestHandler::handleEnterSIMPin,
+    &RequestHandler::handleEnterSIMPuk,
+    &RequestHandler::handleEnterSIMPin2,
+    &RequestHandler::handleEnterSIMPuk2
+};
+

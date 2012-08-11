@@ -90,6 +90,10 @@ void RequestHandler::handleIMEI(Request *request) {
     delete reply;
 }
 
+void RequestHandler::handleIMEISV(Request *request) {
+    request->complete(RIL_E_SUCCESS, "01", sizeof(char *));
+}
+
 void RequestHandler::handleIMSI(Request *request) {
 
     if(m_ril->radioState() != RADIO_STATE_SIM_READY) {
@@ -108,10 +112,14 @@ void RequestHandler::handleIMSI(Request *request) {
     } else {
         std::string imsi = std::string((const char *) &complete->imsi()[0], complete->imsi().size());
 
-        Log::info("IMEI: %s", imsi.c_str());
+        Log::info("IMSI: %s", imsi.c_str());
 
         request->complete(RIL_E_SUCCESS, imsi.c_str(), sizeof(char *));
     }
 
     delete reply;
+}
+
+void RequestHandler::handle(SamsungIPC::Messages::MiscGetMobileEquipImsiReply *message) {
+    (void) message;
 }
