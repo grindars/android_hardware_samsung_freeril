@@ -181,6 +181,242 @@ void RequestHandler::handleOperator(Request *request) {
     delete reply;
 }
 
+void RequestHandler::handle(SamsungIPC::Messages::NetGetCurrentPlmnReply *message) {
+    (void) message;
+
+    m_ril->unsolicited(RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED);
+}
+
+void RequestHandler::handleSetBandMode(Request *request) {
+    Messages::NetSetBandSelection *message = new Messages::NetSetBandSelection;
+    message->setUnknown1(0x02);
+
+    const int *data = (const int *) request->data();
+    switch(data[0]) {
+        case 0:
+        default:
+            message->setBand(Messages::NetSetBandSelection::Automatic);
+
+            break;
+
+        case 1:
+            message->setBand(Messages::NetSetBandSelection::EURO);
+
+            break;
+
+        case 2:
+            message->setBand(Messages::NetSetBandSelection::US);
+
+            break;
+
+        case 3:
+            message->setBand(Messages::NetSetBandSelection::JPN);
+
+            break;
+
+        case 4:
+            message->setBand(Messages::NetSetBandSelection::AUS);
+
+            break;
+
+        case 5:
+            message->setBand(Messages::NetSetBandSelection::AUS2);
+
+            break;
+    }
+
+    Message *reply = m_ril->execute(message);
+    completeGenCommand(reply, "NetSetBandSelection", request);
+}
+
+void RequestHandler::handleQueryAvailableBandMode(Request *request) {
+    static const int data[7] = { 6, 0, 1, 2, 3, 4, 5 };
+
+    request->complete(RIL_E_SUCCESS, data, sizeof(data));
+}
+
+void RequestHandler::handleSetPreferredNetworkType(Request *request) {
+    int mode = ((const int *) request->data())[0];
+
+    Messages::NetSetModeSelect *message = new Messages::NetSetModeSelect;
+
+    switch(mode) {
+        case PREF_NET_TYPE_LTE_GSM_WCDMA:
+        case PREF_NET_TYPE_GSM_WCDMA_AUTO:
+        case PREF_NET_TYPE_CDMA_EVDO_AUTO:
+        case PREF_NET_TYPE_CDMA_ONLY:
+        case PREF_NET_TYPE_EVDO_ONLY:
+        case PREF_NET_TYPE_GSM_WCDMA:
+            message->setMode(1);
+
+            break;
+
+        case PREF_NET_TYPE_GSM_ONLY:
+            message->setMode(2);
+
+            break;
+
+        case PREF_NET_TYPE_WCDMA:
+            message->setMode(3);
+
+            break;
+
+        case PREF_NET_TYPE_LTE_CMDA_EVDO_GSM_WCDMA:
+            message->setMode(4);
+
+            break;
+
+        case PREF_NET_TYPE_LTE_ONLY:
+            message->setMode(6);
+
+            break;
+
+        default:
+            message->setMode(7);
+
+            break;
+    }
+
+    Message *reply = m_ril->execute(message);
+    completeGenCommand(reply, "NetSetModeSelect", request);
+}
+
+void RequestHandler::handleGetPreferredNetworkType(Request *request) {
+    Message *reply = m_ril->execute(new Messages::NetGetModeSelect);
+    Messages::NetGetModeSelectReply *complete = message_cast<Messages::NetGetModeSelectReply>(reply);
+
+    if(complete == NULL) {
+        Log::error("Got unexpected message in response to NetGetModeSelect: %s", reply->inspect().c_str());
+
+        request->complete(RIL_E_GENERIC_FAILURE);
+    } else {
+        int response;
+
+        switch(complete->mode()) {
+            case 1:
+            case 3:
+                response = PREF_NET_TYPE_GSM_ONLY;
+
+                break;
+
+            case 2:
+                response = PREF_NET_TYPE_GSM_WCDMA;
+
+                break;
+
+            case 4:
+                response = PREF_NET_TYPE_WCDMA;
+
+                break;
+
+            case 5:
+                response = PREF_NET_TYPE_LTE_ONLY;
+
+                break;
+
+            case 6:
+                response = PREF_NET_TYPE_CDMA_ONLY;
+
+                break;
+
+            default:
+                response = -1;
+
+                break;
+        }
+
+        request->complete(RIL_E_SUCCESS, &response, sizeof(response));
+    }
+
+    delete reply;
+}
+
+void RequestHandler::handleVoiceRegistrationState(Request *request) {
+    getNetworkRegistration(request, Messages::NetGetNetworkRegistration::Voice);
+}
+
+void RequestHandler::handleDataRegistrationState(Request *request) {
+    getNetworkRegistration(request, Messages::NetGetNetworkRegistration::Data);
+}
+
+void RequestHandler::handle(SamsungIPC::Messages::NetGetNetworkRegistrationReply *message) {
+    switch(message->serviceDomain()) {
+        case SamsungIPC::Messages::NetGetNetworkRegistrationReply::Voice:
+            m_ril->unsolicited(RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED);
+
+            break;
+
+        case SamsungIPC::Messages::NetGetNetworkRegistrationReply::Data:
+
+            break;
+
+        default:
+            Log::error("Registration of unknown service domain: %hhu", message->serviceDomain());
+    }
+}
+
+static unsigned int toRilStatus(Messages::NetGetNetworkRegistrationReply::RegistrationStatus status) {
+    switch(status) {
+        case Messages::NetGetNetworkRegistrationReply::NotRegistered:
+            return 0;
+
+        case Messages::NetGetNetworkRegistrationReply::HomeNetwork:
+            return 1;
+
+        case Messages::NetGetNetworkRegistrationReply::SearchingEmergencyOnly:
+            return 12;
+
+        case Messages::NetGetNetworkRegistrationReply::RegistrationDeniedEmergencyOnly:
+            return 13;
+
+        case Messages::NetGetNetworkRegistrationReply::UnknownEmergencyOnly:
+            return 14;
+
+        case Messages::NetGetNetworkRegistrationReply::Roaming:
+            return 5;
+
+        case Messages::NetGetNetworkRegistrationReply::ANDROID_STATE_6:
+            return 6;
+
+        case Messages::NetGetNetworkRegistrationReply::GPRSNotAllowed:
+            return 7;
+
+        default:
+            return -1;
+    }
+}
+
+void RequestHandler::getNetworkRegistration(Request *request, int op) {
+    Messages::NetGetNetworkRegistration *message = new Messages::NetGetNetworkRegistration;
+    message->setUnknown1(0xFF);
+    message->setServiceDomain((Messages::NetGetNetworkRegistration::ServiceDomain) op);
+
+    Message *reply = m_ril->execute(message);
+    Messages::NetGetNetworkRegistrationReply *complete = message_cast<Messages::NetGetNetworkRegistrationReply>(reply);
+
+    if(complete == NULL) {
+        Log::error("Got unexpected message in response to NetGetNetworkRegistration: %s", reply->inspect().c_str());
+
+        request->complete(RIL_E_GENERIC_FAILURE);
+    } else {
+        char status[16], lac[16], cid[16];
+
+        snprintf(status, sizeof(status), "%u", toRilStatus(complete->registrationStatus()));
+        snprintf(lac, sizeof(lac), "%04hx", complete->lac());
+        snprintf(cid, sizeof(cid), "%08x", complete->cid());
+
+        char *response[] = {
+            status,
+            lac,
+            cid
+        };
+
+        request->complete(RIL_E_SUCCESS, response, sizeof(response));
+    }
+
+    delete reply;
+}
+
 void RequestHandler::setPLMNSelection(Request *request, const char *plmn) {
     size_t plmn_length;
 
@@ -210,3 +446,4 @@ void RequestHandler::setPLMNSelection(Request *request, const char *plmn) {
     Message *reply = m_ril->execute(message);
     completeGenCommand(reply, "NetSetPlmnSelection", request);
 }
+

@@ -39,6 +39,8 @@ message_group :NET, 8 do |g|
         m.u16 :unknown3
     end
 
+    g.unsolicited :GET_CURRENT_PLMN_REPLY
+
     g.out :GET_PLMN_LIST, 4, :get
     g.in :GET_PLMN_LIST_REPLY, 4 do |m|
         m.u8 :count
@@ -54,5 +56,69 @@ message_group :NET, 8 do |g|
         # +7 u8 :unknown2
         # +8 u8 :unknown3
         # +9 u8 :unknown4
+    end
+
+    g.out :GET_NETWORK_REGISTRATION, 5, :get do |m|
+        m.u8 :unknown1 # Always 0xFF
+        m.u8 :serviceDomain, :type => :enum, :values => {
+            Voice: 0x02,
+            Data:  0x03
+        }
+    end
+    g.in :GET_NETWORK_REGISTRATION_REPLY, 5 do |m|
+        m.u8  :act # Unclear
+        m.u8  :serviceDomain, :type => :enum, :values => {
+            Voice: 0x02,
+            Data:  0x03
+        }
+        m.u8  :registrationStatus, :type => :enum, :values => {
+            NotRegistered:                   1,
+            HomeNetwork:                     2,
+            SearchingEmergencyOnly:          3,
+            RegistrationDeniedEmergencyOnly: 4,
+            UnknownEmergencyOnly:            5,
+            Roaming:                         6,
+            ANDROID_STATE_6:                 7, # Not defined, but used by Samsung.
+            GPRSNotAllowed:                  8
+        }
+        m.u8  :unknown1 # Not used by RIL
+        m.u16 :lac
+        m.u32 :cid
+        m.u8  :unknown2 # Not used by RIL
+    end
+    g.unsolicited :GET_NETWORK_REGISTRATION_REPLY
+
+    g.out :GET_BAND_SELECTION, 7, :get
+    g.in :GET_BAND_SELECTION_REPLY, 7 do |m|
+        m.u8  :unknown1 # Not used by the RIL
+        m.u32 :band, :type => :enum, :values => {
+            Automatic: 0x40000000,
+            EURO:      0x16,
+            US:        0x129,
+            JPN:       0x210,
+            AUS:       0x116,
+            AUS2:      0x106
+        }
+    end
+
+    g.out :SET_BAND_SELECTION, 7, :set do |m|
+        m.u8  :unknown1 # Always 0x02
+        m.u32 :band, :type => :enum, :values => {
+            Automatic: 0x40000000,
+            EURO:      0x16,
+            US:        0x129,
+            JPN:       0x210,
+            AUS:       0x116,
+            AUS2:      0x106
+        }
+    end
+
+    g.out :GET_MODE_SELECT, 10, :get
+    g.in :GET_MODE_SELECT_REPLY, 10 do |m|
+        m.u8 :mode
+    end
+
+    g.out :SET_MODE_SELECT, 10, :set do |m|
+        m.u8 :mode
     end
 end

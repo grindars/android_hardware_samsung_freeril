@@ -36,6 +36,8 @@ RequestHandler::RequestHandler(RIL *ril) : m_ril(ril) {
     m_requestHandlers[RIL_REQUEST_GET_IMEISV - FirstRequest] = &RequestHandler::handleIMEISV;
     m_requestHandlers[RIL_REQUEST_GET_IMSI - FirstRequest] = &RequestHandler::handleIMSI;
 
+    m_requestHandlers[RIL_REQUEST_VOICE_REGISTRATION_STATE - FirstRequest] = &RequestHandler::handleVoiceRegistrationState;
+    m_requestHandlers[RIL_REQUEST_DATA_REGISTRATION_STATE - FirstRequest] = &RequestHandler::handleDataRegistrationState;
     m_requestHandlers[RIL_REQUEST_OPERATOR - FirstRequest] = &RequestHandler::handleOperator;
 
     m_requestHandlers[RIL_REQUEST_QUERY_NETWORK_SELECTION_MODE - FirstRequest] = &RequestHandler::handleQueryNetworkSelectionMode;
@@ -44,6 +46,12 @@ RequestHandler::RequestHandler(RIL *ril) : m_ril(ril) {
     m_requestHandlers[RIL_REQUEST_QUERY_AVAILABLE_NETWORKS - FirstRequest] = &RequestHandler::handleQueryAvailableNetworks;
 
     m_requestHandlers[RIL_REQUEST_SCREEN_STATE - FirstRequest] = &RequestHandler::handleScreenState;
+
+    m_requestHandlers[RIL_REQUEST_SET_BAND_MODE - FirstRequest] = &RequestHandler::handleSetBandMode;
+    m_requestHandlers[RIL_REQUEST_QUERY_AVAILABLE_BAND_MODE - FirstRequest] = &RequestHandler::handleQueryAvailableBandMode;
+
+    m_requestHandlers[RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE - FirstRequest] = &RequestHandler::handleSetPreferredNetworkType;
+    m_requestHandlers[RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE - FirstRequest] = &RequestHandler::handleGetPreferredNetworkType;
 }
 
 void RequestHandler::handle(Request *request) {

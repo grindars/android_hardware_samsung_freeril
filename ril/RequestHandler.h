@@ -44,6 +44,8 @@ public:
     virtual void handle(SamsungIPC::Messages::MiscGetMobileEquipImsiReply *message);
     virtual void handle(SamsungIPC::Messages::SecGetPinStatusReply *message);
     virtual void handle(SamsungIPC::Messages::SecSimCardType *message);
+    virtual void handle(SamsungIPC::Messages::NetGetCurrentPlmnReply *message);
+    virtual void handle(SamsungIPC::Messages::NetGetNetworkRegistrationReply *message);
 
 private:
 
@@ -70,8 +72,14 @@ private:
     void handleSetNetworkSelectionManual(Request *request);
     void handleQueryAvailableNetworks(Request *request);
     void handleOperator(Request *request);
-
+    void handleSetBandMode(Request *request);
+    void handleQueryAvailableBandMode(Request *request);
+    void handleSetPreferredNetworkType(Request *request);
+    void handleGetPreferredNetworkType(Request *request);
+    void handleVoiceRegistrationState(Request *request);
+    void handleDataRegistrationState(Request *request);
     void setPLMNSelection(Request *request, const char *plmn);
+    void getNetworkRegistration(Request *request, int op);
 
     void handleScreenState(Request *request);
 
