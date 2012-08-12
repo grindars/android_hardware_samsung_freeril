@@ -28,28 +28,25 @@
 using namespace SamsungIPC;
 
 void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneBootComplete *message) {
-    m_ril->setRadioState(RADIO_STATE_OFF);
-
     Messages::MiscSetDebugLevel *levelMessage = new Messages::MiscSetDebugLevel;
     levelMessage->setLevel(1);
-
     m_ril->submit(levelMessage);
+
+    m_ril->setRadioState(RADIO_STATE_OFF);
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::PwrPhonePoweredOff *message) {
-    Log::debug("Unsolicited phone power off");
+    Log::info("Unsolicited phone power off");
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneReset *message) {
-    Log::debug("Unsolicited phone reset");
+    Log::info("Unsolicited phone reset");
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneModeChanged *message) {
     switch(message->mode()) {
         case Messages::PwrPhoneModeChanged::Normal:
         {
-            Log::debug("Refreshing PIN status");
-
             Messages::SecGetPinStatus *msg = new Messages::SecGetPinStatus;
             msg->subscribe(handlePinStatusRefreshComplete, this);
             m_ril->submit(msg);

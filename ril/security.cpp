@@ -28,7 +28,7 @@
 using namespace SamsungIPC;
 
 void RequestHandler::handle(Messages::SecSimCardType *message) {
-    Log::debug("Unsolicited SecSimCardType. Card type: %u, ICC type: %u\n",
+    Log::info("Card type: %u, ICC type: %u",
                message->cardType(), message->iccType());
 }
 
@@ -202,11 +202,6 @@ void RequestHandler::setPinStatus(Request *request, const char *pin, const char 
         return;
     }
 
-    Log::debug("SecSetPinStatus: operation %d, pin: %s, puk: %s",
-               op,
-               pin ? pin : "(none)",
-               puk ? puk : "(none)");
-
     std::vector<unsigned char> pin1(8), pin2(8);
     memcpy(&pin1[0], pin, pin_len);
     memcpy(&pin2[0], puk, puk_len);
@@ -233,8 +228,6 @@ void RequestHandler::changeLockPwd(Request *request, const char *currentPwd, con
 
         return;
     }
-
-    Log::debug("SecChangeLockPwd: operation %d, current: %s, new: %s", op, currentPwd, newPwd);
 
     std::vector<unsigned char> currentVector(39), newVector(39);
     memcpy(&currentVector[0], currentPwd, current_len);

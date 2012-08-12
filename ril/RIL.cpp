@@ -16,6 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cutils/properties.h>
+#include <sys/mman.h>
+
 #include <Log.h>
 #include <AndroidHAL.h>
 #include <SamsungModem.h>
@@ -44,6 +47,16 @@ RIL::~RIL() {
 bool RIL::initialize(int argc, char **argv) {
     (void) argc;
     (void) argv;
+
+    char shadow_value[PROPERTY_VALUE_MAX], value[PROPERTY_VALUE_MAX];
+    property_get("ro.telephony.ril_class", shadow_value, "RIL");
+    property_get("ril.override_class", value, shadow_value);
+
+    if(strcmp(value, "RIL") != 0) {
+        Log::error("Wrong Java-side RIL class selected: %s", value);
+
+        return false;
+    }
 
     Log::info("Booting modem.");
 
@@ -84,8 +97,6 @@ void RIL::unsolicited(int code, const void *data, size_t datalen) {
 }
 
 void RIL::setRadioState(RIL_RadioState state) {
-    Log::debug("Radio state is now %d", state);
-
     if(state != m_radioState) {
         m_radioState = state;
 

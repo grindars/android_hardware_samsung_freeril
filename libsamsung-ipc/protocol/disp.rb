@@ -16,3 +16,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+message_group :DISP, 7 do |g|
+    g.out :GET_ICON_INFORMATION, 1, :get do |m|
+        m.u8 :icon, :type => :enum, :values => {
+            SignalStrength: 1
+        }
+    end
+    g.in :GET_ICON_INFORMATION_REPLY, 1 do |m|
+        m.u8 :icon
+        m.u8 :value
+        m.u16 :unknown1 # Unused by RIL
+    end
+    g.unsolicited :GET_ICON_INFORMATION_REPLY
+
+    g.in :RSSI_INFORMATION, 6 do |m|
+        m.u8 :rssi
+    end
+    g.unsolicited :RSSI_INFORMATION
+end

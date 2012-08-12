@@ -141,11 +141,7 @@ void IPCSocketHandler::dumpMessage(const char *type, const Message::Header &head
 }
 
 void IPCSocketHandler::submit(Message *message) {
-    Log::debug("IPCSocketHandler: message %p submitted", message);
-
     if(m_freeSequenceNumbers.size() == 0) {
-        Log::debug("No free sequence numbers - queueing");
-
         m_messageQueue.push_back(message);
 
         return;

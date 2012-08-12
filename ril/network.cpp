@@ -109,7 +109,7 @@ void RequestHandler::handleQueryAvailableNetworks(Request *request) {
 
         const PlmnRecord *plmn = (const PlmnRecord *) &data[0];
 
-        size_t response_size = sizeof(char **) * complete->count() * 5;
+        size_t response_size = sizeof(char **) * complete->count() * 4;
         char **response = (char **) malloc(response_size);
 
         for(size_t i = 0; i < complete->count(); i++) {
@@ -139,19 +139,18 @@ void RequestHandler::handleQueryAvailableNetworks(Request *request) {
             }
 
             // TODO: database lookup
-            response[i * 5 + 0] = strdup(mccmnc);
-            response[i * 5 + 1] = strdup(mccmnc);
-            response[i * 5 + 2] = mccmnc;
-            response[i * 5 + 3] = (char *) status;
-            response[i * 5 + 4] = (char *) "";
+            response[i * 4 + 0] = strdup(mccmnc);
+            response[i * 4 + 1] = strdup(mccmnc);
+            response[i * 4 + 2] = mccmnc;
+            response[i * 4 + 3] = (char *) status;
         }
 
         request->complete(RIL_E_SUCCESS, response, response_size);
 
         for(size_t i = 0; i < complete->count(); i++) {
-            free(response[i * 5 + 0]);
-            free(response[i * 5 + 1]);
-            free(response[i * 5 + 2]);
+            free(response[i * 4 + 0]);
+            free(response[i * 4 + 1]);
+            free(response[i * 4 + 2]);
         }
 
         free(response);
@@ -236,9 +235,8 @@ void RequestHandler::handleQueryAvailableBandMode(Request *request) {
 }
 
 void RequestHandler::handleSetPreferredNetworkType(Request *request) {
-    int mode = ((const int *) request->data())[0];
+    int mode = ((const int *) request->data())[0], ipc_mode;
 
-    Messages::NetSetModeSelect *message = new Messages::NetSetModeSelect;
 
     switch(mode) {
         case PREF_NET_TYPE_LTE_GSM_WCDMA:
@@ -247,41 +245,97 @@ void RequestHandler::handleSetPreferredNetworkType(Request *request) {
         case PREF_NET_TYPE_CDMA_ONLY:
         case PREF_NET_TYPE_EVDO_ONLY:
         case PREF_NET_TYPE_GSM_WCDMA:
-            message->setMode(1);
+            ipc_mode = 1;
 
             break;
 
         case PREF_NET_TYPE_GSM_ONLY:
-            message->setMode(2);
+            ipc_mode = 2;
 
             break;
 
         case PREF_NET_TYPE_WCDMA:
-            message->setMode(3);
+            ipc_mode = 3;
 
             break;
 
         case PREF_NET_TYPE_LTE_CMDA_EVDO_GSM_WCDMA:
-            message->setMode(4);
+            ipc_mode = 4;
 
             break;
 
         case PREF_NET_TYPE_LTE_ONLY:
-            message->setMode(6);
+            ipc_mode = 6;
 
             break;
 
         default:
-            message->setMode(7);
+            ipc_mode = 7;
 
             break;
     }
 
-    Message *reply = m_ril->execute(message);
-    completeGenCommand(reply, "NetSetModeSelect", request);
+    int current_mode = getNetworkMode(request);
+
+    if(current_mode == -1)
+        return;
+
+    if(current_mode == ipc_mode) {
+        request->complete(RIL_E_SUCCESS);
+    } else {
+        Messages::NetSetModeSelect *message = new Messages::NetSetModeSelect;
+        message->setMode(ipc_mode);
+
+        Message *reply = m_ril->execute(message);
+        completeGenCommand(reply, "NetSetModeSelect", request);
+    }
+
 }
 
 void RequestHandler::handleGetPreferredNetworkType(Request *request) {
+    int mode = getNetworkMode(request), response;
+
+    switch(mode) {
+        case -1:
+            return;
+
+        case 1:
+        case 3:
+            response = PREF_NET_TYPE_GSM_ONLY;
+
+            break;
+
+        case 2:
+            response = PREF_NET_TYPE_GSM_WCDMA;
+
+            break;
+
+        case 4:
+            response = PREF_NET_TYPE_WCDMA;
+
+            break;
+
+        case 5:
+            response = PREF_NET_TYPE_LTE_ONLY;
+
+            break;
+
+        case 6:
+            response = PREF_NET_TYPE_CDMA_ONLY;
+
+            break;
+
+        default:
+            response = -1;
+
+            break;
+    }
+
+    request->complete(RIL_E_SUCCESS, &response, sizeof(response));
+}
+
+int RequestHandler::getNetworkMode(Request *request) {
+    int ret;
     Message *reply = m_ril->execute(new Messages::NetGetModeSelect);
     Messages::NetGetModeSelectReply *complete = message_cast<Messages::NetGetModeSelectReply>(reply);
 
@@ -289,46 +343,15 @@ void RequestHandler::handleGetPreferredNetworkType(Request *request) {
         Log::error("Got unexpected message in response to NetGetModeSelect: %s", reply->inspect().c_str());
 
         request->complete(RIL_E_GENERIC_FAILURE);
+
+        ret = -1;
     } else {
-        int response;
-
-        switch(complete->mode()) {
-            case 1:
-            case 3:
-                response = PREF_NET_TYPE_GSM_ONLY;
-
-                break;
-
-            case 2:
-                response = PREF_NET_TYPE_GSM_WCDMA;
-
-                break;
-
-            case 4:
-                response = PREF_NET_TYPE_WCDMA;
-
-                break;
-
-            case 5:
-                response = PREF_NET_TYPE_LTE_ONLY;
-
-                break;
-
-            case 6:
-                response = PREF_NET_TYPE_CDMA_ONLY;
-
-                break;
-
-            default:
-                response = -1;
-
-                break;
-        }
-
-        request->complete(RIL_E_SUCCESS, &response, sizeof(response));
+        ret = complete->mode();
     }
 
     delete reply;
+
+    return ret;
 }
 
 void RequestHandler::handleVoiceRegistrationState(Request *request) {

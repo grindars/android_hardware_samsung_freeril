@@ -29,13 +29,15 @@
 
 using namespace SamsungIPC;
 
-RequestHandler::RequestHandler(RIL *ril) : m_ril(ril) {
+RequestHandler::RequestHandler(RIL *ril) : m_ril(ril), m_coarseRSSI(-1) {
+
     m_requestHandlers[RIL_REQUEST_BASEBAND_VERSION - FirstRequest] = &RequestHandler::handleBasebandVersion;
     m_requestHandlers[RIL_REQUEST_RADIO_POWER - FirstRequest] = &RequestHandler::handleRadioPower;
     m_requestHandlers[RIL_REQUEST_GET_IMEI - FirstRequest] = &RequestHandler::handleIMEI;
     m_requestHandlers[RIL_REQUEST_GET_IMEISV - FirstRequest] = &RequestHandler::handleIMEISV;
     m_requestHandlers[RIL_REQUEST_GET_IMSI - FirstRequest] = &RequestHandler::handleIMSI;
 
+    m_requestHandlers[RIL_REQUEST_SIGNAL_STRENGTH - FirstRequest] = &RequestHandler::handleSignalStrength;
     m_requestHandlers[RIL_REQUEST_VOICE_REGISTRATION_STATE - FirstRequest] = &RequestHandler::handleVoiceRegistrationState;
     m_requestHandlers[RIL_REQUEST_DATA_REGISTRATION_STATE - FirstRequest] = &RequestHandler::handleDataRegistrationState;
     m_requestHandlers[RIL_REQUEST_OPERATOR - FirstRequest] = &RequestHandler::handleOperator;

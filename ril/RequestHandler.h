@@ -46,6 +46,8 @@ public:
     virtual void handle(SamsungIPC::Messages::SecSimCardType *message);
     virtual void handle(SamsungIPC::Messages::NetGetCurrentPlmnReply *message);
     virtual void handle(SamsungIPC::Messages::NetGetNetworkRegistrationReply *message);
+    virtual void handle(SamsungIPC::Messages::DispGetIconInformationReply *message);
+    virtual void handle(SamsungIPC::Messages::DispRssiInformation *message);
 
 private:
 
@@ -80,8 +82,10 @@ private:
     void handleDataRegistrationState(Request *request);
     void setPLMNSelection(Request *request, const char *plmn);
     void getNetworkRegistration(Request *request, int op);
+    int getNetworkMode(Request *request);
 
     void handleScreenState(Request *request);
+    void handleSignalStrength(Request *request);
 
     bool completeGenCommand(SamsungIPC::Message *reply, const char *name, Request *request);
 
@@ -93,6 +97,7 @@ private:
     RIL *m_ril;
 
     static void (RequestHandler::*m_requestHandlers[LastRequest - FirstRequest + 1])(Request *request);
+    int m_coarseRSSI;
 };
 
 #endif

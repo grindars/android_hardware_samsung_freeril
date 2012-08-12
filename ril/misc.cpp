@@ -32,30 +32,12 @@ void RequestHandler::handleBasebandVersion(Request *request) {
     Message *reply = m_ril->execute(message);
     Messages::MiscGetMobileEquipVersionReply *complete = message_cast<Messages::MiscGetMobileEquipVersionReply>(reply);
 
-    Log::debug("Reply to handleBasebandVersion got");
-
     if(complete == NULL) {
         Log::error("Got unexpected message in response to MiscGetMobileEquipVersion: %s", reply->inspect().c_str());
 
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {
         std::string sw_ver = std::string((const char *) &complete->softwareVersion()[0], complete->softwareVersion().size());
-        std::string hw_ver = std::string((const char *) &complete->hardwareVersion()[0], complete->hardwareVersion().size());
-        std::string rfcal_date = std::string((const char *) &complete->RFCalDate()[0], complete->RFCalDate().size());
-        std::string product_code = std::string((const char *) &complete->productCode()[0], complete->productCode().size());
-        std::string model = std::string((const char *) &complete->model()[0], complete->model().size());
-        uint8_t prl_num = complete->PRLNum();
-
-        Log::info(
-            "Baseband software version: %s\n"
-            "Baseband hardware version: %s\n"
-            "Baseband RF calibrated on %s\n"
-            "Baseband product code: %s\n"
-            "Baseband model: %s\n"
-            "Baseband PRL number: %hhu",
-            sw_ver.c_str(), hw_ver.c_str(), rfcal_date.c_str(), product_code.c_str(),
-                  model.c_str(), prl_num);
-
         request->complete(RIL_E_SUCCESS, sw_ver.c_str(), sizeof(char *));
     }
 
@@ -81,8 +63,6 @@ void RequestHandler::handleIMEI(Request *request) {
         }
 
         std::string serial = std::string((const char *) &complete->serial()[0], complete->serial().size());
-
-        Log::info("IMEI: %s", serial.c_str());
 
         request->complete(RIL_E_SUCCESS, serial.c_str(), sizeof(char *));
     }
@@ -111,8 +91,6 @@ void RequestHandler::handleIMSI(Request *request) {
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {
         std::string imsi = std::string((const char *) &complete->imsi()[0], complete->imsi().size());
-
-        Log::info("IMSI: %s", imsi.c_str());
 
         request->complete(RIL_E_SUCCESS, imsi.c_str(), sizeof(char *));
     }
