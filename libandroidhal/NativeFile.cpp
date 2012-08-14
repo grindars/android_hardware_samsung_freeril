@@ -88,3 +88,21 @@ off_t HAL::NativeFile::seek(off_t offset, int whence) {
 
     return ret;
 }
+
+ssize_t HAL::NativeFile::pread(void *buf, size_t size, off_t offset) {
+    ssize_t bytes = ::pread(fd(), buf, size, offset);
+
+    if(bytes == -1)
+        Log::panicErrno("pread");
+
+    return bytes;
+}
+
+ssize_t HAL::NativeFile::pwrite(const void *buf, size_t size, off_t offset) {
+    ssize_t bytes = ::pwrite(fd(), buf, size, offset);
+
+    if(bytes == -1)
+        Log::panicErrno("pread");
+
+    return bytes;
+}

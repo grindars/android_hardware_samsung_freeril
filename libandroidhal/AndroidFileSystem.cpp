@@ -76,11 +76,9 @@ bool HAL::AndroidFileSystem::getFirmware(SamsungIPC::IFileSystem::FirmwareType t
 
     HAL::NativeFile file = HAL::NativeFile::open(m_firmware, O_RDONLY);
 
-    file.seek(offset, SEEK_SET);
-
     data.resize(length);
 
-    ssize_t bytes = file.read(&data[0], length);
+    ssize_t bytes = file.pread(&data[0], length, offset);
     if((unsigned int) bytes != length) {
         Log::panic("Short read");
     }
