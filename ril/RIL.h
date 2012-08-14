@@ -34,7 +34,7 @@ namespace SamsungIPC {
 }
 
 class RequestHandler;
-class UnsolicitedResponse;
+class RILDatabase;
 
 class RIL {
 public:
@@ -44,6 +44,8 @@ public:
     inline RIL_RadioState radioState() {
         return m_radioState;
     }
+
+    inline RILDatabase *database() { return m_database; }
 
     void setRadioState(RIL_RadioState state);
 
@@ -78,6 +80,7 @@ private:
     SamsungIPC::SamsungModem *m_modem;
     RequestHandler *m_handler;
     SamsungIPC::Semaphore m_executeSemaphore;
+    RILDatabase *m_database;
 };
 
 #endif

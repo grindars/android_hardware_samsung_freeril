@@ -27,14 +27,16 @@
 #include "RequestHandler.h"
 #include "Request.h"
 #include "Message.h"
+#include "RILDatabase.h"
 
 using namespace SamsungIPC;
 using namespace HAL;
 
-RIL::RIL(const struct RIL_Env *env) : m_env(env), m_radioState(RADIO_STATE_UNAVAILABLE),
-    m_hal(new AndroidHAL) {
+RIL::RIL(const struct RIL_Env *env) : m_env(env), m_radioState(RADIO_STATE_UNAVAILABLE) {
 
+    m_database = new RILDatabase;
     m_handler = new RequestHandler(this);
+    m_hal = new AndroidHAL;
     m_modem = new SamsungModem(m_hal, m_handler);
 }
 
@@ -42,6 +44,7 @@ RIL::~RIL() {
     delete m_handler;
     delete m_modem;
     delete m_hal;
+    delete m_database;
 }
 
 bool RIL::initialize(int argc, char **argv) {
@@ -54,6 +57,12 @@ bool RIL::initialize(int argc, char **argv) {
 
     if(strcmp(value, "RIL") != 0) {
         Log::error("Wrong Java-side RIL class selected: %s", value);
+
+        return false;
+    }
+
+    if(!m_database->open()) {
+        Log::error("Unable to open RIL database: %s", m_database->errorString().c_str());
 
         return false;
     }

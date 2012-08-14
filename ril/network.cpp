@@ -20,6 +20,7 @@
 
 #include "RequestHandler.h"
 #include "RIL.h"
+#include "RILDatabase.h"
 #include "Request.h"
 
 using namespace SamsungIPC;
@@ -138,9 +139,18 @@ void RequestHandler::handleQueryAvailableNetworks(Request *request) {
                     break;
             }
 
-            // TODO: database lookup
-            response[i * 4 + 0] = strdup(mccmnc);
-            response[i * 4 + 1] = strdup(mccmnc);
+            RILDatabase *database = m_ril->database();
+            std::string longLookup, shortLookup;
+            if(!database->lookupOperator(mccmnc, longLookup, shortLookup)) {
+                Log::error("Database lookup for operator %s failed: %s",
+                           mccmnc, database->errorString().c_str());
+
+                longLookup.assign(mccmnc);
+                shortLookup.assign(mccmnc);
+            }
+
+            response[i * 4 + 0] = strdup(longLookup.c_str());
+            response[i * 4 + 1] = strdup(shortLookup.c_str());
             response[i * 4 + 2] = mccmnc;
             response[i * 4 + 3] = (char *) status;
         }
@@ -169,12 +179,27 @@ void RequestHandler::handleOperator(Request *request) {
     } else {
         char *mccmnc = getCleanMCCMNC(&complete->plmn()[0]);
 
-        // TODO: database lookup
-        char *response[3] = { mccmnc, mccmnc, mccmnc };
+        RILDatabase *database = m_ril->database();
+        std::string longLookup, shortLookup;
+        if(!database->lookupOperator(mccmnc, longLookup, shortLookup)) {
+            Log::error("Database lookup for operator %s failed: %s",
+                       mccmnc, database->errorString().c_str());
+
+            longLookup.assign(mccmnc);
+            shortLookup.assign(mccmnc);
+        }
+
+        char *response[3] = {
+            strdup(longLookup.c_str()),
+            strdup(shortLookup.c_str()),
+            mccmnc
+        };
 
         request->complete(RIL_E_SUCCESS, response, sizeof(response));
 
-        free(mccmnc);
+        free(response[0]);
+        free(response[1]);
+        free(response[2]);
     }
 
     delete reply;
