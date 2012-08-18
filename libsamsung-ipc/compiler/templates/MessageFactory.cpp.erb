@@ -17,7 +17,7 @@ Message *Factory::createFromDispatchTable(const MessageFactoryFunction table[],
     else
         return NULL;
 }
-
+<% message_map = {} %>
 <% @protocol.groups.each do |group| %>
     Message *Factory::createCMD_<%= group.id %>(uint8_t command, uint8_t subcommand) {
         return createFromDispatchTable(m_dispatch<%= group.id %>, <%= group.id %>_FIRST, <%= group.id %>_LAST,
@@ -26,6 +26,7 @@ Message *Factory::createFromDispatchTable(const MessageFactoryFunction table[],
 
     <% group.messages.each do |message|
         fullname = "#{group.id}_#{message.id}"
+        message_map[fullname] = message
     %>
         static Message *create<%= fullname %>(uint8_t command, uint8_t subcommand) {
             (void) command;
@@ -42,7 +43,8 @@ Message *Factory::createFromDispatchTable(const MessageFactoryFunction table[],
     functions = [ "NULL" ] * range
 
     enum.values.each do |key, value|
-        next unless functions[value - min] == "NULL"
+
+        next unless (message_map.include?(key) && message_map[key].direction == :in) || (enum.name == "CMD" && functions[value - min] == "NULL")
 
         functions[value - min] = "create" + key
     end
