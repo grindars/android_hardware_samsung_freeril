@@ -44,18 +44,16 @@ message_group :NET, 8 do |g|
     g.out :GET_PLMN_LIST, 4, :get
     g.in :GET_PLMN_LIST_REPLY, 4 do |m|
         m.u8 :count
-        m.vector :data, :read_length => "stream.remainingBytes()"
+        m.array :plmnList, :read_length => "m_count" do |a|
+            a.u8 :status, :type => :enum, :values => {
+                Available: 2,
+                Current:   3,
+                Forbidden: 4
+            }
 
-        # for each PLMN: (10 bytes)
-        # +0 u8 :status, :type => enum, :values = {
-        #        Available: 2
-        #        Current:   3,
-        #        Forbidden: 4,
-        #    }
-        # +1 vector :plmn, :read_length => 6
-        # +7 u8 :unknown2
-        # +8 u8 :unknown3
-        # +9 u8 :unknown4
+            a.vector :plmn, :read_length => 6
+            a.data :unknown, :size => 3
+        end
     end
 
     g.out :GET_NETWORK_REGISTRATION, 5, :get do |m|

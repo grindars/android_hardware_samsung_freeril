@@ -16,15 +16,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-class Message < Structure
-    attr_accessor :direction, :id, :type, :op
+class Structure
+    attr_accessor :fields
 
-    def initialize(direction, id, type, op)
-        super()
+    def initialize
+        @fields = []
+    end
 
-        @direction = direction
-        @id = id
-        @type = type
-        @op = op
+    [ :data, :u8, :u16, :u32, :vector ].each do |type|
+        define_method(type) do |name, parameters = {}|
+            @fields << Field.new(type, name, parameters)
+        end
+    end
+
+    def array(name, parameters, &block)
+        structure = Structure.new
+        structure.instance_exec(structure, &block)
+
+        parameters = parameters.dup
+        parameters[:structure] = structure
+
+        @fields << Field.new(:array, name, parameters)
     end
 end

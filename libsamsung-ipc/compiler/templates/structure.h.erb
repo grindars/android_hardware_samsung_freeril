@@ -1,0 +1,54 @@
+std::string inspect() const;
+bool writeToStream(DataStream &stream);
+bool readFromStream(DataStream &stream);
+
+<% @structure.fields.each do |field|
+   storage_type = STORAGE_TYPE_MAP[field.type]
+%>
+    <% if field.parameters[:type] == :enum
+       enum_name = fieldize(field.name.to_s)
+    %>
+        enum <%= enum_name %> {
+            <% field.parameters[:values].each do |key, value| %>
+                <%= key %> = <%= value %>,
+            <% end %>
+        };
+
+        inline <%= enum_name %> <%= field.name %>() const { return (<%= enum_name %>) m_<%= field.name %>; }
+        inline void set<%= enum_name %>(<%= enum_name %> <%= field.name %>) { m_<%= field.name %> = (<%= storage_type %>) <%= field.name %>; }
+    <% elsif field.type == :data %>
+        // No accessors for data field <%= field.name %>
+    <% elsif field.type == :vector || field.type == :array
+       contained_type = field.type == :vector ? "unsigned char" : "#{fieldize(field.name.to_s)}Item"
+       storage_type = "std::vector<#{contained_type}>"
+     %>
+        <% if field.type == :array %>
+            class <%= contained_type %> {
+            public:
+                <%= @generator.template "structure.h.erb", :@structure => field.parameters[:structure] %>
+            };
+        <% end %>
+
+        inline const <%= storage_type %> &<%= field.name %>() const { return m_<%= field.name %>; }
+        inline void set<%= fieldize(field.name.to_s) %>(const <%= storage_type %> &<%= field.name %>) { m_<%= field.name %> = <%= field.name %>; }
+    <% else %>
+        inline <%= storage_type %> <%= field.name %>() const { return m_<%= field.name %>; }
+        inline void set<%= fieldize field.name.to_s %>(<%= storage_type %> <%= field.name %>) { m_<%= field.name %> = <%= field.name %>; }
+    <% end %>
+<% end %>
+
+private:
+<% @structure.fields.each do |field|
+   storage_type = STORAGE_TYPE_MAP[field.type]
+%>
+    <% if field.type == :data %>
+        unsigned char m_<%= field.name %>[<%= field.parameters[:size] %>];
+    <% elsif field.type == :vector || field.type == :array
+       contained_type = field.type == :vector ? "unsigned char" : "#{fieldize(field.name.to_s)}Item"
+       storage_type = "std::vector<#{contained_type}>"
+     %>
+        <%= storage_type %> m_<%= field.name %>;
+    <% else %>
+        <%= storage_type %> m_<%= field.name %>;
+    <% end %>
+<% end %>

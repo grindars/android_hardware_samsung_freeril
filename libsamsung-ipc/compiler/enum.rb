@@ -16,15 +16,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-class Message < Structure
-    attr_accessor :direction, :id, :type, :op
+class Enum
+    attr_accessor :name, :values
 
-    def initialize(direction, id, type, op)
-        super()
+    def initialize(name = nil, values = [])
+        @name = name
+        @values = values
+    end
 
-        @direction = direction
-        @id = id
-        @type = type
-        @op = op
+    def add_minmax!(prefix = "")
+        min, max = values.minmax { |a, b| a[1] <=> b[1] }
+
+        values << [ prefix + "FIRST", min[1] ]
+        values << [ prefix + "LAST", max[1] ]
     end
 end

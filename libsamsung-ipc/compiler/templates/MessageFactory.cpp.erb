@@ -1,0 +1,55 @@
+#include "MessageFactory.h"
+#include "Messages.h"
+
+using namespace SamsungIPC;
+using namespace Messages;
+
+Message *Factory::createFromDispatchTable(const MessageFactoryFunction table[],
+                                          int first, int last, int type,
+                                          uint8_t command, uint8_t subcommand) {
+    if(type < first || type > last)
+        return NULL;
+
+    MessageFactoryFunction factory = table[type - first];
+
+    if(factory)
+        return factory(command, subcommand);
+    else
+        return NULL;
+}
+
+<% @protocol.groups.each do |group| %>
+    Message *Factory::createCMD_<%= group.id %>(uint8_t command, uint8_t subcommand) {
+        return createFromDispatchTable(m_dispatch<%= group.id %>, <%= group.id %>_FIRST, <%= group.id %>_LAST,
+                                       subcommand, command, subcommand);
+    }
+
+    <% group.messages.each do |message|
+        fullname = "#{group.id}_#{message.id}"
+    %>
+        static Message *create<%= fullname %>(uint8_t command, uint8_t subcommand) {
+            (void) command;
+            (void) subcommand;
+
+            return new <%= class_name_for fullname %>;
+        }
+    <% end %>
+<% end %>
+
+<% @enums.each do |enum|
+    min, max = enum.values.minmax { |a, b| a[1] <=> b[1] }.map { |v| v[1] }
+    range = max - min + 1
+    functions = [ "NULL" ] * range
+
+    enum.values.each do |key, value|
+        next unless functions[value - min] == "NULL"
+
+        functions[value - min] = "create" + key
+    end
+%>
+    const Factory::MessageFactoryFunction Factory::m_dispatch<%= enum.name %>[<%= range %>] = {
+        <% functions.each do |function| %>
+            <%= function %>,
+        <% end %>
+    };
+<% end %>

@@ -1,0 +1,26 @@
+<%
+    unsolicited_classes = []
+    @protocol.groups.each do |group|
+        group.messages.each do |message|
+            next unless group.unsolicited_messages.include? message.id
+
+            unsolicited_classes << class_name_for("#{group.id}_#{message.id}")
+        end
+    end
+%>
+namespace SamsungIPC {
+    namespace Messages {
+        <% unsolicited_classes.each do |classname| %>
+            class <%= classname %>;
+        <% end %>
+    }
+
+    class IUnsolicitedReceiver {
+    public:
+        virtual ~IUnsolicitedReceiver() {}
+
+        <% unsolicited_classes.each do |classname| %>
+            virtual void handle(Messages::<%= classname %> *message) = 0;
+        <% end %>
+    };
+}

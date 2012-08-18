@@ -1,0 +1,97 @@
+<% catch_exceptions = @structure.kind_of?(Message) && @structure.fields.any? %>
+
+std::string <%= @structure_class %>::inspect() const {
+    std::stringstream stream;
+
+    stream << "<%= @structure_class %> {\n\n";
+
+    <% @structure.fields.each do |field| %>
+        <% if field.type == :data %>
+            stream << "  <%= field.name %> = <raw data>\n";
+        <% elsif field.type == :vector %>
+            stream << "  <%= field.name %> = <vector of size " << m_<%= field.name %>.size() << ">\n";
+        <% elsif field.type == :array %>
+            {
+                unsigned int size = m_<%= field.name %>.size();
+
+                stream << "  <%= field.name %>[" << size << "] = {\n";
+
+                for(unsigned int i = 0; i < size; i++) {
+                    const <%= fieldize field.name.to_s %>Item &item = m_<%= field.name %>[i];
+
+                    stream << "  [" << i << "] = " << item.inspect();
+                }
+
+                stream << "  }\n";
+            }
+        <% elsif field.type == :u8 %>
+            stream << "  <%= field.name %> = " << (unsigned int) m_<%= field.name %> << "\n";
+        <% else %>
+            stream << "  <%= field.name %> = " << m_<%= field.name %> << "\n";
+        <% end %>
+    <% end %>
+
+    stream << "}\n";
+
+    return stream.str();
+}
+
+bool <%= @structure_class %>::readFromStream(DataStream &stream) {
+<% if catch_exceptions %>
+    if(stream.caughtExceptionHere())
+        return false;
+    else {
+<% end %>
+        <% @structure.fields.each do |field| %>
+            <% if field.type == :data %>
+                stream.readRawData(m_<%= field.name %>, <%= field.parameters[:size] %>);
+            <% elsif field.type == :vector %>
+                m_<%= field.name %>.resize(<%= field.parameters[:read_length] %>);
+                stream.readRawData(&m_<%= field.name %>[0], m_<%= field.name %>.size());
+            <% elsif field.type == :array %>
+                m_<%= field.name %>.resize(<%= field.parameters[:read_length] %>);
+                for(unsigned int i = 0, count = m_<%= field.name %>.size(); i < count; i++)
+                    m_<%= field.name %>[i].readFromStream(stream);
+            <% else %>
+                stream.read(m_<%= field.name %>);
+            <% end %>
+        <% end %>
+
+        return true;
+<% if catch_exceptions %>
+    }
+<% end %>
+}
+
+bool <%= @structure_class %>::writeToStream(DataStream &stream) {
+<% if catch_exceptions %>
+    if(stream.caughtExceptionHere())
+        return false;
+    else {
+<% end %>
+        <% @structure.fields.each do |field| %>
+            <% if field.type == :data %>
+                stream.writeRawData(m_<%= field.name %>, <%= field.parameters[:size] %>);
+            <% elsif field.type == :vector %>
+                stream.writeRawData(&m_<%= field.name %>[0], m_<%= field.name %>.size());
+            <% elsif field.type == :array %>
+                for(unsigned int i = 0, count = m_<%= field.name %>.size(); i < count; i++)
+                    m_<%= field.name %>[i].writeToStream(stream);
+            <% else %>
+                stream.write(m_<%= field.name %>);
+            <% end %>
+        <% end %>
+
+        return true;
+<% if catch_exceptions %>
+    }
+<% end %>
+}
+
+<% @structure.fields.each do |field| %>
+    <% if field.type == :array %>
+        <%= @generator.template "structure.cpp.erb",
+            :@structure => field.parameters[:structure],
+            :@structure_class => "#{@structure_class}::#{fieldize(field.name.to_s)}Item" %>
+    <% end %>
+<% end %>

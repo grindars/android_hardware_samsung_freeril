@@ -1,0 +1,28 @@
+#include "Message.h"
+
+namespace SamsungIPC {
+    namespace Messages {
+
+        class Factory {
+            typedef Message *(*MessageFactoryFunction)(uint8_t command, uint8_t subcommand);
+
+            static Message *createFromDispatchTable(const MessageFactoryFunction table[],
+                                                    int first, int last, int type,
+                                                    uint8_t command, uint8_t subcommand);
+
+            static const MessageFactoryFunction m_dispatchCMD[CMD_LAST - CMD_FIRST + 1];
+
+            <% @protocol.groups.each do |group| %>
+                static const MessageFactoryFunction m_dispatch<%= group.id %>[<%= group.id %>_LAST - <%= group.id %>_FIRST + 1];
+                static Message *createCMD_<%= group.id %>(uint8_t command, uint8_t subcommand);
+            <% end %>
+
+        public:
+            inline static Message *create(uint8_t command, uint8_t subcommand) {
+                return createFromDispatchTable(m_dispatchCMD,
+                                               CMD_FIRST, CMD_LAST, command,
+                                               command, subcommand);
+            }
+        };
+    }
+}

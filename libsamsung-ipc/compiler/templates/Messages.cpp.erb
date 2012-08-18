@@ -1,0 +1,40 @@
+#include <sstream>
+
+#include "Messages.h"
+#include "IUnsolicitedReceiver.h"
+#include "DataStream.h"
+
+using namespace SamsungIPC;
+using namespace Messages;
+
+<% @protocol.groups.each do |group| %>
+    <% group.messages.each do |message|
+       structure_class = class_name_for "#{group.id}_#{message.id}"
+    %>
+        bool <%= structure_class %>::deliver(IUnsolicitedReceiver *receiver) {
+            <% if group.unsolicited_messages.include? message.id %>
+                receiver->handle(this);
+
+                return true;
+            <% else %>
+                (void) receiver;
+
+                return false;
+            <% end %>
+        }
+
+        uint8_t <%= structure_class %>::command() const {
+            return <%= group.type %>;
+        }
+
+        uint8_t <%= structure_class %>::subcommand() const {
+            return <%= message.type %>;
+        }
+
+        Message::RequestType <%= structure_class %>::requestType() const {
+            return <%= REQUEST_TYPE_MAP[message.op] %>;
+        }
+
+        <%= @generator.template("structure.cpp.erb", :@structure => message, :@structure_class => structure_class) %>
+    <% end %>
+<% end %>

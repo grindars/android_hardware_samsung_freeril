@@ -1,0 +1,11 @@
+namespace SamsungIPC {
+    namespace Messages {
+        <% @enums.each do |enum| %>
+            enum <%= enum.name %> {
+                <% enum.values.each do |key, value| %>
+                    <%= key %> = <%= value %>,
+                <% end %>
+            };
+        <% end %>
+    }
+}

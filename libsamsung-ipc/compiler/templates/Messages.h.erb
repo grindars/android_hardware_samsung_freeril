@@ -1,0 +1,28 @@
+#include <string.h>
+#include <vector>
+
+#include "Message.h"
+
+namespace SamsungIPC {
+    namespace Messages {
+        <% @protocol.groups.each do |group| %>
+            <% group.messages.each do |message|
+               structure_class = class_name_for "#{group.id}_#{message.id}"
+            %>
+                class <%= structure_class %>: public Message {
+                public:
+                    virtual uint8_t command() const;
+                    virtual uint8_t subcommand() const;
+                    virtual RequestType requestType() const;
+                    virtual bool deliver(IUnsolicitedReceiver *receiver);
+
+                    static inline bool isTypeOf(Message *message) {
+                        return message->command() == <%= group.type %> && message->subcommand() == <%= message.type %>;
+                    }
+
+                    <%= @generator.template "structure.h.erb", :@structure => message %>
+                };
+            <% end %>
+        <% end %>
+    }
+}

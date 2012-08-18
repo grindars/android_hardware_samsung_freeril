@@ -17,10 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+require "erb"
+
 require_relative "field.rb"
+require_relative "structure.rb"
 require_relative "message.rb"
 require_relative "message_group.rb"
 require_relative "protocol.rb"
+require_relative "enum.rb"
 require_relative "generator.rb"
 
 if ARGV.count != 2

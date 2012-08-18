@@ -92,43 +92,27 @@ void RequestHandler::handleQueryAvailableNetworks(Request *request) {
 
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {
-        struct PlmnRecord {
-            uint8_t status;
-            uint8_t plmn[6];
-            uint8_t unknown[3];
-        };
-
-        const std::vector<unsigned char> &data = complete->data();
-
-        if(complete->data().size() != sizeof(PlmnRecord) * complete->count()) {
-            request->complete(RIL_E_GENERIC_FAILURE);
-
-            delete reply;
-
-            return;
-        }
-
-        const PlmnRecord *plmn = (const PlmnRecord *) &data[0];
-
-        size_t response_size = sizeof(char **) * complete->count() * 4;
+        size_t count = complete->plmnList().size();
+        size_t response_size = sizeof(char *) * count;
         char **response = (char **) malloc(response_size);
 
-        for(size_t i = 0; i < complete->count(); i++) {
-            char *mccmnc = getCleanMCCMNC(plmn[i].plmn);
+        for(size_t i = 0; i < count; i++) {
+            const Messages::NetGetPlmnListReply::PlmnListItem &item = complete->plmnList()[0];
 
+            char *mccmnc = getCleanMCCMNC(&item.plmn()[0]);
             const char *status;
-            switch(plmn[i].status) {
-                case 2:
+            switch(item.status()) {
+                case Messages::NetGetPlmnListReply::PlmnListItem::Available:
                     status = "available";
 
                     break;
 
-                case 3:
+                case Messages::NetGetPlmnListReply::PlmnListItem::Current:
                     status = "current";
 
                     break;
 
-                case 4:
+                case Messages::NetGetPlmnListReply::PlmnListItem::Forbidden:
                     status = "forbidden";
 
                     break;
