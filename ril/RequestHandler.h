@@ -48,6 +48,8 @@ public:
     virtual void handle(SamsungIPC::Messages::NetGetNetworkRegistrationReply *message);
     virtual void handle(SamsungIPC::Messages::DispGetIconInformationReply *message);
     virtual void handle(SamsungIPC::Messages::DispRssiInformation *message);
+    virtual void handle(SamsungIPC::Messages::CallIncoming *message);
+    virtual void handle(SamsungIPC::Messages::CallStateChanged *message);
 
 private:
 
@@ -84,6 +86,11 @@ private:
     void getNetworkRegistration(Request *request, int op);
     int getNetworkMode(Request *request);
 
+    void handleCurrentCalls(Request *request);
+    void handleLastCallFailCause(Request *request);
+    void handleDial(Request *request);
+    void handleHangup(Request *request);
+
     void handleScreenState(Request *request);
     void handleSignalStrength(Request *request);
 
@@ -98,6 +105,8 @@ private:
 
     static void (RequestHandler::*m_requestHandlers[LastRequest - FirstRequest + 1])(Request *request);
     int m_coarseRSSI;
+    bool m_havePendingCall;
+    RIL_LastCallFailCause m_lastCallFailCause;
 };
 
 #endif

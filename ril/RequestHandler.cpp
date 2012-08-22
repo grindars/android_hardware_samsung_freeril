@@ -29,13 +29,15 @@
 
 using namespace SamsungIPC;
 
-RequestHandler::RequestHandler(RIL *ril) : m_ril(ril), m_coarseRSSI(-1) {
+RequestHandler::RequestHandler(RIL *ril) : m_ril(ril), m_coarseRSSI(-1), m_havePendingCall(false),
+    m_lastCallFailCause(CALL_FAIL_ERROR_UNSPECIFIED) {
+
+    m_requestHandlers[RIL_REQUEST_LAST_CALL_FAIL_CAUSE - FirstRequest] = &RequestHandler::handleLastCallFailCause;
 
     m_requestHandlers[RIL_REQUEST_BASEBAND_VERSION - FirstRequest] = &RequestHandler::handleBasebandVersion;
     m_requestHandlers[RIL_REQUEST_RADIO_POWER - FirstRequest] = &RequestHandler::handleRadioPower;
     m_requestHandlers[RIL_REQUEST_GET_IMEI - FirstRequest] = &RequestHandler::handleIMEI;
     m_requestHandlers[RIL_REQUEST_GET_IMEISV - FirstRequest] = &RequestHandler::handleIMEISV;
-    m_requestHandlers[RIL_REQUEST_GET_IMSI - FirstRequest] = &RequestHandler::handleIMSI;
 
     m_requestHandlers[RIL_REQUEST_SIGNAL_STRENGTH - FirstRequest] = &RequestHandler::handleSignalStrength;
     m_requestHandlers[RIL_REQUEST_VOICE_REGISTRATION_STATE - FirstRequest] = &RequestHandler::handleVoiceRegistrationState;
@@ -61,13 +63,6 @@ void RequestHandler::handle(Request *request) {
         (m_ril->radioState() == RADIO_STATE_OFF && request->code() != RIL_REQUEST_RADIO_POWER)) &&
         request->code() != RIL_REQUEST_GET_SIM_STATUS) {
 
-        request->complete(RIL_E_RADIO_NOT_AVAILABLE);
-
-        return;
-    }
-
-
-    if(request->code() == RIL_REQUEST_GET_CURRENT_CALLS) {
         request->complete(RIL_E_RADIO_NOT_AVAILABLE);
 
         return;
@@ -138,6 +133,9 @@ void (RequestHandler::*RequestHandler::m_requestHandlers[LastRequest - FirstRequ
     &RequestHandler::handleChangeSIMPin,
     &RequestHandler::handleChangeSIMPin2,
     NULL, // RIL_REQUEST_ENTER_NETWORK_DEPERSONALIZATION
-
+    &RequestHandler::handleCurrentCalls,
+    &RequestHandler::handleDial,
+    &RequestHandler::handleIMSI,
+    //&RequestHandler::handleHangup
 };
 
