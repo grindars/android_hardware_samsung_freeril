@@ -16,20 +16,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-LOCAL_PATH:= $(call my-dir)
-include $(CLEAR_VARS)
+message_group :SS, 12 do |g|
+    g.out :MANAGE_CALL, 3, :set do |m|
+        m.u8 :callCommand, :type => :enum, :values => {
+            HangupWaitingOrBackground:        1,
+            HangupForegroundResumeBackground: 2,
+            HangupSpecificCall:               3,
+            SwitchWaitingOrHoldingAndActive:  4,
+            SeparateConnection:               5,
+            Conference:                       6,
+            ExplicitCallTransfer:             7
+        }
+        m.u8 :callId
 
-LOCAL_SRC_FILES = ril.cpp RIL.cpp AndroidLogSink.cpp Request.cpp \
-                  RequestHandler.cpp power.cpp misc.cpp security.cpp \
-                  network.cpp display.cpp RILDatabase.cpp call.cpp
-
-LOCAL_LDLIBS += -lpthread
-LOCAL_MODULE := libril-freei9100-1
-LOCAL_MODULE_TAGS := optional
-LOCAL_SHARED_LIBRARIES = libstlport liblog libcutils libsqlite
-LOCAL_C_INCLUDES = external/stlport/stlport bionic $(LOCAL_PATH)/../libandroidhal $(LOCAL_PATH)/../libsamsung-ipc \
-     $(call intermediates-dir-for,STATIC_LIBRARIES,libSamsungIPC) hardware/ril/libril external/sqlite/dist
-LOCAL_STATIC_LIBRARIES = libSamsungIPC libAndroidHAL
-LOCAL_CFLAGS = -fvisibility=hidden -DRIL_SHLIB
-
-include $(BUILD_SHARED_LIBRARY)
+        m.data :reserved, :size => 83 # Unused by the RIL
+    end
+end

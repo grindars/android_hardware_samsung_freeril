@@ -47,6 +47,9 @@ message_group :CALL, 2 do |g|
     end
     g.unsolicited :INCOMING
 
+    g.out :RELEASE, 3, :exec
+    g.out :ANSWER, 4, :exec
+
     g.in :STATE_CHANGED, 5 do |m|
         m.u16 :callType
         m.u8  :callId

@@ -87,9 +87,18 @@ private:
     int getNetworkMode(Request *request);
 
     void handleCurrentCalls(Request *request);
-    void handleLastCallFailCause(Request *request);
     void handleDial(Request *request);
     void handleHangup(Request *request);
+    void handleHangupWaitingOrBackground(Request *request);
+    void handleHangupForegroundResumeBackground(Request *request);
+    void handleSwitchWaitingOrHoldingAndActive(Request *request);
+    void handleConference(Request *request);
+    void handleUDUB(Request *Request);
+    void handleLastCallFailCause(Request *request);
+    void handleAnswer(Request *request);
+    void handleSeparateConnection(Request *request);
+    void handleExplicitCallTransfer(Request *request);
+    void genericHangup(Request *request, int manageCommand, bool useValidCallId);
 
     void handleScreenState(Request *request);
     void handleSignalStrength(Request *request);
@@ -105,8 +114,8 @@ private:
 
     static void (RequestHandler::*m_requestHandlers[LastRequest - FirstRequest + 1])(Request *request);
     int m_coarseRSSI;
-    bool m_havePendingCall;
     RIL_LastCallFailCause m_lastCallFailCause;
+    std::vector<unsigned char> m_callIds;
 };
 
 #endif

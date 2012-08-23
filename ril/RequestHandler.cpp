@@ -29,20 +29,13 @@
 
 using namespace SamsungIPC;
 
-RequestHandler::RequestHandler(RIL *ril) : m_ril(ril), m_coarseRSSI(-1), m_havePendingCall(false),
+RequestHandler::RequestHandler(RIL *ril) : m_ril(ril), m_coarseRSSI(-1),
     m_lastCallFailCause(CALL_FAIL_ERROR_UNSPECIFIED) {
 
-    m_requestHandlers[RIL_REQUEST_LAST_CALL_FAIL_CAUSE - FirstRequest] = &RequestHandler::handleLastCallFailCause;
-
     m_requestHandlers[RIL_REQUEST_BASEBAND_VERSION - FirstRequest] = &RequestHandler::handleBasebandVersion;
-    m_requestHandlers[RIL_REQUEST_RADIO_POWER - FirstRequest] = &RequestHandler::handleRadioPower;
     m_requestHandlers[RIL_REQUEST_GET_IMEI - FirstRequest] = &RequestHandler::handleIMEI;
     m_requestHandlers[RIL_REQUEST_GET_IMEISV - FirstRequest] = &RequestHandler::handleIMEISV;
-
-    m_requestHandlers[RIL_REQUEST_SIGNAL_STRENGTH - FirstRequest] = &RequestHandler::handleSignalStrength;
-    m_requestHandlers[RIL_REQUEST_VOICE_REGISTRATION_STATE - FirstRequest] = &RequestHandler::handleVoiceRegistrationState;
-    m_requestHandlers[RIL_REQUEST_DATA_REGISTRATION_STATE - FirstRequest] = &RequestHandler::handleDataRegistrationState;
-    m_requestHandlers[RIL_REQUEST_OPERATOR - FirstRequest] = &RequestHandler::handleOperator;
+    m_requestHandlers[RIL_REQUEST_ANSWER - FirstRequest] = &RequestHandler::handleAnswer;
 
     m_requestHandlers[RIL_REQUEST_QUERY_NETWORK_SELECTION_MODE - FirstRequest] = &RequestHandler::handleQueryNetworkSelectionMode;
     m_requestHandlers[RIL_REQUEST_SET_NETWORK_SELECTION_AUTOMATIC - FirstRequest] = &RequestHandler::handleSetNetworkSelectionAutomatic;
@@ -54,8 +47,11 @@ RequestHandler::RequestHandler(RIL *ril) : m_ril(ril), m_coarseRSSI(-1), m_haveP
     m_requestHandlers[RIL_REQUEST_SET_BAND_MODE - FirstRequest] = &RequestHandler::handleSetBandMode;
     m_requestHandlers[RIL_REQUEST_QUERY_AVAILABLE_BAND_MODE - FirstRequest] = &RequestHandler::handleQueryAvailableBandMode;
 
+    m_requestHandlers[RIL_REQUEST_EXPLICIT_CALL_TRANSFER - FirstRequest] = &RequestHandler::handleExplicitCallTransfer;
     m_requestHandlers[RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE - FirstRequest] = &RequestHandler::handleSetPreferredNetworkType;
     m_requestHandlers[RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE - FirstRequest] = &RequestHandler::handleGetPreferredNetworkType;
+
+    m_requestHandlers[RIL_REQUEST_SEPARATE_CONNECTION - FirstRequest] = &RequestHandler::handleSeparateConnection;
 }
 
 void RequestHandler::handle(Request *request) {
@@ -136,6 +132,17 @@ void (RequestHandler::*RequestHandler::m_requestHandlers[LastRequest - FirstRequ
     &RequestHandler::handleCurrentCalls,
     &RequestHandler::handleDial,
     &RequestHandler::handleIMSI,
-    //&RequestHandler::handleHangup
+    &RequestHandler::handleHangup,
+    &RequestHandler::handleHangupWaitingOrBackground,
+    &RequestHandler::handleHangupForegroundResumeBackground,
+    &RequestHandler::handleSwitchWaitingOrHoldingAndActive,
+    &RequestHandler::handleConference,
+    &RequestHandler::handleUDUB,
+    &RequestHandler::handleLastCallFailCause,
+    &RequestHandler::handleSignalStrength,
+    &RequestHandler::handleVoiceRegistrationState,
+    &RequestHandler::handleDataRegistrationState,
+    &RequestHandler::handleOperator,
+    &RequestHandler::handleRadioPower
 };
 
