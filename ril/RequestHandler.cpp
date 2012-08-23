@@ -32,15 +32,16 @@ using namespace SamsungIPC;
 RequestHandler::RequestHandler(RIL *ril) : m_ril(ril), m_coarseRSSI(-1),
     m_lastCallFailCause(CALL_FAIL_ERROR_UNSPECIFIED) {
 
-    m_requestHandlers[RIL_REQUEST_BASEBAND_VERSION - FirstRequest] = &RequestHandler::handleBasebandVersion;
-    m_requestHandlers[RIL_REQUEST_GET_IMEI - FirstRequest] = &RequestHandler::handleIMEI;
-    m_requestHandlers[RIL_REQUEST_GET_IMEISV - FirstRequest] = &RequestHandler::handleIMEISV;
-    m_requestHandlers[RIL_REQUEST_ANSWER - FirstRequest] = &RequestHandler::handleAnswer;
-
     m_requestHandlers[RIL_REQUEST_QUERY_NETWORK_SELECTION_MODE - FirstRequest] = &RequestHandler::handleQueryNetworkSelectionMode;
     m_requestHandlers[RIL_REQUEST_SET_NETWORK_SELECTION_AUTOMATIC - FirstRequest] = &RequestHandler::handleSetNetworkSelectionAutomatic;
     m_requestHandlers[RIL_REQUEST_SET_NETWORK_SELECTION_MANUAL - FirstRequest] = &RequestHandler::handleSetNetworkSelectionManual;
     m_requestHandlers[RIL_REQUEST_QUERY_AVAILABLE_NETWORKS - FirstRequest] = &RequestHandler::handleQueryAvailableNetworks;
+    m_requestHandlers[RIL_REQUEST_DTMF_START - FirstRequest] = &RequestHandler::handleDTMFStart;
+    m_requestHandlers[RIL_REQUEST_DTMF_STOP - FirstRequest] = &RequestHandler::handleDTMFStop;
+    m_requestHandlers[RIL_REQUEST_BASEBAND_VERSION - FirstRequest] = &RequestHandler::handleBasebandVersion;
+    m_requestHandlers[RIL_REQUEST_GET_IMEI - FirstRequest] = &RequestHandler::handleIMEI;
+    m_requestHandlers[RIL_REQUEST_GET_IMEISV - FirstRequest] = &RequestHandler::handleIMEISV;
+    m_requestHandlers[RIL_REQUEST_ANSWER - FirstRequest] = &RequestHandler::handleAnswer;
 
     m_requestHandlers[RIL_REQUEST_SCREEN_STATE - FirstRequest] = &RequestHandler::handleScreenState;
 
@@ -143,6 +144,7 @@ void (RequestHandler::*RequestHandler::m_requestHandlers[LastRequest - FirstRequ
     &RequestHandler::handleVoiceRegistrationState,
     &RequestHandler::handleDataRegistrationState,
     &RequestHandler::handleOperator,
-    &RequestHandler::handleRadioPower
+    &RequestHandler::handleRadioPower,
+    &RequestHandler::handleDTMF
 };
 

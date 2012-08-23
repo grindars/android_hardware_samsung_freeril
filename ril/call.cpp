@@ -336,6 +336,35 @@ void RequestHandler::handleExplicitCallTransfer(Request *request) {
     completeGenCommand(reply, "SsManageCall", request);
 }
 
+void RequestHandler::handleDTMF(Request *request) {
+    char *str = (char *) request->data();
+
+    Log::debug("DTMF: %s", str);
+
+    std::vector<unsigned char> buf;
+    buf.resize(82);
+
+    size_t len = std::min(buf.size(), strlen(str));
+    memcpy(&buf[0], str, len);
+
+    Messages::CallSendBurstDtmf *message = new Messages::CallSendBurstDtmf;
+    message->setUnknown1(0x01);
+    message->setLength(len);
+    message->setData(buf);
+
+    Message *reply = m_ril->execute(message);
+
+    completeGenCommand(reply, "CallSendBurstDTMF", request);
+}
+
+void RequestHandler::handleDTMFStart(Request *request) {
+    continuousDTMF(request, ((char *) request->data())[0]);
+}
+
+void RequestHandler::handleDTMFStop(Request *request) {
+    continuousDTMF(request, 0);
+}
+
 void RequestHandler::genericHangup(Request *request, int manageCommand, bool useValidCallId) {
     int calls = m_callIds.size();
 
@@ -378,3 +407,21 @@ void RequestHandler::genericHangup(Request *request, int manageCommand, bool use
     }
 }
 
+void RequestHandler::continuousDTMF(Request *request, char tone) {
+    if(tone)
+        Log::debug("Start continuous DTMF: %c", tone);
+    else
+        Log::debug("Stop continuous DTMF: %c", tone);
+
+    Messages::CallContinuousDtmf *message = new Messages::CallContinuousDtmf;
+    if(tone) {
+        message->setAction(Messages::CallContinuousDtmf::Start);
+        message->setTone(tone);
+    } else {
+        message->setAction(Messages::CallContinuousDtmf::Stop);
+        message->setTone(0);
+    }
+
+    Message *reply = m_ril->execute(message);
+    completeGenCommand(reply, "CallContinuousDtmf", request);
+}

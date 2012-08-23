@@ -98,7 +98,11 @@ private:
     void handleAnswer(Request *request);
     void handleSeparateConnection(Request *request);
     void handleExplicitCallTransfer(Request *request);
+    void handleDTMF(Request *request);
+    void handleDTMFStart(Request *request);
+    void handleDTMFStop(Request *request);
     void genericHangup(Request *request, int manageCommand, bool useValidCallId);
+    void continuousDTMF(Request *request, char tone);
 
     void handleScreenState(Request *request);
     void handleSignalStrength(Request *request);

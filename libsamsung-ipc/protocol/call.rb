@@ -80,4 +80,19 @@ message_group :CALL, 2 do |g|
 
         m.vector :padding, :read_length => "stream.remainingBytes()"
     end
+
+    g.out :SEND_BURST_DTMF, 7, :exec do |m|
+        m.u8     :unknown1 # Set to 0x01
+        m.u8     :length
+        m.vector :data, :read_length => "m_length"
+    end
+
+    g.out :CONTINUOUS_DTMF, 8, :set do |m|
+        m.u8 :action, :type => :enum, :values => {
+            Start: 1,
+            Stop:  0
+        }
+
+        m.u8 :tone
+    end
 end
