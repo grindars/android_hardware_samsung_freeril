@@ -53,6 +53,8 @@ RequestHandler::RequestHandler(RIL *ril) : m_ril(ril), m_coarseRSSI(-1),
     m_requestHandlers[RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE - FirstRequest] = &RequestHandler::handleGetPreferredNetworkType;
 
     m_requestHandlers[RIL_REQUEST_SEPARATE_CONNECTION - FirstRequest] = &RequestHandler::handleSeparateConnection;
+    m_requestHandlers[RIL_REQUEST_SET_MUTE - FirstRequest] = &RequestHandler::handleSetMute;
+    m_requestHandlers[RIL_REQUEST_GET_MUTE - FirstRequest] = &RequestHandler::handleGetMute;
 }
 
 void RequestHandler::handle(Request *request) {

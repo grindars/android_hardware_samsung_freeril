@@ -107,6 +107,9 @@ private:
     void handleScreenState(Request *request);
     void handleSignalStrength(Request *request);
 
+    void handleSetMute(Request *request);
+    void handleGetMute(Request *request);
+
     bool completeGenCommand(SamsungIPC::Message *reply, const char *name, Request *request);
 
     enum {
