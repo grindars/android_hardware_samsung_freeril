@@ -24,8 +24,13 @@ message_group :RFS, 21 do |g|
     end
 
     g.out :NV_READ_REPLY, 1 do |m|
-        # TODO
+        m.u8  :status
+        m.u32 :offset
+        m.u32 :bytes
+        m.vector :data, :read_length => 0
     end
+
+    # Header takes 6 bytes.
 
     g.in :NV_WRITE, 2 do |m|
         m.u32    :offset
@@ -34,7 +39,9 @@ message_group :RFS, 21 do |g|
     end
 
     g.out :NV_WRITE_REPLY, 2 do |m|
-        m.data :reserved, :size => 9
+        m.u8  :status
+        m.u32 :offset
+        m.u32 :bytes
     end
 
 end

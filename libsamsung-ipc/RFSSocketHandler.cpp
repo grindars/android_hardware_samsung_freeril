@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <unistd.h>
+
 #include "RFSSocketHandler.h"
 #include "Log.h"
 #include "MessageFactory.h"
@@ -80,7 +82,7 @@ void RFSSocketHandler::handleMessage(const Message::RFSHeader &header,
         Message::RFSHeader responseHeader;
         responseHeader.length = sizeof(Message::RFSHeader) + data.size();
         responseHeader.type = response->subcommand();
-        responseHeader.sequence = 0;
+        responseHeader.sequence = header.sequence;
 
         Log::debug("Sending response: %s", response->inspect().c_str());
 
@@ -133,7 +135,12 @@ Message *RFSSocketHandler::handleNvWrite(Message *msg) {
     Log::debug("RFS: Writing %u bytes to NVRAM offset 0x%08X:", nvWrite->bytes(), nvWrite->offset());
     dump(&nvWrite->data()[0], nvWrite->bytes());
 
-    return new Messages::RfsNvWriteReply();
+    Messages::RfsNvWriteReply *reply = new Messages::RfsNvWriteReply();
+    reply->setOffset(nvWrite->offset());
+    reply->setBytes(nvWrite->bytes());
+    reply->setStatus(0x01);
+
+    return reply;
 }
 
 Message *(RFSSocketHandler::*const RFSSocketHandler::m_handlers[LastType - FirstType + 1])(Message *message) = {
