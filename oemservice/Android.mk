@@ -16,5 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-include $(call all-named-subdir-makefiles,libsamsung-ipc libandroidhal \
-                                          tools ril oemservice secril-client-compat)
+LOCAL_PATH:= $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES += src/org/freeril/i9100oemservice/ICrossClientService.aidl \
+                   src/org/freeril/i9100oemservice/IRegistrationInterface.aidl
+LOCAL_PACKAGE_NAME := I9100OemService
+LOCAL_CERTIFICATE := platform
+
+include $(BUILD_PACKAGE)
