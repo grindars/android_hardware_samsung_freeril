@@ -35,13 +35,14 @@ public class RilInterface extends Handler {
     static final int EVENT_RIL_AVAILABLE = 1;
     static final int EVENT_RIL_UNAVAILABLE = 2;
     static final int EVENT_ATTACHMENT_COMPLETE = 3;
-    static final int EVENT_SYNCHRONOUS_CALL_COMPLETE = 4;
 
     private final OEMRequestBuilder mBuilder;
     private CommandsInterface mCI;
     private boolean mAttached = false;
     private Integer mCallIdCounter = new Integer(0);
-    private ConcurrentHashMap<Integer, Object> mLockMap;
+    private final ConcurrentHashMap<Integer, Object> mLockMap = new ConcurrentHashMap<Integer, Object>();
+    private final ConcurrentHashMap<Integer, AsyncResult> mResultMap = new ConcurrentHashMap<Integer, AsyncResult>();
+    private RilRequestCompletionThread mCompletionThread;
 
     public RilInterface() {
         super();
@@ -52,9 +53,18 @@ public class RilInterface extends Handler {
         mCI = ((PhoneBase) proxy.getActivePhone()).mCM;
         mCI.registerForAvailable(this, EVENT_RIL_AVAILABLE, null);
         mCI.registerForNotAvailable(this, EVENT_RIL_UNAVAILABLE, null);
+        mCompletionThread = new RilRequestCompletionThread(this);
+        mCompletionThread.start();
     }
 
     public void dispose() {
+        mCompletionThread.interrupt();
+        try {
+            mCompletionThread.join();
+        } catch(InterruptedException e) {
+
+        }
+
         if(mCI.getRadioState().isAvailable()) {
             Log.d(LOG_TAG, "Detaching from the RIL");
 
@@ -90,7 +100,9 @@ public class RilInterface extends Handler {
         if(!synchronousOemCall(mBuilder.buildGetMute(), response))
             return false;
 
-        return mBuilder.parseGetMute(response, muted);
+        mBuilder.parseGetMute(response, muted);
+
+        return true;
     }
 
     public boolean setMute(int mute) {
@@ -122,8 +134,9 @@ public class RilInterface extends Handler {
     }
 
     protected boolean synchronousOemCall(byte[] request, OemRequestReply reply) {
-        if(request == null)
+        if(request == null) {
             return false;
+        }
 
         int callId;
 
@@ -131,15 +144,13 @@ public class RilInterface extends Handler {
             callId = ++mCallIdCounter;
         }
 
-        Message replyMessage = obtainMessage(EVENT_SYNCHRONOUS_CALL_COMPLETE, callId, 0);
-
         Object lock = new Object();
         mLockMap.put(callId, lock);
 
-        Log.d(LOG_TAG, "Synchronous call " + callId + " started");
-
         try {
             synchronized(lock) {
+                mCI.invokeOemRilRequestRaw(request, mCompletionThread.obtainCompletion(callId));
+
                 lock.wait();
             }
 
@@ -149,12 +160,10 @@ public class RilInterface extends Handler {
             return false;
         }
 
-
-        Log.d(LOG_TAG, "Synchronous call " + callId + " complete");
-
         mLockMap.remove(callId);
+        AsyncResult result = mResultMap.get(callId);
+        mResultMap.remove(callId);
 
-        AsyncResult result = (AsyncResult) replyMessage.obj;
         if(result.exception != null) {
             Log.d(LOG_TAG, "Synchronous call failed with ", result.exception);
 
@@ -190,16 +199,18 @@ public class RilInterface extends Handler {
                 onAttachmentComplete(msg.arg1 != 0, (AsyncResult) msg.obj);
 
                 break;
+        }
+    }
 
-            case EVENT_SYNCHRONOUS_CALL_COMPLETE:
-                Object lock = mLockMap.get(msg.arg1);
+    public void onCallComplete(int callId, AsyncResult result) {
+        Object lock = mLockMap.get(callId);
 
-                if(lock != null)
-                    synchronized(lock) {
-                        lock.notify();
-                    }
+        if(lock != null) {
+            mResultMap.put(callId, result);
 
-                break;
+            synchronized(lock) {
+                lock.notify();
+            }
         }
     }
 

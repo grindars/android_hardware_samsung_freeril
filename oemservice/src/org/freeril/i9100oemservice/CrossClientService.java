@@ -131,7 +131,7 @@ public class CrossClientService extends ICrossClientService.Stub {
         if(!ret)
             Log.w(LOG_TAG, "Access denied for " + getCallingUid() + " upon request of " + permissions);
 
-        return false;
+        return ret;
     }
 
     private int callerPermissions() {

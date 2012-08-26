@@ -18,16 +18,9 @@
 
 package org.freeril.i9100oemservice;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import android.util.Log;
+import android.os.Parcel;
 
 public class OEMRequestBuilder {
-    private static final String TAG = "I9100OemService";
-
     // 'FreeRIL!' in ASCII
     static final int FREERIL_OEM_SIGNATURE_LOW  = 0x65657246;
     static final int FREERIL_OEM_SIGNATURE_HIGH = 0x214c4952;
@@ -48,250 +41,213 @@ public class OEMRequestBuilder {
     static final int OEM_REQUEST_SAMSUNG_OEM_REQUEST = 12;
 
     public byte[] buildAttach(boolean attach) {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-            DataOutputStream dataStream = new DataOutputStream(byteArrayStream);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
 
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_LOW);
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+            parcel.writeInt(OEM_REQUEST_ATTACH_SERVICE);
+            parcel.writeInt(attach ? 1 : 0);
 
-            dataStream.writeInt(OEM_REQUEST_ATTACH_SERVICE);
-            dataStream.writeBoolean(attach);
-
-            return byteArrayStream.toByteArray();
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return null;
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
         }
     }
 
     public byte[] buildSetLoopbackTest(int loopback, int path) {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-            DataOutputStream dataStream = new DataOutputStream(byteArrayStream);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
 
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_LOW);
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+            parcel.writeInt(OEM_REQUEST_SET_LOOPBACK_TEST);
+            parcel.writeInt(loopback);
+            parcel.writeInt(path);
 
-            dataStream.writeInt(OEM_REQUEST_SET_LOOPBACK_TEST);
-            dataStream.writeInt(loopback);
-            dataStream.writeInt(path);
-
-            return byteArrayStream.toByteArray();
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return null;
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
         }
     }
 
     public byte[] buildSetDhaSolution(int mode, int select, String extra) {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-            DataOutputStream dataStream = new DataOutputStream(byteArrayStream);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
 
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_LOW);
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+            parcel.writeInt(OEM_REQUEST_SET_DHA_SOLUTION);
+            parcel.writeInt(mode);
+            parcel.writeInt(select);
+            parcel.writeString(extra);
 
-            dataStream.writeInt(OEM_REQUEST_SET_DHA_SOLUTION);
-            dataStream.writeInt(mode);
-            dataStream.writeInt(select);
-            dataStream.writeUTF(extra);
-
-            return byteArrayStream.toByteArray();
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return null;
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
         }
     }
 
     public byte[] buildSetTwoMicControl(int device, int report) {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-            DataOutputStream dataStream = new DataOutputStream(byteArrayStream);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
 
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_LOW);
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+            parcel.writeInt(OEM_REQUEST_SET_TWO_MIC_CONTROL);
+            parcel.writeInt(device);
+            parcel.writeInt(report);
 
-            dataStream.writeInt(OEM_REQUEST_SET_TWO_MIC_CONTROL);
-            dataStream.writeInt(device);
-            dataStream.writeInt(report);
-
-            return byteArrayStream.toByteArray();
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return null;
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
         }
     }
 
     public byte[] buildGetMute() {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-            DataOutputStream dataStream = new DataOutputStream(byteArrayStream);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
 
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_LOW);
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+            parcel.writeInt(OEM_REQUEST_GET_MUTE);
 
-            dataStream.writeInt(OEM_REQUEST_GET_MUTE);
-
-            return byteArrayStream.toByteArray();
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return null;
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
         }
     }
 
     public byte[] buildSetMute(int mute) {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-            DataOutputStream dataStream = new DataOutputStream(byteArrayStream);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
 
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_LOW);
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+            parcel.writeInt(OEM_REQUEST_SET_MUTE);
+            parcel.writeInt(mute);
 
-            dataStream.writeInt(OEM_REQUEST_SET_MUTE);
-            dataStream.writeInt(mute);
-
-            return byteArrayStream.toByteArray();
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return null;
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
         }
     }
 
     public byte[] buildSetCallRecord(int record) {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-            DataOutputStream dataStream = new DataOutputStream(byteArrayStream);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
 
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_LOW);
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+            parcel.writeInt(OEM_REQUEST_SET_CALL_RECORD);
+            parcel.writeInt(record);
 
-            dataStream.writeInt(OEM_REQUEST_SET_CALL_RECORD);
-            dataStream.writeInt(record);
-
-            return byteArrayStream.toByteArray();
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return null;
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
         }
     }
 
     public byte[] buildSetCallClockSync(int sync) {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-            DataOutputStream dataStream = new DataOutputStream(byteArrayStream);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
 
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_LOW);
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+            parcel.writeInt(OEM_REQUEST_SET_CALL_CLOCK_SYNC);
+            parcel.writeInt(sync);
 
-            dataStream.writeInt(OEM_REQUEST_SET_CALL_CLOCK_SYNC);
-            dataStream.writeInt(sync);
-
-            return byteArrayStream.toByteArray();
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return null;
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
         }
     }
 
     public byte[] buildSetVideoCallClockSync(int sync) {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-            DataOutputStream dataStream = new DataOutputStream(byteArrayStream);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
 
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_LOW);
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+            parcel.writeInt(OEM_REQUEST_SET_VIDEO_CALL_CLOCK_SYNC);
+            parcel.writeInt(sync);
 
-            dataStream.writeInt(OEM_REQUEST_SET_VIDEO_CALL_CLOCK_SYNC);
-            dataStream.writeInt(sync);
-
-            return byteArrayStream.toByteArray();
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return null;
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
         }
     }
 
     public byte[] buildSetCallAudioPath(int path, int extraVolume) {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-            DataOutputStream dataStream = new DataOutputStream(byteArrayStream);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
 
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_LOW);
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+            parcel.writeInt(OEM_REQUEST_SET_CALL_AUDIO_PATH);
+            parcel.writeInt(path);
+            parcel.writeInt(extraVolume);
 
-            dataStream.writeInt(OEM_REQUEST_SET_CALL_AUDIO_PATH);
-            dataStream.writeInt(path);
-            dataStream.writeInt(extraVolume);
-
-            return byteArrayStream.toByteArray();
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return null;
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
         }
     }
 
     public byte[] buildSetCallVolume(int device, int volume) {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-            DataOutputStream dataStream = new DataOutputStream(byteArrayStream);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
 
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_LOW);
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+            parcel.writeInt(OEM_REQUEST_SET_CALL_VOLUME);
+            parcel.writeInt(device);
+            parcel.writeInt(volume);
 
-            dataStream.writeInt(OEM_REQUEST_SET_CALL_VOLUME);
-            dataStream.writeInt(device);
-            dataStream.writeInt(volume);
-
-            return byteArrayStream.toByteArray();
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return null;
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
         }
     }
 
     public byte[] buildSamsungOemRequest(byte[] data) {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
-            DataOutputStream dataStream = new DataOutputStream(byteArrayStream);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
 
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_LOW);
-            dataStream.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+            parcel.writeInt(OEM_REQUEST_SAMSUNG_OEM_REQUEST);
+            parcel.writeByteArray(data);
 
-            dataStream.writeInt(OEM_REQUEST_SAMSUNG_OEM_REQUEST);
-            dataStream.write(data, 0, data.length);
-
-            return byteArrayStream.toByteArray();
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return null;
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
         }
     }
 
-    public boolean parseGetMute(OemRequestReply reply, boolean[] muted) {
+    public void parseGetMute(OemRequestReply reply, boolean[] muted) {
+        Parcel parcel = Parcel.obtain();
+
         try {
-            ByteArrayInputStream byteArrayStream = reply.asInput();
-            DataInputStream dataStream = new DataInputStream(byteArrayStream);
+            byte[] data = reply.toByteArray();
+            parcel.unmarshall(data, 0, data.length);
 
-            muted[0] = dataStream.readBoolean();
+            muted[0] = parcel.readInt() != 0;
 
-            return true;
-        } catch(IOException e) {
-            Log.e("OEMRequestBuilder", "Unexpected exception: ", e);
-
-            return false;
+        } finally {
+            parcel.recycle();
         }
     }
 }

@@ -26,11 +26,14 @@
 #include "RequestHandler.h"
 #include "Request.h"
 #include "RIL.h"
+#include "OemRequestHandler.h"
 
 using namespace SamsungIPC;
 
 RequestHandler::RequestHandler(RIL *ril) : m_ril(ril), m_coarseRSSI(-1),
     m_lastCallFailCause(CALL_FAIL_ERROR_UNSPECIFIED) {
+
+    m_requestHandlers[RIL_REQUEST_OEM_HOOK_RAW - FirstRequest] = &RequestHandler::handleOemHookRaw;
 
     m_requestHandlers[RIL_REQUEST_QUERY_NETWORK_SELECTION_MODE - FirstRequest] = &RequestHandler::handleQueryNetworkSelectionMode;
     m_requestHandlers[RIL_REQUEST_SET_NETWORK_SELECTION_AUTOMATIC - FirstRequest] = &RequestHandler::handleSetNetworkSelectionAutomatic;
@@ -55,12 +58,19 @@ RequestHandler::RequestHandler(RIL *ril) : m_ril(ril), m_coarseRSSI(-1),
     m_requestHandlers[RIL_REQUEST_SEPARATE_CONNECTION - FirstRequest] = &RequestHandler::handleSeparateConnection;
     m_requestHandlers[RIL_REQUEST_SET_MUTE - FirstRequest] = &RequestHandler::handleSetMute;
     m_requestHandlers[RIL_REQUEST_GET_MUTE - FirstRequest] = &RequestHandler::handleGetMute;
+
+    m_oemHandler = new OemRequestHandler(ril);
+}
+
+RequestHandler::~RequestHandler() {
+    delete m_oemHandler;
 }
 
 void RequestHandler::handle(Request *request) {
     if((m_ril->radioState() == RADIO_STATE_UNAVAILABLE ||
         (m_ril->radioState() == RADIO_STATE_OFF && request->code() != RIL_REQUEST_RADIO_POWER)) &&
-        request->code() != RIL_REQUEST_GET_SIM_STATUS) {
+        request->code() != RIL_REQUEST_GET_SIM_STATUS &&
+        request->code() != RIL_REQUEST_OEM_HOOK_RAW) {
 
         request->complete(RIL_E_RADIO_NOT_AVAILABLE);
 
@@ -94,27 +104,31 @@ bool RequestHandler::completeGenCommand(SamsungIPC::Message *reply, const char *
     if(complete == NULL) {
         Log::error("Got unexpected message in response to %s: %s", name, reply->inspect().c_str());
 
-        request->complete(RIL_E_GENERIC_FAILURE);
+        if(request)
+            request->complete(RIL_E_GENERIC_FAILURE);
 
     } else if(complete->status() == Messages::GenCommandComplete::Success) {
 
-        request->complete(RIL_E_SUCCESS);
+        if(request)
+            request->complete(RIL_E_SUCCESS);
 
         ret = true;
 
     } else {
         Log::error("%s failed with status 0x%04X", name, complete->status());
 
-        switch(complete->status()) {
-            case Messages::GenCommandComplete::IncorrectPin:
-                request->complete(RIL_E_PASSWORD_INCORRECT);
+        if(request) {
+            switch(complete->status()) {
+                case Messages::GenCommandComplete::IncorrectPin:
+                    request->complete(RIL_E_PASSWORD_INCORRECT);
 
-                break;
+                    break;
 
-            default:
-                request->complete(RIL_E_GENERIC_FAILURE);
+                default:
+                    request->complete(RIL_E_GENERIC_FAILURE);
 
-                break;
+                    break;
+            }
         }
     }
 

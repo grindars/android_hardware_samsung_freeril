@@ -67,8 +67,7 @@ void RequestHandler::handleCurrentCalls(Request *request) {
             call->isMT = item.direction() == Messages::CallGetCallListReply::CallListItem::MT;
             call->als = 0; // not used by Android, so why bother?
             call->isVoice = item.callType() < 0x102 || item.callType() == 0x700;
-            call->isVoicePrivacy = 0; // for Samsung this is:
-                                        // call->isVideo = callType == 0x300
+            call->isVoicePrivacy = 0;
             call->number = number;
             call->numberPresentation = 0;
             call->name = NULL;

@@ -29,10 +29,12 @@ namespace SamsungIPC {
 
 class RIL;
 class Request;
+class OemRequestHandler;
 
 class RequestHandler: public SamsungIPC::IUnsolicitedReceiver {
 public:
     RequestHandler(RIL *ril);
+    virtual ~RequestHandler();
 
     virtual void handle(Request *request);
     virtual bool supports(int request);
@@ -50,6 +52,8 @@ public:
     virtual void handle(SamsungIPC::Messages::DispRssiInformation *message);
     virtual void handle(SamsungIPC::Messages::CallIncoming *message);
     virtual void handle(SamsungIPC::Messages::CallStateChanged *message);
+
+    static bool completeGenCommand(SamsungIPC::Message *reply, const char *name, Request *request);
 
 private:
 
@@ -110,7 +114,7 @@ private:
     void handleSetMute(Request *request);
     void handleGetMute(Request *request);
 
-    bool completeGenCommand(SamsungIPC::Message *reply, const char *name, Request *request);
+    void handleOemHookRaw(Request *request);
 
     enum {
         FirstRequest = RIL_REQUEST_GET_SIM_STATUS,
@@ -123,6 +127,7 @@ private:
     int m_coarseRSSI;
     RIL_LastCallFailCause m_lastCallFailCause;
     std::vector<unsigned char> m_callIds;
+    OemRequestHandler *m_oemHandler;
 };
 
 #endif

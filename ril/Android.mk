@@ -22,14 +22,15 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES = ril.cpp RIL.cpp AndroidLogSink.cpp Request.cpp \
                   RequestHandler.cpp power.cpp misc.cpp security.cpp \
                   network.cpp display.cpp RILDatabase.cpp call.cpp \
-                  snd.cpp
+                  snd.cpp oem.cpp OemRequestHandler.cpp
 
 LOCAL_LDLIBS += -lpthread
 LOCAL_MODULE := libril-freei9100-1
 LOCAL_MODULE_TAGS := optional
-LOCAL_SHARED_LIBRARIES = libstlport liblog libcutils libsqlite
+LOCAL_SHARED_LIBRARIES = libstlport liblog libcutils libsqlite libbinder libutils
 LOCAL_C_INCLUDES = external/stlport/stlport bionic $(LOCAL_PATH)/../libandroidhal $(LOCAL_PATH)/../libsamsung-ipc \
-     $(call intermediates-dir-for,STATIC_LIBRARIES,libSamsungIPC) hardware/ril/libril external/sqlite/dist
+     $(call intermediates-dir-for,STATIC_LIBRARIES,libSamsungIPC) hardware/ril/libril external/sqlite/dist \
+     $(LOCAL_PATH)/../include
 LOCAL_STATIC_LIBRARIES = libSamsungIPC libAndroidHAL
 LOCAL_CFLAGS = -fvisibility=hidden -DRIL_SHLIB
 
