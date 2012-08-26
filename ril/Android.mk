@@ -34,4 +34,7 @@ LOCAL_C_INCLUDES = external/stlport/stlport bionic $(LOCAL_PATH)/../libandroidha
 LOCAL_STATIC_LIBRARIES = libSamsungIPC libAndroidHAL
 LOCAL_CFLAGS = -fvisibility=hidden -DRIL_SHLIB
 
+LOCAL_CFLAGS += -DPROFILING
+LOCAL_SRC_FILES += timeval.c
+
 include $(BUILD_SHARED_LIBRARY)

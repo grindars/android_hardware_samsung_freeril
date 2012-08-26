@@ -83,8 +83,13 @@ static char *getCleanMCCMNC(const void *data) {
     return mccmnc;
 }
 
-void RequestHandler::handleQueryAvailableNetworks(Request *request) {
-    Message *reply = m_ril->execute(new Messages::NetGetPlmnList);
+static void handleQueryAvailableNetworksComplete(Message *reply, void *arg) {
+    std::pair<Request *, RIL *> *data = (std::pair<Request *, RIL *> *) arg;
+
+    Request *request = data->first;
+    RIL *ril = data->second;
+    delete data;
+
     Messages::NetGetPlmnListReply *complete = message_cast<Messages::NetGetPlmnListReply>(reply);
 
     if(complete == NULL) {
@@ -93,7 +98,7 @@ void RequestHandler::handleQueryAvailableNetworks(Request *request) {
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {
         size_t count = complete->plmnList().size();
-        size_t response_size = sizeof(char *) * count;
+        size_t response_size = sizeof(char *) * count * 4;
         char **response = (char **) malloc(response_size);
 
         for(size_t i = 0; i < count; i++) {
@@ -123,7 +128,7 @@ void RequestHandler::handleQueryAvailableNetworks(Request *request) {
                     break;
             }
 
-            RILDatabase *database = m_ril->database();
+            RILDatabase *database = ril->database();
             std::string longLookup, shortLookup;
             if(!database->lookupOperator(mccmnc, longLookup, shortLookup)) {
                 Log::error("Database lookup for operator %s failed: %s",
@@ -151,6 +156,12 @@ void RequestHandler::handleQueryAvailableNetworks(Request *request) {
     }
 
     delete reply;
+}
+
+void RequestHandler::handleQueryAvailableNetworks(Request *request) {
+    Messages::NetGetPlmnList *message = new Messages::NetGetPlmnList;
+    message->subscribe(handleQueryAvailableNetworksComplete, new std::pair<Request *, RIL *>(request, m_ril));
+    m_ril->submit(message);
 }
 
 void RequestHandler::handleOperator(Request *request) {
@@ -195,6 +206,11 @@ void RequestHandler::handle(SamsungIPC::Messages::NetGetCurrentPlmnReply *messag
     m_ril->unsolicited(RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED);
 }
 
+static void handleSetBandModeComplete(Message *reply, void *arg) {
+    RequestHandler::completeGenCommand(reply, "NetSetBandSelection",
+                                       static_cast<Request *>(arg));
+}
+
 void RequestHandler::handleSetBandMode(Request *request) {
     Messages::NetSetBandSelection *message = new Messages::NetSetBandSelection;
     message->setUnknown1(0x02);
@@ -233,8 +249,8 @@ void RequestHandler::handleSetBandMode(Request *request) {
             break;
     }
 
-    Message *reply = m_ril->execute(message);
-    completeGenCommand(reply, "NetSetBandSelection", request);
+    message->subscribe(handleSetBandModeComplete, request);
+    m_ril->submit(message);
 }
 
 void RequestHandler::handleQueryAvailableBandMode(Request *request) {
@@ -243,9 +259,12 @@ void RequestHandler::handleQueryAvailableBandMode(Request *request) {
     request->complete(RIL_E_SUCCESS, data, sizeof(data));
 }
 
+static void handleSetPreferredNetworkTypeComplete(Message *reply, void *arg) {
+    RequestHandler::completeGenCommand(reply, "NetSetModeSelect", (Request *) arg);
+}
+
 void RequestHandler::handleSetPreferredNetworkType(Request *request) {
     int mode = ((const int *) request->data())[0], ipc_mode;
-
 
     switch(mode) {
         case PREF_NET_TYPE_LTE_GSM_WCDMA:
@@ -284,21 +303,10 @@ void RequestHandler::handleSetPreferredNetworkType(Request *request) {
             break;
     }
 
-    int current_mode = getNetworkMode(request);
-
-    if(current_mode == -1)
-        return;
-
-    if(current_mode == ipc_mode) {
-        request->complete(RIL_E_SUCCESS);
-    } else {
-        Messages::NetSetModeSelect *message = new Messages::NetSetModeSelect;
-        message->setMode(ipc_mode);
-
-        Message *reply = m_ril->execute(message);
-        completeGenCommand(reply, "NetSetModeSelect", request);
-    }
-
+    Messages::NetSetModeSelect *message = new Messages::NetSetModeSelect;
+    message->setMode(ipc_mode);
+    message->subscribe(handleSetPreferredNetworkTypeComplete, request);
+    m_ril->submit(message);
 }
 
 void RequestHandler::handleGetPreferredNetworkType(Request *request) {
@@ -449,6 +457,10 @@ void RequestHandler::getNetworkRegistration(Request *request, int op) {
     delete reply;
 }
 
+static void setPLMNSelectionComplete(Message *reply, void *arg) {
+    RequestHandler::completeGenCommand(reply, "NetSetPlmnSelection", static_cast<Request *>(arg));
+}
+
 void RequestHandler::setPLMNSelection(Request *request, const char *plmn) {
     size_t plmn_length;
 
@@ -475,7 +487,7 @@ void RequestHandler::setPLMNSelection(Request *request, const char *plmn) {
     message->setNetwork(padded);
     message->setUnknown1(0xFF);
 
-    Message *reply = m_ril->execute(message);
-    completeGenCommand(reply, "NetSetPlmnSelection", request);
+    message->subscribe(setPLMNSelectionComplete, request);
+    m_ril->submit(message);
 }
 

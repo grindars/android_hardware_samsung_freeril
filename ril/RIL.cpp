@@ -29,6 +29,10 @@
 #include "Message.h"
 #include "RILDatabase.h"
 
+#if defined(PROFILING)
+#include "timeval.h"
+#endif
+
 using namespace SamsungIPC;
 using namespace HAL;
 
@@ -119,6 +123,13 @@ void RIL::submit(SamsungIPC::Message *message) {
 
 
 SamsungIPC::Message *RIL::execute(SamsungIPC::Message *message) {
+#if defined(PROFILING)
+    struct timeval req_start, req_end, elapsed;
+
+    gettimeofday(&req_start, NULL);
+    std::string inspected = message->inspect();
+#endif
+
     ExecutionData data;
     data.ril = this;
 
@@ -126,6 +137,18 @@ SamsungIPC::Message *RIL::execute(SamsungIPC::Message *message) {
     m_modem->submit(message);
 
     m_executeSemaphore.take();
+
+#if defined(PROFILING)
+    gettimeofday(&req_end, NULL);
+    timeval_subtract(&elapsed, &req_end, &req_start);
+
+    unsigned long elapsed_milliseconds = elapsed.tv_sec * 1000 + elapsed.tv_usec / 1000;
+    if(elapsed_milliseconds > 250) {
+        Log::warning("Synchronous execution of following message taken %u milliseconds.");
+        Log::warning("Consider rewriting corresponding handler asynchronously.");
+        Log::warning("%s", inspected.c_str());
+    }
+#endif
 
     return data.reply;
 }
