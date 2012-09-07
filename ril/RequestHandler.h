@@ -30,6 +30,7 @@ namespace SamsungIPC {
 class RIL;
 class Request;
 class OemRequestHandler;
+class OemUnsolicitedBuilder;
 
 class RequestHandler: public SamsungIPC::IUnsolicitedReceiver {
 public:
@@ -52,6 +53,7 @@ public:
     virtual void handle(SamsungIPC::Messages::DispRssiInformation *message);
     virtual void handle(SamsungIPC::Messages::CallIncoming *message);
     virtual void handle(SamsungIPC::Messages::CallStateChanged *message);
+    virtual void handle(SamsungIPC::Messages::SvcDisplayScreen *message);
 
     static bool completeGenCommand(SamsungIPC::Message *reply, const char *name, Request *request);
 
@@ -128,6 +130,7 @@ private:
     RIL_LastCallFailCause m_lastCallFailCause;
     std::vector<unsigned char> m_callIds;
     OemRequestHandler *m_oemHandler;
+    OemUnsolicitedBuilder *m_oemBuilder;
 };
 
 #endif

@@ -29,27 +29,23 @@ OemRequestHandler::OemRequestHandler(RIL *ril) : m_ril(ril) {
 
 }
 
-void OemRequestHandler::handleAttachService(bool attach) {
-    Log::debug("handleAttachService(%d)", attach);
+bool OemRequestHandler::handleAttachService(bool attach) {
+    (void) attach;
+
+    return true;
 
 }
 
-void OemRequestHandler::handleSetLoopbackTest(int path, int loopback) {
-    Log::debug("handleSetLoopbackTest(%d, %d)", path, loopback);
-
+bool OemRequestHandler::handleSetLoopbackTest(int path, int loopback) {
     (void) loopback;
     Messages::SndSetLoopbackCtrl *message = new Messages::SndSetLoopbackCtrl;
     message->setCtrl(path);
     Message *reply = m_ril->execute(message);
-    RequestHandler::completeGenCommand(reply, "SndSetLoopbackCtrl", 0);
+    return RequestHandler::completeGenCommand(reply, "SndSetLoopbackCtrl", 0);
 }
 
-void OemRequestHandler::handleSetDhaSolution(int mode, int select,
+bool OemRequestHandler::handleSetDhaSolution(int mode, int select,
                           const std::string &extra) {
-
-    Log::debug("handleSetDhaSolution(%d, %d, %s)", mode, select,
-               extra.c_str());
-
     std::vector<unsigned char> parameter;
     parameter.resize(24);
     memcpy(&parameter[0], extra.c_str(), std::min(parameter.size(), extra.size() + 1));
@@ -59,79 +55,61 @@ void OemRequestHandler::handleSetDhaSolution(int mode, int select,
     message->setSelect(select);
     message->setParameter(parameter);
     Message *reply = m_ril->execute(message);
-    RequestHandler::completeGenCommand(reply, "SndSetDhaCtrl", 0);
+    return RequestHandler::completeGenCommand(reply, "SndSetDhaCtrl", 0);
 }
 
-void OemRequestHandler::handleSetTwoMicControl(int param1, int param2) {
-    Log::debug("handleSetTwoMicControl(%d, %d)", param1, param2);
-
+bool OemRequestHandler::handleSetTwoMicControl(int param1, int param2) {
     Messages::SndSetTwoMicCtrl *message = new Messages::SndSetTwoMicCtrl;
     message->setParam1(param1);
     message->setParam2(param2);
     Message *reply = m_ril->execute(message);
-    RequestHandler::completeGenCommand(reply, "SndSetTwoMicCtrl", 0);
+    return RequestHandler::completeGenCommand(reply, "SndSetTwoMicCtrl", 0);
 }
 
-bool OemRequestHandler::handleGetMute() {
-    Log::debug("handleGetMute()");
-
-    bool ret;
-
+bool OemRequestHandler::handleGetMute(bool *muted) {
     Message *reply = m_ril->execute(new Messages::SndGetMicMute);
     Messages::SndGetMicMuteReply *complete = message_cast<Messages::SndGetMicMuteReply>(reply);
 
     if(complete == NULL) {
         Log::error("Got unexpected message in response to SndGetMicMute: %s", reply->inspect().c_str());
 
-        ret = false;
+        return false;
     } else {
-        ret = complete->mute() != 0;
+        *muted = complete->mute() != 0;
     }
 
-    delete reply;
-
-    return false;
+    return true;
 }
 
-void OemRequestHandler::handleSetMute(bool muted) {
-    Log::debug("handleSetMute(%d)", muted);
-
+bool OemRequestHandler::handleSetMute(bool muted) {
     Messages::SndSetMicMute *message = new Messages::SndSetMicMute;
     message->setMute(muted != 0);
     Message *reply = m_ril->execute(message);
-    RequestHandler::completeGenCommand(reply, "SndSetMicMute", 0);
+    return RequestHandler::completeGenCommand(reply, "SndSetMicMute", 0);
 }
 
-void OemRequestHandler::handleSetCallRecord(int record) {
-    Log::debug("handleSetCallRecord(%d)", record);
-
+bool OemRequestHandler::handleSetCallRecord(int record) {
     Messages::SndSetVoiceRecordingCtrl *message = new Messages::SndSetVoiceRecordingCtrl;
     message->setRecord(record);
     Message *reply = m_ril->execute(message);
-    RequestHandler::completeGenCommand(reply, "SndSetVoiceRecordingCtrl", 0);
+    return RequestHandler::completeGenCommand(reply, "SndSetVoiceRecordingCtrl", 0);
 }
 
-void OemRequestHandler::handleSetCallClockSync(int sync) {
-    Log::debug("handleSetCallClockSync(%d)", sync);
-
+bool OemRequestHandler::handleSetCallClockSync(int sync) {
     Messages::SndExecClockCtrl *message = new Messages::SndExecClockCtrl;
     message->setClock(sync);
     Message *reply = m_ril->execute(message);
-    RequestHandler::completeGenCommand(reply, "SndExecClockCtrl", 0);
+    return RequestHandler::completeGenCommand(reply, "SndExecClockCtrl", 0);
 }
 
-void OemRequestHandler::handleSetVideoCallClockSync(int sync) {
-    Log::debug("handleSetVideoCallClockSync(%d)", sync);
-
+bool OemRequestHandler::handleSetVideoCallClockSync(int sync) {
     Messages::SndSetVideoCallCtrl *message = new Messages::SndSetVideoCallCtrl;
     message->setClock(sync);
     Message *reply = m_ril->execute(message);
-    RequestHandler::completeGenCommand(reply, "SndSetVideoCallCtrl", 0);
+    return RequestHandler::completeGenCommand(reply, "SndSetVideoCallCtrl", 0);
 }
 
-void OemRequestHandler::handleSetCallAudioPath(int path, int extraVolume) {
-    Log::debug("handleSetCallAudioPath", path, extraVolume);
-
+bool OemRequestHandler::handleSetCallAudioPath(int path, int extraVolume) {
     static const unsigned char path_map[] = {
         1, 2, 6, 4, 5, 7, 8, 0
     };
@@ -141,18 +119,16 @@ void OemRequestHandler::handleSetCallAudioPath(int path, int extraVolume) {
     if(path < 0 || path >= (int) sizeof(path_map)) {
         Log::warning("Invalid audio path %d", path);
 
-        return;
+        return false;
     }
 
     Messages::SndSetAudioPath *message = new Messages::SndSetAudioPath;
     message->setPath(path_map[path]);
     Message *reply = m_ril->execute(message);
-    RequestHandler::completeGenCommand(reply, "SndSetAudioPath", 0);
+    return RequestHandler::completeGenCommand(reply, "SndSetAudioPath", 0);
 }
 
-void OemRequestHandler::handleSetCallVolume(int device, int volume) {
-    Log::debug("handleSetCallVolume(%d, %d)", device, volume);
-
+bool OemRequestHandler::handleSetCallVolume(int device, int volume) {
     static const unsigned char device_map[] = {
         1, 17, 49, 65
     };
@@ -160,18 +136,43 @@ void OemRequestHandler::handleSetCallVolume(int device, int volume) {
     if(device < 0 || device > (int) sizeof(device_map)) {
         Log::warning("Invalid device %d", device);
 
-        return;
+        return false;
     }
 
     Messages::SndSetVolumeCtrl *message = new Messages::SndSetVolumeCtrl;
     message->setDevice(device_map[device]);
     message->setVolume(volume);
     Message *reply = m_ril->execute(message);
-    RequestHandler::completeGenCommand(reply, "SndSetVolumeCtrl", 0);
+    return RequestHandler::completeGenCommand(reply, "SndSetVolumeCtrl", 0);
 }
 
 bool OemRequestHandler::handleSamsungOemRequest(android::Parcel &request, android::Parcel &response) {
     Log::debug("handleSamsungOemRequest");
 
     return false;
+}
+
+bool OemRequestHandler::handleEnterServiceMode(int modeType, int subType) {
+    Messages::SvcEnterServiceMode *message = new Messages::SvcEnterServiceMode;
+    message->setModeType(modeType);
+    if(modeType == 1)
+        message->setSubType(subType + 0x1000);
+    else
+        message->setSubType(0);
+    Message *reply = m_ril->execute(message);
+    return RequestHandler::completeGenCommand(reply, "SvcEnterServiceMode", 0);
+}
+
+bool OemRequestHandler::handleExitServiceMode(int modeType) {
+    Messages::SvcExitServiceMode *message = new Messages::SvcExitServiceMode;
+    message->setModeType(modeType);
+    Message *reply = m_ril->execute(message);
+    return RequestHandler::completeGenCommand(reply, "SvcExitServiceMode", 0);
+}
+
+bool OemRequestHandler::handleSendServiceKeyCode(int keyCode) {
+    Messages::SvcProcessKeyCode *message = new Messages::SvcProcessKeyCode;
+    message->setKeyCode(keyCode);
+    Message *reply = m_ril->execute(message);
+    return RequestHandler::completeGenCommand(reply, "SvcProcessKeyCode", 0);
 }

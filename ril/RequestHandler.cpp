@@ -27,6 +27,7 @@
 #include "Request.h"
 #include "RIL.h"
 #include "OemRequestHandler.h"
+#include "OemUnsolicitedBuilder.h"
 
 using namespace SamsungIPC;
 
@@ -60,9 +61,11 @@ RequestHandler::RequestHandler(RIL *ril) : m_ril(ril), m_coarseRSSI(-1),
     m_requestHandlers[RIL_REQUEST_GET_MUTE - FirstRequest] = &RequestHandler::handleGetMute;
 
     m_oemHandler = new OemRequestHandler(ril);
+    m_oemBuilder = new OemUnsolicitedBuilder(ril);
 }
 
 RequestHandler::~RequestHandler() {
+    delete m_oemBuilder;
     delete m_oemHandler;
 }
 

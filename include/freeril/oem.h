@@ -62,9 +62,9 @@ namespace FreeRIL {
          * Set DHA solution.
          *
          * Request:
-         *  - int32_t mode
-         *  - int32_t select
-         *  - UTF     extra
+         *  - int32_t   mode
+         *  - int32_t  select
+         *  - String16 extra
          * Response:
          *  (none)
          */
@@ -163,8 +163,55 @@ namespace FreeRIL {
          */
         OEM_REQUEST_SAMSUNG_OEM_REQUEST,
 
-        OEM_REQUEST_FIRST = OEM_REQUEST_ATTACH_SERVICE,
-        OEM_REQUEST_LAST = OEM_REQUEST_SAMSUNG_OEM_REQUEST
+        /*
+         * Enter Service Mode.
+         *
+         * Request:
+         *  int32_t modeType
+         *  int32_t subType
+         * Response:
+         *  (none)
+         */
+        OEM_REQUEST_ENTER_SERVICE_MODE,
+
+        /*
+         * Exit Service Mode.
+         *
+         * Request:
+         *  int32_t modeType
+         * Response:
+         *  (none)
+         */
+        OEM_REQUEST_EXIT_SERVICE_MODE,
+
+        /*
+         * Send Service Mode key code.
+         *
+         * Request:
+         *  int32_t keyCode
+         * Response:
+         *  (none)
+         */
+        OEM_REQUEST_SEND_SERVICE_KEY_CODE
+    };
+
+    enum OemUnsolicitedResponse {
+        /*
+         * Service Mode completed
+         *
+         * Data:
+         *  (none)
+         */
+        OEM_UNSOLICITED_SERVICE_COMPLETED = 1,
+
+        /*
+         * Service Mode display updated
+         *
+         * Data:
+         *   int32_t lineCount
+         *   <lineCount> String16 lines
+         */
+        OEM_UNSOLICITED_SERVICE_DISPLAY
     };
 
 }

@@ -28,6 +28,7 @@ import android.os.RemoteException;
 
 public class I9100OemService extends Service {
     private CrossClientService mCrossClientService;
+    private PhoneService mPhoneService;
     private RilInterface mRIL;
 
     private IRegistrationInterface mRegistrationService;
@@ -69,10 +70,13 @@ public class I9100OemService extends Service {
 
         mRIL = new RilInterface();
         mCrossClientService = new CrossClientService(mRIL);
+        mPhoneService = new PhoneService(this, mRIL);
+        mRIL.setUnsolicitedReceiver(mPhoneService);
     }
 
     @Override
     public void onDestroy() {
+        mRIL.setUnsolicitedReceiver(null);
         mRIL.dispose();
 
         super.onDestroy();
@@ -81,6 +85,7 @@ public class I9100OemService extends Service {
     private void registerServices() {
         try {
             mRegistrationService.registerService("org.freeril.i9100oemservice.CrossClientService", mCrossClientService);
+            mRegistrationService.registerService("org.freeril.i9100oemservice.PhoneService", mPhoneService);
         } catch(android.os.RemoteException e) {
             stopSelf();
         } finally {

@@ -31,21 +31,25 @@ class OemRequestHandler {
 public:
     OemRequestHandler(RIL *ril);
 
-    void handleAttachService(bool attach);
+    bool handleAttachService(bool attach);
 
-    void handleSetLoopbackTest(int path, int loopback);
-    void handleSetDhaSolution(int mode, int select,
+    bool handleSetLoopbackTest(int path, int loopback);
+    bool handleSetDhaSolution(int mode, int select,
                               const std::string &extra);
-    void handleSetTwoMicControl(int param1, int param2);
-    bool handleGetMute();
-    void handleSetMute(bool muted);
-    void handleSetCallRecord(int record);
-    void handleSetCallClockSync(int sync);
-    void handleSetVideoCallClockSync(int sync);
-    void handleSetCallAudioPath(int path, int extraVolume);
-    void handleSetCallVolume(int device, int volume);
+    bool handleSetTwoMicControl(int param1, int param2);
+    bool handleGetMute(bool *muted);
+    bool handleSetMute(bool muted);
+    bool handleSetCallRecord(int record);
+    bool handleSetCallClockSync(int sync);
+    bool handleSetVideoCallClockSync(int sync);
+    bool handleSetCallAudioPath(int path, int extraVolume);
+    bool handleSetCallVolume(int device, int volume);
 
     bool handleSamsungOemRequest(android::Parcel &request, android::Parcel &response);
+
+    bool handleEnterServiceMode(int modeType, int subType);
+    bool handleExitServiceMode(int modeType);
+    bool handleSendServiceKeyCode(int keyCode);
 
 private:
     RIL *m_ril;

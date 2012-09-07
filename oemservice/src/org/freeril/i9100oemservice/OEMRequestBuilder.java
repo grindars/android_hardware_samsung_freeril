@@ -19,26 +19,34 @@
 package org.freeril.i9100oemservice;
 
 import android.os.Parcel;
+import java.util.List;
 
 public class OEMRequestBuilder {
     // 'FreeRIL!' in ASCII
-    static final int FREERIL_OEM_SIGNATURE_LOW  = 0x65657246;
-    static final int FREERIL_OEM_SIGNATURE_HIGH = 0x214c4952;
+    public static final int FREERIL_OEM_SIGNATURE_LOW  = 0x65657246;
+    public static final int FREERIL_OEM_SIGNATURE_HIGH = 0x214c4952;
 
-    static final int OEM_REQUEST_ATTACH_SERVICE = 1;
+    public static final int OEM_REQUEST_ATTACH_SERVICE = 1;
 
-    static final int OEM_REQUEST_SET_LOOPBACK_TEST = 2;
-    static final int OEM_REQUEST_SET_DHA_SOLUTION = 3;
-    static final int OEM_REQUEST_SET_TWO_MIC_CONTROL = 4;
-    static final int OEM_REQUEST_GET_MUTE = 5;
-    static final int OEM_REQUEST_SET_MUTE = 6;
-    static final int OEM_REQUEST_SET_CALL_RECORD = 7;
-    static final int OEM_REQUEST_SET_CALL_CLOCK_SYNC = 8;
-    static final int OEM_REQUEST_SET_VIDEO_CALL_CLOCK_SYNC = 9;
-    static final int OEM_REQUEST_SET_CALL_AUDIO_PATH = 10;
-    static final int OEM_REQUEST_SET_CALL_VOLUME = 11;
+    public static final int OEM_REQUEST_SET_LOOPBACK_TEST = 2;
+    public static final int OEM_REQUEST_SET_DHA_SOLUTION = 3;
+    public static final int OEM_REQUEST_SET_TWO_MIC_CONTROL = 4;
+    public static final int OEM_REQUEST_GET_MUTE = 5;
+    public static final int OEM_REQUEST_SET_MUTE = 6;
+    public static final int OEM_REQUEST_SET_CALL_RECORD = 7;
+    public static final int OEM_REQUEST_SET_CALL_CLOCK_SYNC = 8;
+    public static final int OEM_REQUEST_SET_VIDEO_CALL_CLOCK_SYNC = 9;
+    public static final int OEM_REQUEST_SET_CALL_AUDIO_PATH = 10;
+    public static final int OEM_REQUEST_SET_CALL_VOLUME = 11;
 
-    static final int OEM_REQUEST_SAMSUNG_OEM_REQUEST = 12;
+    public static final int OEM_REQUEST_SAMSUNG_OEM_REQUEST = 12;
+
+    public static final int OEM_REQUEST_ENTER_SERVICE_MODE = 13;
+    public static final int OEM_REQUEST_EXIT_SERVICE_MODE = 14;
+    public static final int OEM_REQUEST_SEND_SERVICE_KEY_CODE = 15;
+
+    public static final int OEM_UNSOLICITED_SERVICE_COMPLETED = 1;
+    public static final int OEM_UNSOLICITED_SERVICE_DISPLAY   = 2;
 
     public byte[] buildAttach(boolean attach) {
         Parcel parcel = Parcel.obtain();
@@ -237,17 +245,87 @@ public class OEMRequestBuilder {
         }
     }
 
+    public byte[] buildEnterServiceMode(int modeType, int subType) {
+        Parcel parcel = Parcel.obtain();
+
+        try {
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+
+            parcel.writeInt(OEM_REQUEST_ENTER_SERVICE_MODE);
+            parcel.writeInt(modeType);
+            parcel.writeInt(subType);
+
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
+        }
+    }
+
+    public byte[] buildExitServiceMode(int modeType) {
+        Parcel parcel = Parcel.obtain();
+
+        try {
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+
+            parcel.writeInt(OEM_REQUEST_EXIT_SERVICE_MODE);
+            parcel.writeInt(modeType);
+
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
+        }
+    }
+
+    public byte[] buildSendServiceKeyCode(int keyCode) {
+        Parcel parcel = Parcel.obtain();
+
+        try {
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_LOW);
+            parcel.writeInt(FREERIL_OEM_SIGNATURE_HIGH);
+
+            parcel.writeInt(OEM_REQUEST_SEND_SERVICE_KEY_CODE);
+            parcel.writeInt(keyCode);
+
+            return parcel.marshall();
+        } finally {
+            parcel.recycle();
+        }
+    }
+
     public void parseGetMute(OemRequestReply reply, boolean[] muted) {
         Parcel parcel = Parcel.obtain();
 
         try {
             byte[] data = reply.toByteArray();
             parcel.unmarshall(data, 0, data.length);
+            parcel.setDataPosition(0);
 
             muted[0] = parcel.readInt() != 0;
 
         } finally {
             parcel.recycle();
+        }
+    }
+
+    public int readUnsolicitedHeader(Parcel parcel) {
+        int low = parcel.readInt();
+        int high = parcel.readInt();
+        int type = parcel.readInt();
+
+        if(low != FREERIL_OEM_SIGNATURE_LOW || high != FREERIL_OEM_SIGNATURE_HIGH)
+            throw new RuntimeException(String.format("Bad OEM signature: %08X %08X", low, high));
+
+        return type;
+    }
+
+    public void readUnsolicitedServiceDisplay(Parcel parcel, List<String> display) {
+        display.clear();
+
+        int count = parcel.readInt();
+        for(int i = 0; i < count; i++) {
+            display.add(parcel.readString());
         }
     }
 }

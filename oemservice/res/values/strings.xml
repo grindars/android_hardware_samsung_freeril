@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FreeRIL-I9100 OEM Service</string>
+    <string name="callphoneservice_label">Manage phone</string>
+    <string name="callphoneservice_description">Perform dangerous low-level phone management tasks.</string>
 </resources>

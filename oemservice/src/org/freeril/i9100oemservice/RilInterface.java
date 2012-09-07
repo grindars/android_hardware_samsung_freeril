@@ -22,27 +22,31 @@ import android.os.Handler;
 import com.android.internal.telephony.PhoneFactory;
 import com.android.internal.telephony.PhoneBase;
 import com.android.internal.telephony.PhoneProxy;
-import com.android.internal.telephony.CommandsInterface;
+import com.android.internal.telephony.BaseCommands;
 import android.os.Message;
 import android.util.Log;
 import android.os.AsyncResult;
 import java.util.concurrent.ConcurrentHashMap;
 import java.lang.InterruptedException;
 import java.io.IOException;
+import android.os.Parcel;
+import java.util.ArrayList;
 
 public class RilInterface extends Handler {
     static final String LOG_TAG = "I9100OemService";
     static final int EVENT_RIL_AVAILABLE = 1;
     static final int EVENT_RIL_UNAVAILABLE = 2;
     static final int EVENT_ATTACHMENT_COMPLETE = 3;
+    static final int EVENT_OEM_UNSOLICITED = 4;
 
     private final OEMRequestBuilder mBuilder;
-    private CommandsInterface mCI;
+    private BaseCommands mCI;
     private boolean mAttached = false;
     private Integer mCallIdCounter = new Integer(0);
     private final ConcurrentHashMap<Integer, Object> mLockMap = new ConcurrentHashMap<Integer, Object>();
     private final ConcurrentHashMap<Integer, AsyncResult> mResultMap = new ConcurrentHashMap<Integer, AsyncResult>();
     private RilRequestCompletionThread mCompletionThread;
+    private IOemUnsolicitedReceiver mUnsolicitedReceiver = null;
 
     public RilInterface() {
         super();
@@ -50,11 +54,16 @@ public class RilInterface extends Handler {
         PhoneProxy proxy = (PhoneProxy) PhoneFactory.getDefaultPhone();
 
         mBuilder = new OEMRequestBuilder();
-        mCI = ((PhoneBase) proxy.getActivePhone()).mCM;
+        mCI = (BaseCommands) ((PhoneBase) proxy.getActivePhone()).mCM;
+        mCI.setOnUnsolOemHookRaw(this, EVENT_OEM_UNSOLICITED, null);
         mCI.registerForAvailable(this, EVENT_RIL_AVAILABLE, null);
         mCI.registerForNotAvailable(this, EVENT_RIL_UNAVAILABLE, null);
         mCompletionThread = new RilRequestCompletionThread(this);
         mCompletionThread.start();
+    }
+
+    public void setUnsolicitedReceiver(IOemUnsolicitedReceiver receiver) {
+        mUnsolicitedReceiver = receiver;
     }
 
     public void dispose() {
@@ -76,6 +85,7 @@ public class RilInterface extends Handler {
 
         mCI.unregisterForAvailable(this);
         mCI.unregisterForNotAvailable(this);
+        mCI.unSetOnUnsolOemHookRaw(this);
     }
 
     public boolean isAttached() {
@@ -131,6 +141,18 @@ public class RilInterface extends Handler {
 
     public boolean samsungOemRequest(byte[] data, OemRequestReply reply) {
         return synchronousOemCall(mBuilder.buildSamsungOemRequest(data), reply);
+    }
+
+    public boolean enterServiceMode(int modeType, int subType) {
+        return synchronousOemCall(mBuilder.buildEnterServiceMode(modeType, subType), null);
+    }
+
+    public boolean exitServiceMode(int modeType) {
+        return synchronousOemCall(mBuilder.buildExitServiceMode(modeType), null);
+    }
+
+    public boolean sendServiceKeyCode(int keyCode) {
+        return synchronousOemCall(mBuilder.buildSendServiceKeyCode(keyCode), null);
     }
 
     protected boolean synchronousOemCall(byte[] request, OemRequestReply reply) {
@@ -199,6 +221,11 @@ public class RilInterface extends Handler {
                 onAttachmentComplete(msg.arg1 != 0, (AsyncResult) msg.obj);
 
                 break;
+
+            case EVENT_OEM_UNSOLICITED:
+                onOemUnsolicited((byte[]) ((AsyncResult) msg.obj).result);
+
+                break;
         }
     }
 
@@ -240,6 +267,45 @@ public class RilInterface extends Handler {
                 Log.d(LOG_TAG, "Detached from the RIL");
 
             mAttached = attached;
+        }
+    }
+
+    protected void onOemUnsolicited(byte[] data) {
+        if(mUnsolicitedReceiver == null)
+            return;
+
+        Parcel parcel = Parcel.obtain();
+
+        try {
+            parcel.unmarshall(data, 0, data.length);
+            parcel.setDataPosition(0);
+            int type = mBuilder.readUnsolicitedHeader(parcel);
+
+            switch(type) {
+                case OEMRequestBuilder.OEM_UNSOLICITED_SERVICE_COMPLETED:
+                    mUnsolicitedReceiver.serviceCompleted();
+
+                    break;
+
+                case OEMRequestBuilder.OEM_UNSOLICITED_SERVICE_DISPLAY:
+                    ArrayList<String> lines = new ArrayList<String>();
+
+                    mBuilder.readUnsolicitedServiceDisplay(parcel, lines);
+                    mUnsolicitedReceiver.serviceDisplay(lines);
+
+                    break;
+
+                default:
+                    Log.e(LOG_TAG, String.format("Received unsupported OEM unsolicited response: %d", type));
+
+                    break;
+            }
+
+        } catch(Throwable e) {
+            Log.e(LOG_TAG, "Exception during processing of unsolicited response:", e);
+
+        } finally {
+            parcel.recycle();
         }
     }
 }

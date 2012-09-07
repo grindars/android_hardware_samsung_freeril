@@ -20,12 +20,14 @@
 #include <freeril/oem.h>
 #include <binder/Parcel.h>
 #include <utils/String8.h>
+#include <utils/String16.h>
 #include <arpa/inet.h>
 
 #include "RequestHandler.h"
 #include "Request.h"
 #include "RIL.h"
 #include "OemRequestHandler.h"
+#include "OemUnsolicitedBuilder.h"
 
 using namespace FreeRIL;
 using namespace SamsungIPC;
@@ -67,11 +69,10 @@ void RequestHandler::handleOemHookRaw(Request *request) {
 
             if(parcel.errorCheck() != NO_ERROR) {
                 request->complete(RIL_E_GENERIC_FAILURE);
-            } else {
-
-                m_oemHandler->handleAttachService(attach != 0);
-
+            } else if(m_oemHandler->handleAttachService(attach != 0)) {
                 request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
             }
 
             break;
@@ -84,11 +85,10 @@ void RequestHandler::handleOemHookRaw(Request *request) {
 
             if(parcel.errorCheck() != NO_ERROR) {
                 request->complete(RIL_E_GENERIC_FAILURE);
-            } else {
-
-                m_oemHandler->handleSetLoopbackTest(path, loopback);
-
+            } else if(m_oemHandler->handleSetLoopbackTest(path, loopback)) {
                 request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
             }
 
             break;
@@ -98,16 +98,16 @@ void RequestHandler::handleOemHookRaw(Request *request) {
         {
             int32_t mode = parcel.readInt32();
             int32_t select = parcel.readInt32();
-            String8 extra = parcel.readString8();
+            String8 extra = String8(parcel.readString16());
 
             if(parcel.errorCheck() != NO_ERROR) {
                 request->complete(RIL_E_GENERIC_FAILURE);
-            } else {
-
-                m_oemHandler->handleSetDhaSolution(mode, select,
-                    std::string(extra.string()));
+            } else if(m_oemHandler->handleSetDhaSolution(mode, select,
+                std::string(extra.string()))) {
 
                 request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
             }
 
             break;
@@ -120,11 +120,10 @@ void RequestHandler::handleOemHookRaw(Request *request) {
 
             if(parcel.errorCheck() != NO_ERROR) {
                 request->complete(RIL_E_GENERIC_FAILURE);
-            } else {
-
-                m_oemHandler->handleSetTwoMicControl(param1, param2);
-
+            } else if(m_oemHandler->handleSetTwoMicControl(param1, param2)) {
                 request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
             }
 
             break;
@@ -133,11 +132,16 @@ void RequestHandler::handleOemHookRaw(Request *request) {
         case OEM_REQUEST_GET_MUTE:
         {
             Parcel reply;
+            bool muted;
 
-            bool ret = m_oemHandler->handleGetMute();
-            reply.writeInt32(ret ? 1 : 0);
+            if(m_oemHandler->handleGetMute(&muted)) {
+                reply.writeInt32(muted ? 1 : 0);
 
-            request->complete(RIL_E_SUCCESS, reply.data(), reply.dataSize());
+                request->complete(RIL_E_SUCCESS, reply.data(), reply.dataSize());
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
+            }
+
 
             break;
         }
@@ -148,11 +152,10 @@ void RequestHandler::handleOemHookRaw(Request *request) {
 
             if(parcel.errorCheck() != NO_ERROR) {
                 request->complete(RIL_E_GENERIC_FAILURE);
-            } else {
-
-                m_oemHandler->handleSetMute(mute != 0);
-
+            } else if(m_oemHandler->handleSetMute(mute != 0)) {
                 request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
             }
 
             break;
@@ -164,11 +167,10 @@ void RequestHandler::handleOemHookRaw(Request *request) {
 
             if(parcel.errorCheck() != NO_ERROR) {
                 request->complete(RIL_E_GENERIC_FAILURE);
-            } else {
-
-                m_oemHandler->handleSetCallRecord(record);
-
+            } else if(m_oemHandler->handleSetCallRecord(record)) {
                 request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
             }
 
             break;
@@ -180,11 +182,10 @@ void RequestHandler::handleOemHookRaw(Request *request) {
 
             if(parcel.errorCheck() != NO_ERROR) {
                 request->complete(RIL_E_GENERIC_FAILURE);
-            } else {
-
-                m_oemHandler->handleSetCallClockSync(sync);
-
+            } else if(m_oemHandler->handleSetCallClockSync(sync)) {
                 request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
             }
 
             break;
@@ -196,11 +197,10 @@ void RequestHandler::handleOemHookRaw(Request *request) {
 
             if(parcel.errorCheck() != NO_ERROR) {
                 request->complete(RIL_E_GENERIC_FAILURE);
-            } else {
-
-                m_oemHandler->handleSetVideoCallClockSync(sync);
-
+            } else if(m_oemHandler->handleSetVideoCallClockSync(sync)) {
                 request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
             }
 
             break;
@@ -213,11 +213,10 @@ void RequestHandler::handleOemHookRaw(Request *request) {
 
             if(parcel.errorCheck() != NO_ERROR) {
                 request->complete(RIL_E_GENERIC_FAILURE);
-            } else {
-
-                m_oemHandler->handleSetCallAudioPath(path, extraVolume);
-
+            } else if(m_oemHandler->handleSetCallAudioPath(path, extraVolume)) {
                 request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
             }
 
             break;
@@ -230,11 +229,10 @@ void RequestHandler::handleOemHookRaw(Request *request) {
 
             if(parcel.errorCheck() != NO_ERROR) {
                 request->complete(RIL_E_GENERIC_FAILURE);
-            } else {
-
-                m_oemHandler->handleSetCallVolume(device, volume);
-
+            } else if(m_oemHandler->handleSetCallVolume(device, volume)) {
                 request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
             }
 
             break;
@@ -253,6 +251,52 @@ void RequestHandler::handleOemHookRaw(Request *request) {
             break;
         }
 
+        case OEM_REQUEST_ENTER_SERVICE_MODE:
+        {
+            int32_t modeType = parcel.readInt32();
+            int32_t subType = parcel.readInt32();
+
+            if(parcel.errorCheck() != NO_ERROR) {
+                request->complete(RIL_E_GENERIC_FAILURE);
+            } else if(m_oemHandler->handleEnterServiceMode(modeType, subType)) {
+                request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
+            }
+
+            break;
+        }
+
+        case OEM_REQUEST_EXIT_SERVICE_MODE:
+        {
+            int32_t modeType = parcel.readInt32();
+
+            if(parcel.errorCheck() != NO_ERROR) {
+                request->complete(RIL_E_GENERIC_FAILURE);
+            } else if(m_oemHandler->handleExitServiceMode(modeType)) {
+                request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
+            }
+
+            break;
+        }
+
+        case OEM_REQUEST_SEND_SERVICE_KEY_CODE:
+        {
+            int32_t keyCode = parcel.readInt32();
+
+            if(parcel.errorCheck() != NO_ERROR) {
+                request->complete(RIL_E_GENERIC_FAILURE);
+            } else if(m_oemHandler->handleSendServiceKeyCode(keyCode)) {
+                request->complete(RIL_E_SUCCESS);
+            } else {
+                request->complete(RIL_E_GENERIC_FAILURE);
+            }
+
+            break;
+        }
+
         default:
             Log::warning("Unsupported OEM request %u", header->request);
 
@@ -262,6 +306,28 @@ void RequestHandler::handleOemHookRaw(Request *request) {
     }
 
     return;
+}
 
+void RequestHandler::handle(SamsungIPC::Messages::SvcDisplayScreen *message) {
+    if(message->lineCount() == 0) {
+        m_oemBuilder->notifyServiceCompleted();
+    } else {
+        if(message->lineCount() == 1) {
+            const Messages::SvcDisplayScreen::LinesItem &line = message->lines()[0];
 
+            if(line.unknown1() == 0 && line.unknown2() == 1)
+                return;
+        }
+
+        std::vector<std::string> lines;
+        lines.resize(message->lineCount());
+        for(unsigned int i = 0, count = message->lineCount(); i < count; i++) {
+            const Messages::SvcDisplayScreen::LinesItem &line = message->lines()[i];
+            const std::vector<unsigned char> &data = line.line();
+
+            lines[i].assign((char *) &data[0], strnlen((char *) &data[0], data.size()));
+        }
+
+        m_oemBuilder->notifyServiceDisplay(lines);
+    }
 }
