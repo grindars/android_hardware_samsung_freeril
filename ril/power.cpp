@@ -61,6 +61,11 @@ void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneModeChanged *message) 
     }
 }
 
+static void handleRadioPowerSetModeComplete(Message *reply, void *arg) {
+    Request *request = static_cast<Request *>(arg);
+
+    RequestHandler::completeGenCommand(reply, "PwrPhoneSetMode", request);
+}
 
 void RequestHandler::handleRadioPower(Request *request) {
     if(request->data_size() != sizeof(int)) {
@@ -94,8 +99,8 @@ void RequestHandler::handleRadioPower(Request *request) {
             message->setFlags(0x00);
         }
 
-        Message *reply = m_ril->execute(message);
-        completeGenCommand(reply, "PwrPhoneSetMode", request);
+        message->subscribe(handleRadioPowerSetModeComplete, request);
+        m_ril->submit(message);
 
     } else {
         Log::info("Powering radio off");
