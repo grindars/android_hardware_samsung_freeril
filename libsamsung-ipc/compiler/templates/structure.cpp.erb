@@ -1,5 +1,6 @@
 <% catch_exceptions = @structure.kind_of?(Message) && @structure.fields.any? %>
 
+#if defined(PACKET_INSPECTION)
 std::string <%= @structure_class %>::inspect() const {
     std::stringstream stream;
 
@@ -35,6 +36,7 @@ std::string <%= @structure_class %>::inspect() const {
 
     return stream.str();
 }
+#endif
 
 bool <%= @structure_class %>::readFromStream(DataStream &stream) {
 <% if catch_exceptions %>

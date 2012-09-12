@@ -1,4 +1,6 @@
+#if defined(PACKET_INSPECTION)
 std::string inspect() const;
+#endif
 bool writeToStream(DataStream &stream);
 bool readFromStream(DataStream &stream);
 

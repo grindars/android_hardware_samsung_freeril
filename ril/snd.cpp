@@ -40,7 +40,7 @@ void RequestHandler::handleGetMute(Request *request) {
     Messages::SndGetMicMuteReply *complete = message_cast<Messages::SndGetMicMuteReply>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to SndGetMicMute: %s", reply->inspect().c_str());
+        unexpected("SndGetMicMute", reply);
 
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {

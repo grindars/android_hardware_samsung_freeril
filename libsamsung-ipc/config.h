@@ -16,25 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sstream>
-#include <string.h>
+#ifndef __CONFIG__H__
+#define __CONFIG__H__
 
-#include "Message.h"
-
-using namespace SamsungIPC;
-using namespace SamsungIPC::Messages;
-
-Message::~Message() {
-
-}
-
-#if !defined(PACKET_INSPECTION)
-std::string Message::inspect() const {
-    std::stringstream stream;
-
-    stream << "[" << (int) command() << ", " << (int) subcommand() << ", " << (int) requestType() << "]";
-
-    return stream.str();
-}
+#if defined(IPC_DEBUG)
+    #define PACKET_INSPECTION
+    #define TRACE_RFS
+    #define IO_TRACE
+#else
+    #undef PACKET_INSPECTION
+    #undef TRACE_RFS
+    #undef IO_TRACE
+#endif
 
 #endif

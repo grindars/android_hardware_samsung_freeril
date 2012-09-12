@@ -33,7 +33,7 @@ void RequestHandler::handleBasebandVersion(Request *request) {
     Messages::MiscGetMobileEquipVersionReply *complete = message_cast<Messages::MiscGetMobileEquipVersionReply>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to MiscGetMobileEquipVersion: %s", reply->inspect().c_str());
+        unexpected("MiscGetMobileEquipVersion", reply);
 
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {
@@ -52,7 +52,7 @@ void RequestHandler::handleIMEI(Request *request) {
     Messages::MiscGetMobileEquipSerialNumberReply *complete = message_cast<Messages::MiscGetMobileEquipSerialNumberReply>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to MiscGetMobileEquipSerialNumber: %s", reply->inspect().c_str());
+        unexpected("MiscGetMobileEquipSerialNumber", reply);
 
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {
@@ -86,7 +86,7 @@ void RequestHandler::handleIMSI(Request *request) {
     Messages::MiscGetMobileEquipImsiReply *complete = message_cast<Messages::MiscGetMobileEquipImsiReply>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to MiscGetMobileEquipImsi: %s", reply->inspect().c_str());
+        unexpected("MiscGetMobileEquipImsi", reply);
 
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {

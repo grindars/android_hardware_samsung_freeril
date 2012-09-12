@@ -105,7 +105,7 @@ bool RequestHandler::completeGenCommand(SamsungIPC::Message *reply, const char *
     Messages::GenCommandComplete *complete = message_cast<Messages::GenCommandComplete>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to %s: %s", name, reply->inspect().c_str());
+        unexpected(name, reply);
 
         if(request)
             request->complete(RIL_E_GENERIC_FAILURE);
@@ -138,6 +138,10 @@ bool RequestHandler::completeGenCommand(SamsungIPC::Message *reply, const char *
     delete reply;
 
     return ret;
+}
+
+void RequestHandler::unexpected(const std::string &message, SamsungIPC::Message *reply) {
+    Log::error("Got unexpected message in response to %s: %s", message.c_str(), reply->inspect().c_str());
 }
 
 void (RequestHandler::*RequestHandler::m_requestHandlers[LastRequest - FirstRequest + 1])(Request *request) = {

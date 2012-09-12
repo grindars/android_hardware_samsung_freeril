@@ -53,7 +53,7 @@ void RequestHandler::handleSignalStrength(Request *request) {
     Messages::DispGetIconInformationReply *complete = message_cast<Messages::DispGetIconInformationReply>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to DispGetIconInformation: %s", reply->inspect().c_str());
+        unexpected("DispGetIconInformation", reply);
 
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {

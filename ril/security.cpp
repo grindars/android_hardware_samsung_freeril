@@ -120,7 +120,7 @@ void RequestHandler::handleSIMStatus(Request *request) {
     Messages::SecGetPinStatusReply *complete = message_cast<Messages::SecGetPinStatusReply>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to SecGetPinStatus: %s", reply->inspect().c_str());
+        unexpected("SecGetPinStatus", reply);
 
         translateSimStatus(Messages::SecGetPinStatusReply::SimUnavailable, 0, request);
     } else {
@@ -136,7 +136,7 @@ void RequestHandler::handlePinStatusRefreshComplete(SamsungIPC::Message *reply, 
     RequestHandler *handler = static_cast<RequestHandler *>(arg);
 
     if(complete == NULL)
-        Log::error("Got unexpected message in response to SecGetPinStatus: %s", reply->inspect().c_str());
+        unexpected("SecGetPinStatus", reply);
     else
         handler->handle(complete);
 }

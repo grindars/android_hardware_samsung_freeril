@@ -56,8 +56,6 @@ bool SocketHandler::wantWrite() const {
 void SocketHandler::readable() {
     ssize_t size = m_socket->recv(m_reassemblyBuf + m_reassemblyBufUsed, m_reassemblyBufSize - m_reassemblyBufUsed, -1);
 
-    Log::debug("Handler %p read %d", this, size);
-
     if(size == 0)
         handleEOF();
 

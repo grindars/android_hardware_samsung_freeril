@@ -28,6 +28,12 @@
 #include "Utilities.h"
 #include "IFileSystem.h"
 
+#if defined(TRACE_RFS)
+    #define RFS_TRACE(...) Log::debug("RFS: " __VA_ARGS__)
+#else
+    #define RFS_TRACE(...)
+#endif
+
 using namespace SamsungIPC;
 
 template<class T> static void buildReply(T *reply, int ret) {
@@ -98,7 +104,9 @@ void RFSSocketHandler::handleMessage(const Message::RFSHeader &header,
         return;
     }
 
+#if defined(PACKET_INSPECTION)
     Log::debug("Received request: %s", message->inspect().c_str());
+#endif
 
     Message *response = (this->*m_handlers[header.type - FirstType])(message);
     delete message;
@@ -120,7 +128,9 @@ void RFSSocketHandler::handleMessage(const Message::RFSHeader &header,
         responseHeader.type = response->subcommand();
         responseHeader.sequence = header.sequence;
 
+#if defined(PACKET_INSPECTION)
         Log::debug("Sending response: %s", response->inspect().c_str());
+#endif
 
         sendMessage(responseHeader, &data[0]);
 
@@ -160,7 +170,7 @@ void RFSSocketHandler::sendMessage(const Message::RFSHeader &header,
 Message *RFSSocketHandler::handleNvRead(Message *msg) {
     Messages::RfsNvRead *nvRead = static_cast<Messages::RfsNvRead *>(msg);
 
-    Log::debug("RFS: reading %u bytes from NV offset 0x%08X", nvRead->size(), nvRead->offset());
+    RFS_TRACE("reading %u bytes from NV offset 0x%08X", nvRead->size(), nvRead->offset());
 
     std::vector<unsigned char> data;
     size_t len = std::min(512U, nvRead->size());
@@ -169,7 +179,7 @@ Message *RFSSocketHandler::handleNvRead(Message *msg) {
 
     int ret = m_fs->readNVData(nvRead->offset(), data);
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     data.resize(512);
 
@@ -185,11 +195,11 @@ Message *RFSSocketHandler::handleNvRead(Message *msg) {
 Message *RFSSocketHandler::handleNvWrite(Message *msg) {
     Messages::RfsNvWrite *nvWrite = static_cast<Messages::RfsNvWrite *>(msg);
 
-    Log::debug("RFS: writing %u bytes to NV offset 0x%08X", nvWrite->size(), nvWrite->offset());
+    RFS_TRACE("writing %u bytes to NV offset 0x%08X", nvWrite->size(), nvWrite->offset());
 
     int ret = m_fs->writeNVData(nvWrite->offset(), nvWrite->data());
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsNvWriteReply *reply = new Messages::RfsNvWriteReply;
     reply->setOffset(nvWrite->offset());
@@ -202,14 +212,14 @@ Message *RFSSocketHandler::handleNvWrite(Message *msg) {
 Message *RFSSocketHandler::handleReadFile(Message *msg) {
     Messages::RfsReadFile *readFile = static_cast<Messages::RfsReadFile *>(msg);
 
-    Log::debug("RFS: reading %u bytes from fd %d", readFile->bytes(), readFile->fd());
+    RFS_TRACE("reading %u bytes from fd %d", readFile->bytes(), readFile->fd());
 
     std::vector<unsigned char> data;
     data.reserve(4096);
     data.resize(std::min(4096U, readFile->bytes()));
 
     int ret = m_fs->readFile(readFile->fd(), data);
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     data.resize(4096);
 
@@ -223,11 +233,11 @@ Message *RFSSocketHandler::handleReadFile(Message *msg) {
 Message *RFSSocketHandler::handleWriteFile(Message *msg) {
     Messages::RfsWriteFile *writeFile = static_cast<Messages::RfsWriteFile *>(msg);
 
-    Log::debug("RFS: writing %u bytes to fd %d", writeFile->bytes(), writeFile->fd());
+    RFS_TRACE("writing %u bytes to fd %d", writeFile->bytes(), writeFile->fd());
 
     int ret = m_fs->writeFile(writeFile->fd(), writeFile->data());
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsWriteFileReply *reply = new Messages::RfsWriteFileReply;
     buildReply(reply, ret);
@@ -238,11 +248,11 @@ Message *RFSSocketHandler::handleWriteFile(Message *msg) {
 Message *RFSSocketHandler::handleLseekFile(Message *msg) {
     Messages::RfsLseekFile *lseekFile = static_cast<Messages::RfsLseekFile *>(msg);
 
-    Log::debug("RFS: seeking %d to %u from %d", lseekFile->fd(), lseekFile->offset(), lseekFile->whence());
+    RFS_TRACE("seeking %d to %u from %d", lseekFile->fd(), lseekFile->offset(), lseekFile->whence());
 
     int ret = m_fs->lseekFile(lseekFile->fd(), lseekFile->offset(), lseekFile->whence());
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsLseekFileReply *reply = new Messages::RfsLseekFileReply;
     buildReply(reply, ret);
@@ -253,11 +263,11 @@ Message *RFSSocketHandler::handleLseekFile(Message *msg) {
 Message *RFSSocketHandler::handleCloseFile(Message *msg) {
     Messages::RfsCloseFile *closeFile = static_cast<Messages::RfsCloseFile *>(msg);
 
-    Log::debug("RFS: closing file %d", closeFile->fd());
+    RFS_TRACE("closing file %d", closeFile->fd());
 
     int ret = m_fs->closeFile(closeFile->fd());
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsCloseFileReply *reply = new Messages::RfsCloseFileReply;
     buildReply(reply, ret);
@@ -271,7 +281,7 @@ Message *RFSSocketHandler::handlePutFile(Message *msg) {
     std::string name;
     name.assign((char *) &putFile->name()[0], std::min(putFile->name().size(), putFile->nameSize()));
 
-    Log::debug("RFS: putting %u bytes to %s (mode %08X)", putFile->bytes(), name.c_str(), putFile->flags());
+    RFS_TRACE("putting %u bytes to %s (mode %08X)", putFile->bytes(), name.c_str(), putFile->flags());
 
     int ret = m_fs->openFile(name, putFile->flags());
 
@@ -283,7 +293,7 @@ Message *RFSSocketHandler::handlePutFile(Message *msg) {
         m_fs->closeFile(fd);
     }
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsPutFileReply *reply = new Messages::RfsPutFileReply;
     buildReply(reply, ret);
@@ -297,7 +307,7 @@ Message *RFSSocketHandler::handleGetFile(Message *msg) {
     std::string name;
     name.assign((char *) &getFile->name()[0], std::min(getFile->name().size(), getFile->nameSize()));
 
-    Log::debug("RFS: getting %u bytes from %s", getFile->size(), name.c_str());
+    RFS_TRACE("getting %u bytes from %s", getFile->size(), name.c_str());
 
     std::vector<unsigned char> data;
     data.reserve(4096);
@@ -313,7 +323,7 @@ Message *RFSSocketHandler::handleGetFile(Message *msg) {
         m_fs->closeFile(fd);
     }
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     data.resize(4096);
 
@@ -331,11 +341,11 @@ Message *RFSSocketHandler::handleRenameFile(Message *msg) {
     oldName.assign((char *) &renameFile->oldName()[0], std::min(renameFile->oldName().size(), renameFile->oldNameSize()));
     newName.assign((char *) &renameFile->newName()[0], std::min(renameFile->newName().size(), renameFile->newNameSize()));
 
-    Log::debug("RFS: renaming %s to %s", oldName.c_str(), newName.c_str());
+    RFS_TRACE("renaming %s to %s", oldName.c_str(), newName.c_str());
 
     int ret = m_fs->renameFile(oldName, newName);
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsRenameFileReply *reply = new Messages::RfsRenameFileReply;
     buildReply(reply, ret);
@@ -349,7 +359,7 @@ Message *RFSSocketHandler::handleGetFileInfo(Message *msg) {
     std::string name;
     name.assign((char *) &getFileInfo->name()[0], std::min(getFileInfo->name().size(), getFileInfo->nameSize()));
 
-    Log::debug("RFS: getting %s info", name.c_str());
+    RFS_TRACE("getting %s info", name.c_str());
 
     struct stat statbuf;
     int ret = m_fs->openFile(name.c_str(), O_RDONLY);
@@ -360,7 +370,7 @@ Message *RFSSocketHandler::handleGetFileInfo(Message *msg) {
         m_fs->closeFile(fd);
     }
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsGetFileInfoReply *reply = new Messages::RfsGetFileInfoReply;
     buildReply(reply, ret);
@@ -375,11 +385,11 @@ Message *RFSSocketHandler::handleDeleteFile(Message *msg) {
     std::string name;
     name.assign((char *) &deleteFile->name()[0], std::min(deleteFile->name().size(), deleteFile->nameSize()));
 
-    Log::debug("RFS: deleting %s", name.c_str());
+    RFS_TRACE("deleting %s", name.c_str());
 
     int ret = m_fs->deleteFile(name);
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsDeleteFileReply *reply = new Messages::RfsDeleteFileReply;
     buildReply(reply, ret);
@@ -393,7 +403,7 @@ Message *RFSSocketHandler::handleMakeDirectory(Message *msg) {
     std::string name;
     name.assign((char *) &makeDirectory->name()[0], std::min(makeDirectory->name().size(), makeDirectory->nameSize()));
 
-    Log::debug("RFS: creating directory %s", name.c_str());
+    RFS_TRACE("creating directory %s", name.c_str());
 
     int ret = m_fs->makeDirectory(name);
 
@@ -409,7 +419,7 @@ Message *RFSSocketHandler::handleDeleteDirectory(Message *msg) {
     std::string name;
     name.assign((char *) &deleteDirectory->name()[0], std::min(deleteDirectory->name().size(), deleteDirectory->nameSize()));
 
-    Log::debug("RFS: deleting directory %s", name.c_str());
+    RFS_TRACE("deleting directory %s", name.c_str());
 
     int ret = m_fs->deleteDirectory(name);
 
@@ -425,7 +435,7 @@ Message *RFSSocketHandler::handleOpenDirectory(Message *msg) {
     std::string name;
     name.assign((char *) &openDirectory->name()[0], std::min(openDirectory->name().size(), openDirectory->nameSize()));
 
-    Log::debug("RFS: opening directory %s", name.c_str());
+    RFS_TRACE("opening directory %s", name.c_str());
 
     int ret = m_fs->openDirectory(name);
 
@@ -438,7 +448,7 @@ Message *RFSSocketHandler::handleOpenDirectory(Message *msg) {
 Message *RFSSocketHandler::handleReadDirectory(Message *msg) {
     Messages::RfsReadDirectory *readDirectory = static_cast<Messages::RfsReadDirectory *>(msg);
 
-    Log::debug("RFS: reading directory %d", readDirectory->fd());
+    RFS_TRACE("reading directory %d", readDirectory->fd());
 
     std::string name;
 
@@ -471,11 +481,11 @@ Message *RFSSocketHandler::handleReadDirectory(Message *msg) {
 Message *RFSSocketHandler::handleCloseDirectory(Message *msg) {
     Messages::RfsCloseDirectory *closeDirectory = static_cast<Messages::RfsCloseDirectory *>(msg);
 
-    Log::debug("RFS: closing directory %d", closeDirectory->fd());
+    RFS_TRACE("closing directory %d", closeDirectory->fd());
 
     int ret = m_fs->closeDirectory(closeDirectory->fd());
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsCloseDirectoryReply *reply = new Messages::RfsCloseDirectoryReply;
     buildReply(reply, ret);
@@ -489,11 +499,11 @@ Message *RFSSocketHandler::handleOpenFile(Message *msg) {
     std::string name;
     name.assign((char *) &openFile->name()[0], std::min(openFile->name().size(), openFile->nameSize()));
 
-    Log::debug("RFS: opening file %s, flags 0x%08X", name.c_str(), openFile->flags());
+    RFS_TRACE("opening file %s, flags 0x%08X", name.c_str(), openFile->flags());
 
     int ret = m_fs->openFile(name, openFile->flags());
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsOpenFileReply *reply = new Messages::RfsOpenFileReply;
     buildReply(reply, ret);
@@ -504,11 +514,11 @@ Message *RFSSocketHandler::handleOpenFile(Message *msg) {
 Message *RFSSocketHandler::handleFtruncateFile(Message *msg) {
     Messages::RfsFtruncateFile *ftruncateFile = static_cast<Messages::RfsFtruncateFile *>(msg);
 
-    Log::debug("RFS: truncating file %d to %u bytes", ftruncateFile->fd(), ftruncateFile->size());
+    RFS_TRACE("truncating file %d to %u bytes", ftruncateFile->fd(), ftruncateFile->size());
 
     int ret = m_fs->ftruncateFile(ftruncateFile->fd(), ftruncateFile->size());
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsFtruncateFileReply *reply = new Messages::RfsFtruncateFileReply;
     buildReply(reply, ret);
@@ -519,12 +529,12 @@ Message *RFSSocketHandler::handleFtruncateFile(Message *msg) {
 Message *RFSSocketHandler::handleGetFileInfoByHandle(Message *msg) {
     Messages::RfsGetFileInfoByHandle *getFileInfoByHandle = static_cast<Messages::RfsGetFileInfoByHandle *>(msg);
 
-    Log::debug("RFS: getting %d info", getFileInfoByHandle->fd());
+    RFS_TRACE("getting %d info", getFileInfoByHandle->fd());
 
     struct stat statbuf;
     int ret = m_fs->getFileInfoByHandle(getFileInfoByHandle->fd(), &statbuf);
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsGetFileInfoByHandleReply *reply = new Messages::RfsGetFileInfoByHandleReply;
     buildReply(reply, ret);
@@ -536,11 +546,11 @@ Message *RFSSocketHandler::handleGetFileInfoByHandle(Message *msg) {
 Message *RFSSocketHandler::handleNvWriteAll(Message *msg) {
     Messages::RfsNvWriteAll *nvWriteAll = static_cast<Messages::RfsNvWriteAll *>(msg);
 
-    Log::debug("RFS: writing %u bytes to NV offset 0x%08X", nvWriteAll->size(), nvWriteAll->offset());
+    RFS_TRACE("writing %u bytes to NV offset 0x%08X", nvWriteAll->size(), nvWriteAll->offset());
 
     int ret = m_fs->writeNVData(nvWriteAll->offset(), nvWriteAll->data());
 
-    Log::debug("RFS: status %d", ret);
+    RFS_TRACE("status %d", ret);
 
     Messages::RfsNvWriteAllReply *reply = new Messages::RfsNvWriteAllReply;
     reply->setOffset(nvWriteAll->offset());

@@ -21,4 +21,10 @@
 
 #define DATABASE_PATH "/system/vendor/etc/freeril-i9100-database.db"
 
+#if defined(RIL_DEBUG)
+    #define PROFILING
+#else
+    #undef PROFILING
+#endif
+
 #endif

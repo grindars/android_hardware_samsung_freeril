@@ -23,6 +23,7 @@
 #include <string>
 
 #include "MessageTypes.h"
+#include "config.h"
 
 namespace SamsungIPC {
     class DataStream;
@@ -78,7 +79,11 @@ namespace SamsungIPC {
         virtual uint8_t command() const = 0;
         virtual uint8_t subcommand() const = 0;
         virtual RequestType requestType() const = 0;
+#if defined(PACKET_INSPECTION)
         virtual std::string inspect() const = 0;
+#else
+        std::string inspect() const;
+#endif
         virtual bool deliver(IUnsolicitedReceiver *receiver) = 0;
 
         virtual bool readFromStream(DataStream &stream) = 0;

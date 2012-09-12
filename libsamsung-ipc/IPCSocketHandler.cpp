@@ -66,10 +66,12 @@ void IPCSocketHandler::handleMessage(const Message::Header &header,
         return;
     }
 
+#if defined(IO_TRACE)
     Log::debug("RX mseq: %02hhX, aseq: %02hhX, response: %02hhX",
                header.mseq, header.aseq, header.responseType);
 
     Log::debug("Message: %s", message->inspect().c_str());
+#endif
 
     switch(header.responseType) {
         case Message::IPC_CMD_INDI:
@@ -172,9 +174,11 @@ void IPCSocketHandler::submit(Message *message) {
     header.subCommand = message->subcommand();
     header.responseType = message->requestType();
 
+#if defined(IO_TRACE)
     Log::debug("TX mseq: %02hhX, aseq: %02hhX, response: %02hhX",
                header.mseq, header.aseq, header.responseType);
     Log::debug("Message: %s", message->inspect().c_str());
+#endif
 
     sendMessage(header, &data[0]);
 

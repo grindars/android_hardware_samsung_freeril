@@ -31,7 +31,7 @@ void RequestHandler::handleCurrentCalls(Request *request) {
     Messages::CallGetCallListReply *complete = message_cast<Messages::CallGetCallListReply>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to CallGetCallList: %s", reply->inspect().c_str());
+        unexpected("CallGetCallList", reply);
 
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {

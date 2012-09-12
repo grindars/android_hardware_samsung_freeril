@@ -44,4 +44,8 @@ $(GEN): $(LOCAL_PATH)/protocol/*.rb $(LOCAL_PATH)/compiler/*.rb $(LOCAL_PATH)/co
 
 LOCAL_GENERATED_SOURCES = $(GEN)
 
+ifeq ($(TARGET_BUILD_VARIANT),eng)
+LOCAL_CFLAGS += -DIPC_DEBUG
+endif
+
 include $(BUILD_STATIC_LIBRARY)

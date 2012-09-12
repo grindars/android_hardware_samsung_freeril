@@ -71,7 +71,7 @@ bool OemRequestHandler::handleGetMute(bool *muted) {
     Messages::SndGetMicMuteReply *complete = message_cast<Messages::SndGetMicMuteReply>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to SndGetMicMute: %s", reply->inspect().c_str());
+        RequestHandler::unexpected("SndGetMicMute", reply);
 
         return false;
     } else {

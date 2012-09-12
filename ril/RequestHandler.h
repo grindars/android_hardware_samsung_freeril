@@ -56,6 +56,7 @@ public:
     virtual void handle(SamsungIPC::Messages::SvcDisplayScreen *message);
 
     static bool completeGenCommand(SamsungIPC::Message *reply, const char *name, Request *request);
+    static void unexpected(const std::string &message, SamsungIPC::Message *reply);
 
 private:
 

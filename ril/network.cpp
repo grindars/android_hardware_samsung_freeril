@@ -30,7 +30,7 @@ void RequestHandler::handleQueryNetworkSelectionMode(Request *request) {
     Messages::NetGetPlmnSelectionReply *complete = message_cast<Messages::NetGetPlmnSelectionReply>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to NetGetPlmnSelectionReply: %s", reply->inspect().c_str());
+        unexpected("NetGetPlmnSelectionReply", reply);
 
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {
@@ -93,7 +93,7 @@ static void handleQueryAvailableNetworksComplete(Message *reply, void *arg) {
     Messages::NetGetPlmnListReply *complete = message_cast<Messages::NetGetPlmnListReply>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to NetGetPlmList: %s", reply->inspect().c_str());
+        RequestHandler::unexpected("NetGetPlmList", reply);
 
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {
@@ -168,7 +168,7 @@ void RequestHandler::handleOperator(Request *request) {
     Message *reply = m_ril->execute(new Messages::NetGetCurrentPlmn);
     Messages::NetGetCurrentPlmnReply *complete = message_cast<Messages::NetGetCurrentPlmnReply>(reply);
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to NetGetCurrentPlmn: %s", reply->inspect().c_str());
+        unexpected("NetGetCurrentPlmn", reply);
 
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {
@@ -357,7 +357,7 @@ int RequestHandler::getNetworkMode(Request *request) {
     Messages::NetGetModeSelectReply *complete = message_cast<Messages::NetGetModeSelectReply>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to NetGetModeSelect: %s", reply->inspect().c_str());
+        unexpected("NetGetModeSelect", reply);
 
         request->complete(RIL_E_GENERIC_FAILURE);
 
@@ -435,7 +435,7 @@ void RequestHandler::getNetworkRegistration(Request *request, int op) {
     Messages::NetGetNetworkRegistrationReply *complete = message_cast<Messages::NetGetNetworkRegistrationReply>(reply);
 
     if(complete == NULL) {
-        Log::error("Got unexpected message in response to NetGetNetworkRegistration: %s", reply->inspect().c_str());
+        unexpected("NetGetNetworkRegistration", reply);
 
         request->complete(RIL_E_GENERIC_FAILURE);
     } else {
