@@ -16,4 +16,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-include $(call all-named-subdir-makefiles,bootmodem dumpmodem)
+include $(call all-named-subdir-makefiles,dumpmodem)
