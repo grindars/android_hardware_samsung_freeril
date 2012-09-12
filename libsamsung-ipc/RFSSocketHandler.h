@@ -23,9 +23,11 @@
 #include "SocketHandler.h"
 
 namespace SamsungIPC {
+    class IFileSystem;
+
     class RFSSocketHandler: public SocketHandler {
     public:
-        RFSSocketHandler(IIPCSocket *socket);
+        RFSSocketHandler(IIPCSocket *socket, IFileSystem *fs);
 
     protected:
         void handleMessage(const Message::RFSHeader &header,
@@ -38,13 +40,32 @@ namespace SamsungIPC {
     private:
         Message *handleNvRead(Message *msg);
         Message *handleNvWrite(Message *msg);
+        Message *handleReadFile(Message *msg);
+        Message *handleWriteFile(Message *msg);
+        Message *handleLseekFile(Message *msg);
+        Message *handleCloseFile(Message *msg);
+        Message *handlePutFile(Message *msg);
+        Message *handleGetFile(Message *msg);
+        Message *handleRenameFile(Message *msg);
+        Message *handleGetFileInfo(Message *msg);
+        Message *handleDeleteFile(Message *msg);
+        Message *handleMakeDirectory(Message *msg);
+        Message *handleDeleteDirectory(Message *msg);
+        Message *handleOpenDirectory(Message *msg);
+        Message *handleReadDirectory(Message *msg);
+        Message *handleCloseDirectory(Message *msg);
+        Message *handleOpenFile(Message *msg);
+        Message *handleFtruncateFile(Message *msg);
+        Message *handleGetFileInfoByHandle(Message *msg);
+        Message *handleNvWriteAll(Message *msg);
 
         enum {
             FirstType = Messages::RFS_NV_READ,
-            LastType  = Messages::RFS_NV_WRITE
+            LastType  = Messages::RFS_NV_WRITE_ALL
         };
 
         static Message *(RFSSocketHandler::*const m_handlers[LastType - FirstType + 1])(Message *message);
+        IFileSystem *m_fs;
     };
 }
 

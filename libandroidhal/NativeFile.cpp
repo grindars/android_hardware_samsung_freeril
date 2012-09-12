@@ -22,37 +22,38 @@
 #include "NativeFile.h"
 
 using namespace SamsungIPC;
+using namespace HAL;
 
-HAL::NativeFileData::NativeFileData(int _fd) : refs(1), fd(_fd) {
+NativeFileData::NativeFileData(int _fd) : refs(1), fd(_fd) {
 
 }
 
-void HAL::NativeFileData::deref() {
+void NativeFileData::deref() {
     if(--refs == 0) {
         close(fd);
         delete this;
     }
 }
 
-void HAL::NativeFileData::ref() {
+void NativeFileData::ref() {
     refs++;
 }
 
-HAL::NativeFile::NativeFile(int fd) : m_data(new NativeFileData(fd)) {
+NativeFile::NativeFile(int fd) : m_data(new NativeFileData(fd)) {
 
 }
 
-HAL::NativeFile::~NativeFile() {
+NativeFile::~NativeFile() {
     m_data->deref();
 }
 
-HAL::NativeFile::NativeFile(const NativeFile &orig) {
+NativeFile::NativeFile(const NativeFile &orig) {
     m_data = orig.m_data;
 
     m_data->ref();
 }
 
-HAL::NativeFile HAL::NativeFile::open(const std::string &file, int flags,
+NativeFile NativeFile::open(const std::string &file, int flags,
                                       int mode) {
     int fd = ::open(file.c_str(), flags, mode);
 
@@ -62,7 +63,7 @@ HAL::NativeFile HAL::NativeFile::open(const std::string &file, int flags,
     return NativeFile(fd);
 }
 
-ssize_t HAL::NativeFile::read(void *buf, size_t size) {
+ssize_t NativeFile::read(void *buf, size_t size) {
     ssize_t bytes = ::read(fd(), buf, size);
 
     if(bytes == -1)
@@ -71,7 +72,7 @@ ssize_t HAL::NativeFile::read(void *buf, size_t size) {
     return bytes;
 }
 
-ssize_t HAL::NativeFile::write(const void *buf, size_t size) {
+ssize_t NativeFile::write(const void *buf, size_t size) {
     ssize_t bytes = ::write(fd(), buf, size);
 
     if(bytes == -1)
@@ -80,7 +81,7 @@ ssize_t HAL::NativeFile::write(const void *buf, size_t size) {
     return bytes;
 }
 
-off_t HAL::NativeFile::seek(off_t offset, int whence) {
+off_t NativeFile::seek(off_t offset, int whence) {
     off_t ret = ::lseek(fd(), offset, whence);
 
     if(ret == -1)
@@ -89,7 +90,7 @@ off_t HAL::NativeFile::seek(off_t offset, int whence) {
     return ret;
 }
 
-ssize_t HAL::NativeFile::pread(void *buf, size_t size, off_t offset) {
+ssize_t NativeFile::pread(void *buf, size_t size, off_t offset) {
     ssize_t bytes = ::pread(fd(), buf, size, offset);
 
     if(bytes == -1)
@@ -98,11 +99,33 @@ ssize_t HAL::NativeFile::pread(void *buf, size_t size, off_t offset) {
     return bytes;
 }
 
-ssize_t HAL::NativeFile::pwrite(const void *buf, size_t size, off_t offset) {
+ssize_t NativeFile::pwrite(const void *buf, size_t size, off_t offset) {
     ssize_t bytes = ::pwrite(fd(), buf, size, offset);
 
     if(bytes == -1)
         Log::panicErrno("pread");
 
     return bytes;
+}
+
+void NativeFile::get(const std::string &filename, std::vector<unsigned char> &data) {
+    NativeFile file = NativeFile::open(filename, O_RDONLY);
+
+    off_t size = file.seek(0, SEEK_END);
+
+    data.resize(size);
+    data.resize(file.pread(&data[0], size, 0));
+}
+
+void NativeFile::put(const std::string &filename, const std::vector<unsigned char> &data, bool sync) {
+    NativeFile file = NativeFile::open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+
+    file.write(&data[0], data.size());
+    if(sync)
+        file.sync();
+}
+
+void NativeFile::sync() {
+    if(fsync(fd()) == -1)
+        Log::panicErrno("fdatasync");
 }

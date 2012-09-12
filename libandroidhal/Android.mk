@@ -26,7 +26,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_MODULE = libAndroidHAL
 LOCAL_LDLIBS = -lpthread
 LOCAL_SHARED_LIBRARIES = libstlport
-LOCAL_C_INCLUDES = external/stlport/stlport bionic $(LOCAL_PATH)/../libsamsung-ipc
+LOCAL_C_INCLUDES = external/stlport/stlport external/openssl/include bionic $(LOCAL_PATH)/../libsamsung-ipc
 LOCAL_CFLAGS = -fvisibility=hidden
 
 include $(BUILD_STATIC_LIBRARY)

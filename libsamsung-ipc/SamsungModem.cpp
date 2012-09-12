@@ -141,7 +141,7 @@ bool SamsungModem::dump(std::ostream &stream, IProgressCallback *progress) {
 }
 
 bool SamsungModem::sendPSI(IIPCSocket *socket) {
-    std::vector<char> image;
+    std::vector<unsigned char> image;
 
     if(!m_filesystem->getFirmware(IFileSystem::PSI, image)) {
         Log::error("PSI is not available");
@@ -216,7 +216,7 @@ bool SamsungModem::sendPSI(IIPCSocket *socket) {
 }
 
 bool SamsungModem::sendEBL(IIPCSocket *socket) {
-    std::vector<char> image;
+    std::vector<unsigned char> image;
 
     if(!m_filesystem->getFirmware(IFileSystem::EBL, image)) {
         Log::error("EBL is not available");
@@ -329,7 +329,8 @@ bool SamsungModem::bootloaderCommand(IIPCSocket *socket,
 bool SamsungModem::sendSecureImage(IIPCSocket *socket) {
     uint16_t end_magic   = 0x0000;
 
-    std::vector<char> secure, firmware, nvdata;
+    std::vector<unsigned char> secure, firmware, nvdata;
+    nvdata.resize(2097152);
 
     if(!m_filesystem->getFirmware(IFileSystem::SecureImage, secure)) {
         Log::error("Secure image is not available");
@@ -343,18 +344,10 @@ bool SamsungModem::sendSecureImage(IIPCSocket *socket) {
         return false;
     }
 
-    if(!m_filesystem->readNVData(nvdata)) {
-        Log::error("SamsungModem::sendSecureImage: NVData read failed. Performing recovery.");
+    if(m_filesystem->readNVData(0, nvdata) < 0) {
+        Log::error("SamsungModem::sendSecureImage: NVData read failed.");
 
-        if(!m_filesystem->getFirmware(IFileSystem::DefaultNVData, nvdata)) {
-            Log::error("Default nvdata image is unavailable too.");
-
-            return false;
-        }
-
-        if(!m_filesystem->writeNVData(nvdata)) {
-            Log::error("nvdata writeback failed");
-        }
+        return false;
     }
 
     if(!bootloaderCommand(socket, ReqSecStart, &secure[0], secure.size()))
@@ -370,7 +363,7 @@ bool SamsungModem::sendSecureImage(IIPCSocket *socket) {
 }
 
 bool SamsungModem::loadFlashImage(IIPCSocket *socket, uint32_t address,
-    const std::vector<char> &image) {
+    const std::vector<unsigned char> &image) {
 
     if(!bootloaderCommand(socket, ReqFlashSetAddress, &address, 4))
         return false;
@@ -390,8 +383,8 @@ bool SamsungModem::loadFlashImage(IIPCSocket *socket, uint32_t address,
     return true;
 }
 
-unsigned char SamsungModem::calculateCRC(const std::vector<char> &data) {
-    const unsigned char *ptr = (const unsigned char *) &data[0];
+unsigned char SamsungModem::calculateCRC(const std::vector<unsigned char> &data) {
+    const unsigned char *ptr = &data[0];
     unsigned char crc = 0;
     unsigned int len = data.size();
 
@@ -420,7 +413,7 @@ void SamsungModem::initialize() {
     m_worker = new IPCWorkerThread();
 
     m_worker->addHandler(new IPCSocketHandler(m_ipctransport->createSocket(IIPCTransport::IPC), m_unsolicitedHandler));
-    m_worker->addHandler(new RFSSocketHandler(m_ipctransport->createSocket(IIPCTransport::RFS)));
+    m_worker->addHandler(new RFSSocketHandler(m_ipctransport->createSocket(IIPCTransport::RFS), m_filesystem));
 
     m_worker->start();
 }

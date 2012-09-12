@@ -21,6 +21,8 @@
 
 #include <vector>
 
+struct stat;
+
 namespace SamsungIPC {
     class IFileSystem {
     public:
@@ -34,10 +36,29 @@ namespace SamsungIPC {
 
         virtual ~IFileSystem() {}
 
-        virtual bool getFirmware(FirmwareType type, std::vector<char> &data) = 0;
+        virtual bool getFirmware(FirmwareType type, std::vector<unsigned char> &data) = 0;
 
-        virtual bool readNVData(std::vector<char> &data) = 0;
-        virtual bool writeNVData(const std::vector<char> &data) = 0;
+        virtual int readNVData(off_t offset, std::vector<unsigned char> &data) = 0;
+        virtual int writeNVData(off_t offset, const std::vector<unsigned char> &data) = 0;
+        virtual void backupNVData(bool full = false) = 0;
+
+        virtual int readFile(int fd, std::vector<unsigned char> &data) = 0;
+        virtual int writeFile(int fd, const std::vector<unsigned char> &data) = 0;
+        virtual int lseekFile(int fd, int offset, int whence) = 0;
+        virtual int closeFile(int fd) = 0;
+        virtual int renameFile(const std::string &oldName, const std::string &newName) = 0;
+        virtual int getFileInfoByHandle(int fd, struct stat *statbuf) = 0;
+        virtual int deleteFile(const std::string &filename) = 0;
+
+        virtual int makeDirectory(const std::string &filename) = 0;
+        virtual int deleteDirectory(const std::string &filename) = 0;
+        virtual int openDirectory(const std::string &filename) = 0;
+        virtual int readDirectory(int fd, std::string &filename) = 0;
+        virtual int closeDirectory(int fd) = 0;
+
+        virtual int openFile(const std::string &filename, int flags) = 0;
+        virtual int ftruncateFile(int fd, unsigned int size) = 0;
+
     };
 }
 

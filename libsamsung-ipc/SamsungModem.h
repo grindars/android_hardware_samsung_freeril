@@ -84,12 +84,12 @@ namespace SamsungIPC {
         bool sendSecureImage(IIPCSocket *socket);
 
         bool loadFlashImage(IIPCSocket *socket, uint32_t address,
-            const std::vector<char> &image);
+            const std::vector<unsigned char> &image);
         bool bootloaderCommand(IIPCSocket *socket, uint16_t cmd,
                                const void *data, size_t data_size);
         bool expectAck(IIPCSocket *socket, const unsigned char *data, size_t size);
 
-        static unsigned char calculateCRC(const std::vector<char> &data);
+        static unsigned char calculateCRC(const std::vector<unsigned char> &data);
 
         IIPCTransport *m_ipctransport;
         IFileSystem *m_filesystem;

@@ -20,6 +20,7 @@
 #define __ANDROIDHAL__NATIVEFILE__H__
 
 #include <string>
+#include <vector>
 
 namespace HAL {
     struct NativeFileData {
@@ -48,6 +49,10 @@ namespace HAL {
         ssize_t pwrite(const void *buf, size_t size, off_t offset);
         ssize_t write(const void *buf, size_t size);
         off_t seek(off_t offset, int whence);
+        void sync();
+
+        static void get(const std::string &filename, std::vector<unsigned char> &data);
+        static void put(const std::string &filename, const std::vector<unsigned char> &data, bool sync = false);
 
     private:
         NativeFileData *m_data;
