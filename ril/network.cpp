@@ -84,11 +84,13 @@ static char *getCleanMCCMNC(const void *data) {
 }
 
 static void handleQueryAvailableNetworksComplete(Message *reply, void *arg) {
-    std::pair<Request *, RIL *> *data = (std::pair<Request *, RIL *> *) arg;
+    std::pair<Request *, RequestHandler *> *data = (std::pair<Request *, RequestHandler *> *) arg;
 
     Request *request = data->first;
-    RIL *ril = data->second;
+    RequestHandler *handler = data->second;
     delete data;
+
+    RIL *ril = handler->lockRIL();
 
     Messages::NetGetPlmnListReply *complete = message_cast<Messages::NetGetPlmnListReply>(reply);
 
@@ -156,11 +158,13 @@ static void handleQueryAvailableNetworksComplete(Message *reply, void *arg) {
     }
 
     delete reply;
+
+    handler->unlockRIL();
 }
 
 void RequestHandler::handleQueryAvailableNetworks(Request *request) {
     Messages::NetGetPlmnList *message = new Messages::NetGetPlmnList;
-    message->subscribe(handleQueryAvailableNetworksComplete, new std::pair<Request *, RIL *>(request, m_ril));
+    message->subscribe(handleQueryAvailableNetworksComplete, new std::pair<Request *, RequestHandler *>(request, this));
     m_ril->submit(message);
 }
 
@@ -203,12 +207,25 @@ void RequestHandler::handleOperator(Request *request) {
 void RequestHandler::handle(SamsungIPC::Messages::NetGetCurrentPlmnReply *message) {
     (void) message;
 
+    m_rilMutex.lock();
+
     m_ril->unsolicited(RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED);
+
+    m_rilMutex.unlock();
 }
 
 static void handleSetBandModeComplete(Message *reply, void *arg) {
-    RequestHandler::completeGenCommand(reply, "NetSetBandSelection",
-                                       static_cast<Request *>(arg));
+    std::pair<Request *, RequestHandler *> *data = (std::pair<Request *, RequestHandler *> *) arg;
+
+    Request *request = data->first;
+    RequestHandler *handler = data->second;
+    delete data;
+
+    handler->lockRIL();
+
+    RequestHandler::completeGenCommand(reply, "NetSetBandSelection", request);
+
+    handler->unlockRIL();
 }
 
 void RequestHandler::handleSetBandMode(Request *request) {
@@ -249,7 +266,7 @@ void RequestHandler::handleSetBandMode(Request *request) {
             break;
     }
 
-    message->subscribe(handleSetBandModeComplete, request);
+    message->subscribe(handleSetBandModeComplete, new std::pair<Request *, RequestHandler *>(request, this));
     m_ril->submit(message);
 }
 
@@ -260,7 +277,17 @@ void RequestHandler::handleQueryAvailableBandMode(Request *request) {
 }
 
 static void handleSetPreferredNetworkTypeComplete(Message *reply, void *arg) {
-    RequestHandler::completeGenCommand(reply, "NetSetModeSelect", (Request *) arg);
+    std::pair<Request *, RequestHandler *> *data = (std::pair<Request *, RequestHandler *> *) arg;
+
+    Request *request = data->first;
+    RequestHandler *handler = data->second;
+    delete data;
+
+    handler->lockRIL();
+
+    RequestHandler::completeGenCommand(reply, "NetSetModeSelect", request);
+
+    handler->unlockRIL();
 }
 
 void RequestHandler::handleSetPreferredNetworkType(Request *request) {
@@ -305,7 +332,7 @@ void RequestHandler::handleSetPreferredNetworkType(Request *request) {
 
     Messages::NetSetModeSelect *message = new Messages::NetSetModeSelect;
     message->setMode(ipc_mode);
-    message->subscribe(handleSetPreferredNetworkTypeComplete, request);
+    message->subscribe(handleSetPreferredNetworkTypeComplete, new std::pair<Request *, RequestHandler *>(request, this));
     m_ril->submit(message);
 }
 
@@ -458,7 +485,17 @@ void RequestHandler::getNetworkRegistration(Request *request, int op) {
 }
 
 static void setPLMNSelectionComplete(Message *reply, void *arg) {
-    RequestHandler::completeGenCommand(reply, "NetSetPlmnSelection", static_cast<Request *>(arg));
+    std::pair<Request *, RequestHandler *> *data = (std::pair<Request *, RequestHandler *> *) arg;
+
+    Request *request = data->first;
+    RequestHandler *handler = data->second;
+    delete data;
+
+    handler->lockRIL();
+
+    RequestHandler::completeGenCommand(reply, "NetSetPlmnSelection", request);
+
+    handler->unlockRIL();
 }
 
 void RequestHandler::setPLMNSelection(Request *request, const char *plmn) {
@@ -487,7 +524,7 @@ void RequestHandler::setPLMNSelection(Request *request, const char *plmn) {
     message->setNetwork(padded);
     message->setUnknown1(0xFF);
 
-    message->subscribe(setPLMNSelectionComplete, request);
+    message->subscribe(setPLMNSelectionComplete, new std::pair<Request *, RequestHandler *>(request, this));
     m_ril->submit(message);
 }
 

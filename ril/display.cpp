@@ -67,6 +67,8 @@ void RequestHandler::handleSignalStrength(Request *request) {
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::DispGetIconInformationReply *message) {
+    m_rilMutex.lock();
+
     if(message->icon() & 0x1) {
         RIL_SignalStrength_v6 strength;
 
@@ -75,9 +77,13 @@ void RequestHandler::handle(SamsungIPC::Messages::DispGetIconInformationReply *m
         buildSignalStrength(m_coarseRSSI, &strength);
         m_ril->unsolicited(RIL_UNSOL_SIGNAL_STRENGTH, &strength, sizeof(strength));
     }
+
+    m_rilMutex.unlock();
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::DispRssiInformation *message) {
+    m_rilMutex.lock();
+
     if(m_coarseRSSI != -1) {
         // TODO: extract fine RSSI level from DispRssiInformation
 
@@ -88,5 +94,6 @@ void RequestHandler::handle(SamsungIPC::Messages::DispRssiInformation *message) 
         m_ril->unsolicited(RIL_UNSOL_SIGNAL_STRENGTH, &strength, sizeof(strength));
     }
 
+    m_rilMutex.unlock();
 }
 

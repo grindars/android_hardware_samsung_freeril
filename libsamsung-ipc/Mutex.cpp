@@ -24,8 +24,14 @@
 using namespace SamsungIPC;
 
 Mutex::Mutex() {
-    if(pthread_mutex_init(&m_mutex, NULL) == -1) 
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+
+    if(pthread_mutex_init(&m_mutex, &attr) == -1)
         Log::panicErrno("pthread_mutex_init");
+
+    pthread_mutexattr_destroy(&attr);
 }
 
 Mutex::~Mutex() {
@@ -44,13 +50,13 @@ bool Mutex::tryLock() {
     if(ret == -1 && errno == EBUSY)
         return false;
     else if(ret == -1)
-        Log::panicErrno("pthread_mutex_trylock");        
+        Log::panicErrno("pthread_mutex_trylock");
 
     return true;
 }
 
 void Mutex::unlock() {
-    if(pthread_mutex_unlock(&m_mutex) == -1) 
-        Log::panicErrno("pthread_mutex_unlock");        
+    if(pthread_mutex_unlock(&m_mutex) == -1)
+        Log::panicErrno("pthread_mutex_unlock");
 }
 

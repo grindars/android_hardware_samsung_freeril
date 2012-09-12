@@ -135,11 +135,15 @@ void RequestHandler::handleDial(Request *request) {
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::CallIncoming *message) {
+    m_rilMutex.lock();
+
     Log::debug("Incoming call: type 0x%04hX, reserved 0x%02hX, lineId 0x%02hX",
                message->callType(), message->reserved(), message->lineId());
 
     m_ril->unsolicited(RIL_UNSOL_CALL_RING);
     m_ril->unsolicited(RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED);
+
+    m_rilMutex.unlock();
 }
 
 static RIL_LastCallFailCause mapCallFail(unsigned char cause1, unsigned char cause2) {
@@ -241,7 +245,7 @@ static RIL_LastCallFailCause mapCallFail(unsigned char cause1, unsigned char cau
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::CallStateChanged *message) {
-
+    m_rilMutex.lock();
 
     Log::debug("Call state changed: type 0x%04hX, call id 0x%02hX, event 0x%02hX, release cause: 0x%02hhX, 0x%02hhX",
                message->callType(), message->callId(), message->event(), message->releaseCause1(), message->releaseCause2());
@@ -249,6 +253,8 @@ void RequestHandler::handle(SamsungIPC::Messages::CallStateChanged *message) {
     m_lastCallFailCause = mapCallFail(message->releaseCause1(), message->releaseCause2());
 
     m_ril->unsolicited(RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED);
+
+    m_rilMutex.unlock();
 }
 
 void RequestHandler::handleHangup(Request *request) {

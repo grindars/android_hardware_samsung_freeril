@@ -28,11 +28,15 @@
 using namespace SamsungIPC;
 
 void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneBootComplete *message) {
+    m_rilMutex.lock();
+
     Messages::MiscSetDebugLevel *levelMessage = new Messages::MiscSetDebugLevel;
     levelMessage->setLevel(1);
     m_ril->submit(levelMessage);
 
     m_ril->setRadioState(RADIO_STATE_OFF);
+
+    m_rilMutex.unlock();
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::PwrPhonePoweredOff *message) {
@@ -44,6 +48,8 @@ void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneReset *message) {
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneModeChanged *message) {
+    m_rilMutex.lock();
+
     switch(message->mode()) {
         case Messages::PwrPhoneModeChanged::Normal:
         {
@@ -59,12 +65,22 @@ void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneModeChanged *message) 
 
             break;
     }
+
+    m_rilMutex.unlock();
 }
 
 static void handleRadioPowerSetModeComplete(Message *reply, void *arg) {
-    Request *request = static_cast<Request *>(arg);
+    std::pair<Request *, RequestHandler *> *data = (std::pair<Request *, RequestHandler *> *) arg;
+
+    Request *request = data->first;
+    RequestHandler *handler = data->second;
+    delete data;
+
+    handler->lockRIL();
 
     RequestHandler::completeGenCommand(reply, "PwrPhoneSetMode", request);
+
+    handler->unlockRIL();
 }
 
 void RequestHandler::handleRadioPower(Request *request) {
@@ -99,7 +115,7 @@ void RequestHandler::handleRadioPower(Request *request) {
             message->setFlags(0x00);
         }
 
-        message->subscribe(handleRadioPowerSetModeComplete, request);
+        message->subscribe(handleRadioPowerSetModeComplete, new std::pair<Request *, RequestHandler *>(request, this));
         m_ril->submit(message);
 
     } else {

@@ -309,14 +309,19 @@ void RequestHandler::handleOemHookRaw(Request *request) {
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::SvcDisplayScreen *message) {
+    m_rilMutex.lock();
+
     if(message->lineCount() == 0) {
         m_oemBuilder->notifyServiceCompleted();
     } else {
         if(message->lineCount() == 1) {
             const Messages::SvcDisplayScreen::LinesItem &line = message->lines()[0];
 
-            if(line.unknown1() == 0 && line.unknown2() == 1)
+            if(line.unknown1() == 0 && line.unknown2() == 1) {
+                m_rilMutex.unlock();
+
                 return;
+            }
         }
 
         std::vector<std::string> lines;
@@ -330,4 +335,6 @@ void RequestHandler::handle(SamsungIPC::Messages::SvcDisplayScreen *message) {
 
         m_oemBuilder->notifyServiceDisplay(lines);
     }
+
+    m_rilMutex.unlock();
 }

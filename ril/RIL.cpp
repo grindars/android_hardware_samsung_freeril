@@ -125,6 +125,8 @@ void RIL::submit(SamsungIPC::Message *message) {
 
 
 SamsungIPC::Message *RIL::execute(SamsungIPC::Message *message) {
+    m_handler->unlockRIL();
+
 #if defined(PROFILING)
     struct timeval req_start, req_end, elapsed;
 
@@ -151,6 +153,8 @@ SamsungIPC::Message *RIL::execute(SamsungIPC::Message *message) {
         Log::warning("%s", inspected.c_str());
     }
 #endif
+
+    m_handler->lockRIL();
 
     return data.reply;
 }

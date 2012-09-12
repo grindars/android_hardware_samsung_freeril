@@ -70,6 +70,9 @@ RequestHandler::~RequestHandler() {
 }
 
 void RequestHandler::handle(Request *request) {
+
+    m_rilMutex.lock();
+
     if((m_ril->radioState() == RADIO_STATE_UNAVAILABLE ||
         (m_ril->radioState() == RADIO_STATE_OFF && request->code() != RIL_REQUEST_RADIO_POWER)) &&
         request->code() != RIL_REQUEST_GET_SIM_STATUS &&
@@ -77,6 +80,7 @@ void RequestHandler::handle(Request *request) {
 
         request->complete(RIL_E_RADIO_NOT_AVAILABLE);
 
+        m_rilMutex.unlock();
         return;
     }
 
@@ -87,9 +91,11 @@ void RequestHandler::handle(Request *request) {
 
         request->complete(RIL_E_REQUEST_NOT_SUPPORTED);
     } else {
+
         (this->*(m_requestHandlers[request->code() - FirstRequest]))(request);
     }
 
+    m_rilMutex.unlock();
 }
 
 bool RequestHandler::supports(int request) {
@@ -144,6 +150,16 @@ void RequestHandler::unexpected(const std::string &message, SamsungIPC::Message 
     Log::error("Got unexpected message in response to %s: %s", message.c_str(), reply->inspect().c_str());
 }
 
+RIL *RequestHandler::lockRIL() {
+    m_rilMutex.lock();
+
+    return m_ril;
+}
+
+void RequestHandler::unlockRIL() {
+    m_rilMutex.unlock();
+}
+
 void (RequestHandler::*RequestHandler::m_requestHandlers[LastRequest - FirstRequest + 1])(Request *request) = {
     &RequestHandler::handleSIMStatus,
     &RequestHandler::handleEnterSIMPin,
@@ -170,4 +186,3 @@ void (RequestHandler::*RequestHandler::m_requestHandlers[LastRequest - FirstRequ
     &RequestHandler::handleRadioPower,
     &RequestHandler::handleDTMF
 };
-

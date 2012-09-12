@@ -22,6 +22,7 @@
 #include <telephony/ril.h>
 
 #include <IUnsolicitedReceiver.h>
+#include <Mutex.h>
 
 namespace SamsungIPC {
     class Message;
@@ -57,6 +58,10 @@ public:
 
     static bool completeGenCommand(SamsungIPC::Message *reply, const char *name, Request *request);
     static void unexpected(const std::string &message, SamsungIPC::Message *reply);
+
+    // for use by async completion handlers only.
+    RIL *lockRIL();
+    void unlockRIL();
 
 private:
 
@@ -132,6 +137,7 @@ private:
     std::vector<unsigned char> m_callIds;
     OemRequestHandler *m_oemHandler;
     OemUnsolicitedBuilder *m_oemBuilder;
+    SamsungIPC::Mutex m_rilMutex;
 };
 
 #endif
