@@ -24,6 +24,8 @@
 #include <IUnsolicitedReceiver.h>
 #include <Mutex.h>
 
+#include "MessageCache.h"
+
 namespace SamsungIPC {
     class Message;
 }
@@ -62,6 +64,7 @@ public:
     // for use by async completion handlers only.
     RIL *lockRIL();
     void unlockRIL();
+    inline MessageCache &cache() { return m_cache; }
 
 private:
 
@@ -138,6 +141,7 @@ private:
     OemRequestHandler *m_oemHandler;
     OemUnsolicitedBuilder *m_oemBuilder;
     SamsungIPC::Mutex m_rilMutex;
+    MessageCache m_cache;
 };
 
 #endif

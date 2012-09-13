@@ -45,6 +45,8 @@ void RequestHandler::handle(SamsungIPC::Messages::PwrPhonePoweredOff *message) {
 
 void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneReset *message) {
     Log::info("Unsolicited phone reset");
+
+    exit(0);
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneModeChanged *message) {
@@ -62,6 +64,7 @@ void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneModeChanged *message) 
 
         case Messages::PwrPhoneModeChanged::LPM:
             m_ril->setRadioState(RADIO_STATE_OFF);
+            m_cache.flush();
 
             break;
     }

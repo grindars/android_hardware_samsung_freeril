@@ -26,36 +26,47 @@
 using namespace SamsungIPC;
 
 void RequestHandler::handleQueryNetworkSelectionMode(Request *request) {
-    Message *reply = m_ril->execute(new Messages::NetGetPlmnSelection);
-    Messages::NetGetPlmnSelectionReply *complete = message_cast<Messages::NetGetPlmnSelectionReply>(reply);
+    Messages::NetGetPlmnSelectionReply *complete = m_cache.get<Messages::NetGetPlmnSelectionReply>("plmnSelection");
 
     if(complete == NULL) {
-        unexpected("NetGetPlmnSelectionReply", reply);
 
-        request->complete(RIL_E_GENERIC_FAILURE);
-    } else {
-        int mode = complete->selection();
+        Message *reply = m_ril->execute(new Messages::NetGetPlmnSelection);
 
-        if(mode >= 2 && mode <= 5) {
-            int ril_mode;
+        complete = message_cast<Messages::NetGetPlmnSelectionReply>(reply);
 
-            ril_mode = 0;
+        if(complete == NULL) {
+            unexpected("NetGetPlmnSelectionReply", reply);
 
-            request->complete(RIL_E_SUCCESS, &ril_mode, sizeof(int *));
-
-        } else if(mode == 6) {
-            int ril_mode;
-
-            ril_mode = 1;
-
-            request->complete(RIL_E_SUCCESS, &ril_mode, sizeof(int *));
-
-        } else {
             request->complete(RIL_E_GENERIC_FAILURE);
+
+            delete reply;
+
+            return;
         }
+
+        m_cache.put("plmnSelection", complete);
     }
 
-    delete reply;
+
+    int mode = complete->selection();
+
+    if(mode >= 2 && mode <= 5) {
+        int ril_mode;
+
+        ril_mode = 0;
+
+        request->complete(RIL_E_SUCCESS, &ril_mode, sizeof(int *));
+
+    } else if(mode == 6) {
+        int ril_mode;
+
+        ril_mode = 1;
+
+        request->complete(RIL_E_SUCCESS, &ril_mode, sizeof(int *));
+
+    } else {
+        request->complete(RIL_E_GENERIC_FAILURE);
+    }
 }
 
 
@@ -169,39 +180,47 @@ void RequestHandler::handleQueryAvailableNetworks(Request *request) {
 }
 
 void RequestHandler::handleOperator(Request *request) {
-    Message *reply = m_ril->execute(new Messages::NetGetCurrentPlmn);
-    Messages::NetGetCurrentPlmnReply *complete = message_cast<Messages::NetGetCurrentPlmnReply>(reply);
+    Messages::NetGetCurrentPlmnReply *complete = m_cache.get<Messages::NetGetCurrentPlmnReply>("currentPlmn");
+
     if(complete == NULL) {
-        unexpected("NetGetCurrentPlmn", reply);
+        Message *reply = m_ril->execute(new Messages::NetGetCurrentPlmn);
+        complete = message_cast<Messages::NetGetCurrentPlmnReply>(reply);
 
-        request->complete(RIL_E_GENERIC_FAILURE);
-    } else {
-        char *mccmnc = getCleanMCCMNC(&complete->plmn()[0]);
+        if(complete == NULL) {
+            unexpected("NetGetCurrentPlmn", reply);
 
-        RILDatabase *database = m_ril->database();
-        std::string longLookup, shortLookup;
-        if(!database->lookupOperator(mccmnc, longLookup, shortLookup)) {
-            Log::error("Database lookup for operator %s failed: %s",
-                       mccmnc, database->errorString().c_str());
+            delete reply;
+            request->complete(RIL_E_GENERIC_FAILURE);
 
-            longLookup.assign(mccmnc);
-            shortLookup.assign(mccmnc);
+            return;
         }
 
-        char *response[3] = {
-            strdup(longLookup.c_str()),
-            strdup(shortLookup.c_str()),
-            mccmnc
-        };
-
-        request->complete(RIL_E_SUCCESS, response, sizeof(response));
-
-        free(response[0]);
-        free(response[1]);
-        free(response[2]);
+        m_cache.put("currentPlmn", complete);
     }
 
-    delete reply;
+    char *mccmnc = getCleanMCCMNC(&complete->plmn()[0]);
+
+    RILDatabase *database = m_ril->database();
+    std::string longLookup, shortLookup;
+    if(!database->lookupOperator(mccmnc, longLookup, shortLookup)) {
+        Log::error("Database lookup for operator %s failed: %s",
+                    mccmnc, database->errorString().c_str());
+
+        longLookup.assign(mccmnc);
+        shortLookup.assign(mccmnc);
+    }
+
+    char *response[3] = {
+        strdup(longLookup.c_str()),
+        strdup(shortLookup.c_str()),
+        mccmnc
+    };
+
+    request->complete(RIL_E_SUCCESS, response, sizeof(response));
+
+    free(response[0]);
+    free(response[1]);
+    free(response[2]);
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::NetGetCurrentPlmnReply *message) {
@@ -209,6 +228,7 @@ void RequestHandler::handle(SamsungIPC::Messages::NetGetCurrentPlmnReply *messag
 
     m_rilMutex.lock();
 
+    m_cache.put("currentPlmn", new SamsungIPC::Messages::NetGetCurrentPlmnReply(*message));
     m_ril->unsolicited(RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED);
 
     m_rilMutex.unlock();
@@ -285,6 +305,7 @@ static void handleSetPreferredNetworkTypeComplete(Message *reply, void *arg) {
 
     handler->lockRIL();
 
+    handler->cache().invalidate("netMode");
     RequestHandler::completeGenCommand(reply, "NetSetModeSelect", request);
 
     handler->unlockRIL();
@@ -337,12 +358,28 @@ void RequestHandler::handleSetPreferredNetworkType(Request *request) {
 }
 
 void RequestHandler::handleGetPreferredNetworkType(Request *request) {
-    int mode = getNetworkMode(request), response;
+    Messages::NetGetModeSelectReply *complete = m_cache.get<Messages::NetGetModeSelectReply>("netMode");
 
-    switch(mode) {
-        case -1:
+    if(complete == NULL) {
+        Message *reply = m_ril->execute(new Messages::NetGetModeSelect);
+        complete = message_cast<Messages::NetGetModeSelectReply>(reply);
+
+        if(complete == NULL) {
+            unexpected("NetGetModeSelect", reply);
+
+            request->complete(RIL_E_GENERIC_FAILURE);
+
+            delete reply;
+
             return;
+        }
 
+        m_cache.put("netMode", complete);
+    }
+
+    int response;
+
+    switch(complete->mode()) {
         case 1:
         case 3:
             response = PREF_NET_TYPE_GSM_ONLY;
@@ -378,26 +415,6 @@ void RequestHandler::handleGetPreferredNetworkType(Request *request) {
     request->complete(RIL_E_SUCCESS, &response, sizeof(response));
 }
 
-int RequestHandler::getNetworkMode(Request *request) {
-    int ret;
-    Message *reply = m_ril->execute(new Messages::NetGetModeSelect);
-    Messages::NetGetModeSelectReply *complete = message_cast<Messages::NetGetModeSelectReply>(reply);
-
-    if(complete == NULL) {
-        unexpected("NetGetModeSelect", reply);
-
-        request->complete(RIL_E_GENERIC_FAILURE);
-
-        ret = -1;
-    } else {
-        ret = complete->mode();
-    }
-
-    delete reply;
-
-    return ret;
-}
-
 void RequestHandler::handleVoiceRegistrationState(Request *request) {
     getNetworkRegistration(request, Messages::NetGetNetworkRegistration::Voice);
 }
@@ -407,19 +424,26 @@ void RequestHandler::handleDataRegistrationState(Request *request) {
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::NetGetNetworkRegistrationReply *message) {
+    m_rilMutex.lock();
+
     switch(message->serviceDomain()) {
-        case SamsungIPC::Messages::NetGetNetworkRegistrationReply::Voice:
+        case Messages::NetGetNetworkRegistrationReply::Voice:
+            m_cache.put("voiceRegistration", new Messages::NetGetNetworkRegistrationReply(*message));
+
             m_ril->unsolicited(RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED);
 
             break;
 
-        case SamsungIPC::Messages::NetGetNetworkRegistrationReply::Data:
+        case Messages::NetGetNetworkRegistrationReply::Data:
+            m_cache.put("dataRegistration", new Messages::NetGetNetworkRegistrationReply(*message));
 
             break;
 
         default:
             Log::error("Registration of unknown service domain: %hhu", message->serviceDomain());
     }
+
+    m_rilMutex.unlock();
 }
 
 static unsigned int toRilStatus(Messages::NetGetNetworkRegistrationReply::RegistrationStatus status) {
@@ -454,34 +478,49 @@ static unsigned int toRilStatus(Messages::NetGetNetworkRegistrationReply::Regist
 }
 
 void RequestHandler::getNetworkRegistration(Request *request, int op) {
-    Messages::NetGetNetworkRegistration *message = new Messages::NetGetNetworkRegistration;
-    message->setUnknown1(0xFF);
-    message->setServiceDomain((Messages::NetGetNetworkRegistration::ServiceDomain) op);
+    std::string key;
+    if(op == Messages::NetGetNetworkRegistration::Voice)
+        key = "voiceRegistration";
+    else
+        key = "dataRegistration";
 
-    Message *reply = m_ril->execute(message);
-    Messages::NetGetNetworkRegistrationReply *complete = message_cast<Messages::NetGetNetworkRegistrationReply>(reply);
+    Messages::NetGetNetworkRegistrationReply *complete = m_cache.get<Messages::NetGetNetworkRegistrationReply>(key);
 
     if(complete == NULL) {
-        unexpected("NetGetNetworkRegistration", reply);
+        Messages::NetGetNetworkRegistration *message = new Messages::NetGetNetworkRegistration;
+        message->setUnknown1(0xFF);
+        message->setServiceDomain((Messages::NetGetNetworkRegistration::ServiceDomain) op);
 
-        request->complete(RIL_E_GENERIC_FAILURE);
-    } else {
-        char status[16], lac[16], cid[16];
+        Message *reply = m_ril->execute(message);
 
-        snprintf(status, sizeof(status), "%u", toRilStatus(complete->registrationStatus()));
-        snprintf(lac, sizeof(lac), "%04hx", complete->lac());
-        snprintf(cid, sizeof(cid), "%08x", complete->cid());
+        complete = message_cast<Messages::NetGetNetworkRegistrationReply>(reply);
 
-        char *response[] = {
-            status,
-            lac,
-            cid
-        };
+        if(complete == NULL) {
+            unexpected("NetGetNetworkRegistration", reply);
 
-        request->complete(RIL_E_SUCCESS, response, sizeof(response));
+            request->complete(RIL_E_GENERIC_FAILURE);
+
+            delete reply;
+
+            return;
+        }
+
+        m_cache.put(key, complete);
     }
 
-    delete reply;
+    char status[16], lac[16], cid[16];
+
+    snprintf(status, sizeof(status), "%u", toRilStatus(complete->registrationStatus()));
+    snprintf(lac, sizeof(lac), "%04hx", complete->lac());
+    snprintf(cid, sizeof(cid), "%08x", complete->cid());
+
+    char *response[] = {
+        status,
+        lac,
+        cid
+    };
+
+    request->complete(RIL_E_SUCCESS, response, sizeof(response));
 }
 
 static void setPLMNSelectionComplete(Message *reply, void *arg) {
@@ -492,6 +531,8 @@ static void setPLMNSelectionComplete(Message *reply, void *arg) {
     delete data;
 
     handler->lockRIL();
+
+    handler->cache().invalidate("plmnSelection");
 
     RequestHandler::completeGenCommand(reply, "NetSetPlmnSelection", request);
 
