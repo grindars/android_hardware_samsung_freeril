@@ -33,11 +33,7 @@ void RequestHandler::handle(Messages::SecSimCardType *message) {
 }
 
 void RequestHandler::handle(Messages::SecGetPinStatusReply *message) {
-    Log::debug("entering");
-
     m_rilMutex.lock();
-
-    Log::debug("entered");
 
     switch(message->state()) {
         case Messages::SecGetPinStatusReply::Ready:
@@ -56,11 +52,7 @@ void RequestHandler::handle(Messages::SecGetPinStatusReply *message) {
             break;
     }
 
-    Log::debug("exiting");
-
     m_rilMutex.unlock();
-
-    Log::debug("exited");
 }
 
 static void translateSimStatus(Messages::SecGetPinStatusReply::State state, uint8_t xstate, Request *request) {

@@ -26,48 +26,65 @@
 using namespace SamsungIPC;
 
 void RequestHandler::handleBasebandVersion(Request *request) {
-    Messages::MiscGetMobileEquipVersion *message = new Messages::MiscGetMobileEquipVersion;
-    message->setReserved(0xFF);
-
-    Message *reply = m_ril->execute(message);
-    Messages::MiscGetMobileEquipVersionReply *complete = message_cast<Messages::MiscGetMobileEquipVersionReply>(reply);
+    Messages::MiscGetMobileEquipVersionReply *complete = m_cache.get<Messages::MiscGetMobileEquipVersionReply>("basebandVersion");
 
     if(complete == NULL) {
-        unexpected("MiscGetMobileEquipVersion", reply);
+        Messages::MiscGetMobileEquipVersion *message = new Messages::MiscGetMobileEquipVersion;
+        message->setReserved(0xFF);
 
-        request->complete(RIL_E_GENERIC_FAILURE);
-    } else {
-        std::string sw_ver = std::string((const char *) &complete->softwareVersion()[0], complete->softwareVersion().size());
-        request->complete(RIL_E_SUCCESS, sw_ver.c_str(), sizeof(char *));
-    }
+        Message *reply = m_ril->execute(message);
+        complete = message_cast<Messages::MiscGetMobileEquipVersionReply>(reply);
 
-    delete reply;
-}
+        if(complete == NULL) {
+            unexpected("MiscGetMobileEquipVersion", reply);
 
-void RequestHandler::handleIMEI(Request *request) {
-    Messages::MiscGetMobileEquipSerialNumber *msg = new Messages::MiscGetMobileEquipSerialNumber;
-    msg->setReserved(0x01);
-
-    Message *reply = m_ril->execute(msg);
-    Messages::MiscGetMobileEquipSerialNumberReply *complete = message_cast<Messages::MiscGetMobileEquipSerialNumberReply>(reply);
-
-    if(complete == NULL) {
-        unexpected("MiscGetMobileEquipSerialNumber", reply);
-
-        request->complete(RIL_E_GENERIC_FAILURE);
-    } else {
-        if(complete->stringLength() >= 32) {
             request->complete(RIL_E_GENERIC_FAILURE);
+
+            delete reply;
 
             return;
         }
 
-        std::string serial = std::string((const char *) &complete->serial()[0], complete->serial().size());
-
-        request->complete(RIL_E_SUCCESS, serial.c_str(), sizeof(char *));
+        m_cache.put("basebandVersion", complete);
     }
 
-    delete reply;
+    std::string sw_ver = std::string((const char *) &complete->softwareVersion()[0], complete->softwareVersion().size());
+    request->complete(RIL_E_SUCCESS, sw_ver.c_str(), sizeof(char *));
+}
+
+void RequestHandler::handleIMEI(Request *request) {
+    Messages::MiscGetMobileEquipSerialNumberReply *complete = m_cache.get<Messages::MiscGetMobileEquipSerialNumberReply>("imei");
+
+    if(complete == NULL) {
+        Messages::MiscGetMobileEquipSerialNumber *msg = new Messages::MiscGetMobileEquipSerialNumber;
+        msg->setReserved(0x01);
+
+        Message *reply = m_ril->execute(msg);
+        complete = message_cast<Messages::MiscGetMobileEquipSerialNumberReply>(reply);
+
+        if(complete == NULL) {
+            unexpected("MiscGetMobileEquipSerialNumber", reply);
+
+            request->complete(RIL_E_GENERIC_FAILURE);
+
+            delete reply;
+
+            return;
+        }
+
+        m_cache.put("imei", complete);
+    }
+
+
+    if(complete->stringLength() >= 32) {
+        request->complete(RIL_E_GENERIC_FAILURE);
+
+        return;
+    }
+
+    std::string serial = std::string((const char *) &complete->serial()[0], complete->serial().size());
+
+    request->complete(RIL_E_SUCCESS, serial.c_str(), sizeof(char *));
 }
 
 void RequestHandler::handleIMEISV(Request *request) {
@@ -75,29 +92,40 @@ void RequestHandler::handleIMEISV(Request *request) {
 }
 
 void RequestHandler::handleIMSI(Request *request) {
-
     if(m_ril->radioState() != RADIO_STATE_SIM_READY) {
         request->complete(RIL_E_GENERIC_FAILURE);
 
         return;
     }
 
-    Message *reply = m_ril->execute(new Messages::MiscGetMobileEquipImsi);
-    Messages::MiscGetMobileEquipImsiReply *complete = message_cast<Messages::MiscGetMobileEquipImsiReply>(reply);
+    Messages::MiscGetMobileEquipImsiReply *complete = m_cache.get<Messages::MiscGetMobileEquipImsiReply>("imsi");
 
     if(complete == NULL) {
-        unexpected("MiscGetMobileEquipImsi", reply);
+        Message *reply = m_ril->execute(new Messages::MiscGetMobileEquipImsi);
+        complete = message_cast<Messages::MiscGetMobileEquipImsiReply>(reply);
 
-        request->complete(RIL_E_GENERIC_FAILURE);
-    } else {
-        std::string imsi = std::string((const char *) &complete->imsi()[0], complete->imsi().size());
+        if(complete == NULL) {
+            unexpected("MiscGetMobileEquipImsi", reply);
 
-        request->complete(RIL_E_SUCCESS, imsi.c_str(), sizeof(char *));
+            request->complete(RIL_E_GENERIC_FAILURE);
+
+            delete reply;
+
+            return;
+        }
+
+        m_cache.put("imsi", complete);
     }
 
-    delete reply;
+    std::string imsi = std::string((const char *) &complete->imsi()[0], complete->imsi().size());
+
+    request->complete(RIL_E_SUCCESS, imsi.c_str(), sizeof(char *));
 }
 
 void RequestHandler::handle(SamsungIPC::Messages::MiscGetMobileEquipImsiReply *message) {
-    (void) message;
+    m_rilMutex.lock();
+
+    m_cache.put("imsi", new SamsungIPC::Messages::MiscGetMobileEquipImsiReply(*message));
+
+    m_rilMutex.unlock();
 }
