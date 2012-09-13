@@ -27,6 +27,6 @@ LOCAL_C_INCLUDES = external/stlport/stlport bionic $(LOCAL_PATH)/../../libandroi
 LOCAL_STATIC_LIBRARIES = libSamsungIPC libAndroidHAL
 
 LOCAL_MODULE := dumpmodem
-LOCAL_MODULE_TAGS := end
+LOCAL_MODULE_TAGS := eng
 
 include $(BUILD_EXECUTABLE)
