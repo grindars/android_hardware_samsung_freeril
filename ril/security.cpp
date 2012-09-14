@@ -27,6 +27,60 @@
 
 using namespace SamsungIPC;
 
+static int hex2val(char ch) {
+    if(ch >= '0' && ch <= '9')
+        return ch - '0';
+    else if(ch >= 'a' && ch <= 'f')
+        return ch - 'a' + 10;
+    else if(ch >= 'A' && ch <= 'F')
+        return ch - 'A' + 10;
+    else
+        return -1;
+}
+
+static char val2hex(int value) {
+    if(value >= 0x0A)
+        return value + 'A' - 10;
+    else
+        return value + '0';
+}
+
+static bool hex2bin(const std::string &hex, std::vector<unsigned char> &bin) {
+    size_t len = hex.length();
+
+    if(len & 1)
+        return false;
+
+    bin.resize(len >> 1);
+
+    for(size_t i = 0; i < len; i += 2) {
+        int upper = hex2val(hex[i]), lower = hex2val(hex[i + 1]);
+
+        if(upper == -1 || lower == -1)
+            return false;
+
+        bin[i >> 1] = (upper << 4) | lower;
+    }
+
+    return true;
+}
+
+static void bin2hex(const std::vector<unsigned char> &bin, std::string &hex) {
+    size_t len = bin.size();
+
+    hex.resize(len * 2);
+
+    for(size_t i = 0; i < len; i++) {
+        unsigned char byte = bin[i];
+
+        char high = val2hex((byte & 0xF0) >> 4);
+        char low  = val2hex(byte & 0x0F);
+
+        hex[i * 2] = high;
+        hex[i * 2 + 1] = low;
+    }
+}
+
 void RequestHandler::handle(Messages::SecSimCardType *message) {
     Log::info("Card type: %u, ICC type: %u",
                message->cardType(), message->iccType());
@@ -185,6 +239,68 @@ void RequestHandler::handleChangeSIMPin2(Request *request) {
                   ((const char **) request->data())[0],
                   ((const char **) request->data())[1],
                   Messages::SecChangeLockPwd::Pin2);
+}
+
+void RequestHandler::handleSIM_IO(Request *request) {
+    const RIL_SIM_IO_v6 *io = (const RIL_SIM_IO_v6 *) request->data();
+
+    if((io->command == 0xD6 || io->command == 0xDC) && io->fileid == 0x6F3B) {
+        Log::debug("Write data to EF file");
+
+    } else {
+        Messages::SecRsimAccess *message = new Messages::SecRsimAccess;
+        message->setCmd(io->command);
+        message->setFileId(io->fileid);
+        message->setP1(io->p1);
+        message->setP2(io->p2);
+        message->setP3(io->p3);
+
+        std::vector<unsigned char> data;
+
+        if(io->data && !hex2bin(io->data, data)) {
+            request->complete(RIL_E_GENERIC_FAILURE);
+
+            return;
+        }
+
+        message->setData(data);
+
+        Message *reply = m_ril->execute(message);
+        Messages::SecRsimAccessReply *complete = message_cast<Messages::SecRsimAccessReply>(reply);
+        if(complete == NULL) {
+            unexpected("SecRsimAccess", reply);
+
+            request->complete(RIL_E_GENERIC_FAILURE);
+
+            delete reply;
+
+            return;
+        }
+
+        RIL_SIM_IO_Response response;
+        response.sw1 = complete->sw1();
+        response.sw2 = complete->sw2();
+
+        data = complete->data();
+        delete reply;
+
+        if(data.size() == 0) {
+            response.simResponse = NULL;
+        } else {
+            std::string hex;
+
+            bin2hex(data, hex);
+
+            response.simResponse = strdup(hex.c_str());
+        }
+
+        Log::debug("SIM_IO: 0x%02hhX, 0x%04hX, %s, 0x%02hhX, 0x%02hhX, 0x%02hhX, %s -> 0x%02hhX, 0x%02hhX, %s",
+                   io->command, io->fileid, io->path, io->p1, io->p2, io->p3, io->data, response.sw1, response.sw2, response.simResponse);
+
+        request->complete(RIL_E_SUCCESS, &response, sizeof(RIL_SIM_IO_Response));
+        free(response.simResponse);
+    }
+
 }
 
 void RequestHandler::setPinStatus(Request *request, const char *pin, const char *puk, int op) {

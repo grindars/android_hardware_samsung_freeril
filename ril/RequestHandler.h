@@ -82,6 +82,7 @@ private:
     void handleEnterSIMPuk2(Request *request);
     void handleChangeSIMPin(Request *request);
     void handleChangeSIMPin2(Request *request);
+    void handleSIM_IO(Request *request);
     static void handlePinStatusRefreshComplete(SamsungIPC::Message *reply, void *arg);
     void setPinStatus(Request *request, const char *pin, const char *puk, int op);
     void changeLockPwd(Request *request, const char *currentPwd, const char *newPwd, int op);

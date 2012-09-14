@@ -62,6 +62,23 @@ message_group :SEC, 5 do |g|
         m.vector :newPwd,     :read_length => 39
     end
 
+    g.out :RSIM_ACCESS, 5, :get do |m|
+        m.u8     :cmd
+        m.u16    :fileId
+        m.u8     :p1
+        m.u8     :p2
+        m.u8     :p3
+        m.vector :data, :read_length => 256
+    end
+
+    g.in :RSIM_ACCESS_REPLY, 5 do |m|
+        m.u8     :sw1
+        m.u8     :sw2
+        m.u8     :dataLength
+        m.vector :data, :read_length => "m_dataLength"
+
+    end
+
     g.in :SIM_CARD_TYPE, 7 do |m|
         m.u8 :cardType
         m.u8 :iccType

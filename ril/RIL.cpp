@@ -29,10 +29,9 @@
 #include "Message.h"
 #include "RILDatabase.h"
 
+#include "config.h"
 #if defined(PROFILING)
 #include "timeval.h"
-
-#error Packet inspection must be enabled for profiling
 #endif
 
 using namespace SamsungIPC;

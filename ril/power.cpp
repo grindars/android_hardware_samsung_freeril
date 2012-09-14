@@ -31,7 +31,7 @@ void RequestHandler::handle(SamsungIPC::Messages::PwrPhoneBootComplete *message)
     m_rilMutex.lock();
 
     Messages::MiscSetDebugLevel *levelMessage = new Messages::MiscSetDebugLevel;
-    levelMessage->setLevel(1);
+    levelMessage->setLevel(2);
     m_ril->submit(levelMessage);
 
     m_ril->setRadioState(RADIO_STATE_OFF);

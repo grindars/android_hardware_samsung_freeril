@@ -57,5 +57,8 @@ message_group :MISC, 10 do |g|
         m.vector :serial, :read_length => 32
     end
 
+    g.out :SET_MODEM_INTERFACE_MODE, 3, :set do |m|
+        m.u8    :mode
+    end
 
 end

@@ -34,6 +34,8 @@ using namespace SamsungIPC;
 RequestHandler::RequestHandler(RIL *ril) : m_ril(ril), m_coarseRSSI(-1),
     m_lastCallFailCause(CALL_FAIL_ERROR_UNSPECIFIED) {
 
+    m_requestHandlers[RIL_REQUEST_SIM_IO - FirstRequest] = &RequestHandler::handleSIM_IO;
+
     m_requestHandlers[RIL_REQUEST_OEM_HOOK_RAW - FirstRequest] = &RequestHandler::handleOemHookRaw;
 
     m_requestHandlers[RIL_REQUEST_QUERY_NETWORK_SELECTION_MODE - FirstRequest] = &RequestHandler::handleQueryNetworkSelectionMode;
